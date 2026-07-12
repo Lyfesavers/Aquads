@@ -388,7 +388,7 @@ const Bounties = ({ currentUser, onLogin, onLogout, onCreateAccount, showNotific
             <p className="text-slate-500 mt-2">Be the first project to post a bounty and attract top talent.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
             {visibleBounties.map((b, i) => {
               const cat = categoryMeta(b.category);
               const badge = statusBadge(b.status);
@@ -399,39 +399,44 @@ const Bounties = ({ currentUser, onLogin, onLogout, onCreateAccount, showNotific
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.25, delay: Math.min(i * 0.03, 0.3) }}
-                  className="text-left bg-slate-800/50 hover:bg-slate-800/80 border border-slate-700/50 hover:border-cyan-500/40 rounded-2xl overflow-hidden transition-all group flex flex-col">
+                  className="text-left bg-slate-800/50 hover:bg-slate-800/80 border border-slate-700/50 hover:border-cyan-500/40 rounded-xl overflow-hidden transition-all group flex flex-col">
                   {/* Escrow trust ribbon */}
-                  <div className={`flex items-center gap-1.5 px-4 py-1.5 text-[11px] font-medium border-b ${
+                  <div className={`flex items-center gap-1 px-3 py-1 text-[10px] font-medium border-b ${
                     b.status === 'completed'
                       ? 'bg-blue-500/10 border-blue-500/20 text-blue-300'
                       : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-300'
                   }`}>
                     <span>{b.status === 'completed' ? '✓' : '🔒'}</span>
-                    <span>{b.status === 'completed' ? 'Reward released from escrow' : 'Reward secured in escrow'}</span>
+                    <span className="truncate">{b.status === 'completed' ? 'Released from escrow' : 'Secured in escrow'}</span>
                   </div>
 
-                  <div className="p-4 sm:p-5 flex flex-col flex-1">
-                    <div className="flex items-center justify-between mb-3 gap-2">
-                      <span className="text-xs px-2 py-1 rounded-md bg-slate-700/60 text-slate-300 truncate">{cat.icon} {cat.label}</span>
-                      <span className={`text-xs px-2 py-1 rounded-md border whitespace-nowrap ${badge.cls}`}>{badge.label}</span>
-                    </div>
-                    <h3 className="text-base sm:text-lg font-semibold text-white group-hover:text-cyan-300 transition-colors line-clamp-2">{b.title}</h3>
-                    <div className="flex items-center gap-2 mt-3">
-                      {(b.projectLogo || b.posterImage) && (
-                        <img src={b.projectLogo || b.posterImage} alt="" className="w-5 h-5 rounded-full object-cover flex-shrink-0 bg-slate-700"
-                          onError={(e) => { e.target.style.display = 'none'; }} />
-                      )}
-                      <span className="text-sm text-slate-400 truncate">{b.projectName || b.posterUsername}</span>
+                  <div className="p-3 flex flex-col flex-1">
+                    {/* Poster header: big logo/avatar + status */}
+                    <div className="flex items-start gap-2.5">
+                      <div className="w-14 h-14 rounded-xl flex-shrink-0 bg-gradient-to-br from-cyan-500/30 to-blue-600/30 border border-slate-600/50 flex items-center justify-center text-xl font-bold text-cyan-200 relative overflow-hidden">
+                        <span>{initialOf(b.projectName || b.posterUsername)}</span>
+                        {(b.projectLogo || b.posterImage) && (
+                          <img src={b.projectLogo || b.posterImage} alt="" className="absolute inset-0 w-full h-full object-cover"
+                            onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <span className={`inline-block text-[10px] px-1.5 py-0.5 rounded border whitespace-nowrap ${badge.cls}`}>{badge.label}</span>
+                        <p className="text-xs text-slate-400 truncate mt-1.5" title={b.projectName || b.posterUsername}>{b.projectName || b.posterUsername}</p>
+                        <p className="text-[10px] text-slate-500 truncate mt-0.5">{cat.icon} {cat.label}</p>
+                      </div>
                     </div>
 
-                    <div className="mt-auto pt-4">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xl font-bold text-emerald-400">${b.amount} <span className="text-xs text-slate-500 font-normal">{b.currency}</span></span>
-                        <span className="text-xs text-slate-500">{b.submissionCount || 0} submissions</span>
+                    <h3 className="text-sm font-semibold text-white group-hover:text-cyan-300 transition-colors line-clamp-2 mt-2.5 leading-snug">{b.title}</h3>
+
+                    <div className="mt-auto pt-2.5">
+                      <div className="flex items-end justify-between gap-2">
+                        <span className="text-lg font-bold text-emerald-400 leading-none">${b.amount} <span className="text-[10px] text-slate-500 font-normal">{b.currency}</span></span>
+                        <span className="text-[10px] text-slate-500 whitespace-nowrap">{b.submissionCount || 0} subs</span>
                       </div>
                       {/* Deadline urgency + progress bar */}
-                      <div className="mt-3">
-                        <div className="flex justify-between text-xs mb-1">
+                      <div className="mt-2">
+                        <div className="flex justify-between text-[10px] mb-1">
                           <span className={u.text}>{di.text}</span>
                         </div>
                         {di.hasBar && (
