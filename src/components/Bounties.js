@@ -46,6 +46,22 @@ const timeAgo = (date) => {
 
 const initialOf = (name) => (name || '?').trim().charAt(0).toUpperCase();
 
+// Bounty avatar: shows the project logo / poster image, falling back to a
+// gradient initial only when there's no image or it fails to load.
+const BountyAvatar = ({ src, name, className = 'w-14 h-14', textClass = 'text-xl' }) => {
+  const [failed, setFailed] = useState(false);
+  const showImg = src && !failed;
+  return (
+    <div className={`${className} rounded-xl flex-shrink-0 border border-slate-600/50 overflow-hidden flex items-center justify-center ${showImg ? 'bg-slate-800' : 'bg-gradient-to-br from-cyan-500/30 to-blue-600/30'}`}>
+      {showImg ? (
+        <img src={src} alt={name || ''} className="w-full h-full object-cover" onError={() => setFailed(true)} />
+      ) : (
+        <span className={`${textClass} font-bold text-cyan-200`}>{initialOf(name)}</span>
+      )}
+    </div>
+  );
+};
+
 // Static class maps so Tailwind keeps them (no dynamic string concatenation).
 const URGENCY = {
   green: { text: 'text-emerald-400', bar: 'bg-emerald-500' },
@@ -413,13 +429,7 @@ const Bounties = ({ currentUser, onLogin, onLogout, onCreateAccount, showNotific
                   <div className="p-3 flex flex-col flex-1">
                     {/* Poster header: big logo/avatar + status */}
                     <div className="flex items-start gap-2.5">
-                      <div className="w-14 h-14 rounded-xl flex-shrink-0 bg-gradient-to-br from-cyan-500/30 to-blue-600/30 border border-slate-600/50 flex items-center justify-center text-xl font-bold text-cyan-200 relative overflow-hidden">
-                        <span>{initialOf(b.projectName || b.posterUsername)}</span>
-                        {(b.projectLogo || b.posterImage) && (
-                          <img src={b.projectLogo || b.posterImage} alt="" className="absolute inset-0 w-full h-full object-cover"
-                            onError={(e) => { e.currentTarget.style.display = 'none'; }} />
-                        )}
-                      </div>
+                      <BountyAvatar src={b.projectLogo || b.posterImage} name={b.projectName || b.posterUsername} />
                       <div className="min-w-0 flex-1">
                         <span className={`inline-block text-[10px] px-1.5 py-0.5 rounded border whitespace-nowrap ${badge.cls}`}>{badge.label}</span>
                         <p className="text-xs text-slate-400 truncate mt-1.5" title={b.projectName || b.posterUsername}>{b.projectName || b.posterUsername}</p>
