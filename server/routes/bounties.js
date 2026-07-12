@@ -124,7 +124,7 @@ router.get('/:id', async (req, res) => {
 // Create a bounty (project owners only). Also creates the escrow awaiting the poster's deposit.
 router.post('/', auth, async (req, res) => {
   try {
-    const { title, description, deliverables, category, amount, deadline, projectAdId } = req.body;
+    const { title, description, deliverables, rules, category, amount, deadline, projectAdId } = req.body;
 
     if (!title || !description || amount === undefined || amount === null) {
       return res.status(400).json({ error: 'Title, description and amount are required' });
@@ -156,6 +156,7 @@ router.post('/', auth, async (req, res) => {
       title: title.trim(),
       description,
       deliverables: deliverables || '',
+      rules: rules || '',
       category: category || 'other',
       amount: amountNum,
       currency: 'USDC',
@@ -204,7 +205,7 @@ router.patch('/:id', auth, async (req, res) => {
       return res.status(400).json({ error: 'Only open bounties can be edited' });
     }
 
-    const { title, description, deliverables, category, deadline } = req.body;
+    const { title, description, deliverables, rules, category, deadline } = req.body;
     let scopeChanged = false;
 
     if (title !== undefined && title.trim() && title.trim() !== bounty.title) {
@@ -215,6 +216,9 @@ router.patch('/:id', auth, async (req, res) => {
     }
     if (deliverables !== undefined && deliverables !== bounty.deliverables) {
       bounty.deliverables = deliverables; scopeChanged = true;
+    }
+    if (rules !== undefined && rules !== bounty.rules) {
+      bounty.rules = rules; scopeChanged = true;
     }
     if (category !== undefined && category !== bounty.category) {
       bounty.category = category;

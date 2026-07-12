@@ -350,7 +350,7 @@ const Bounties = ({ currentUser, onLogin, onLogout, onCreateAccount, showNotific
 
 const PostBountyModal = ({ currentUser, projects, onClose, onCreated, notify }) => {
   const [form, setForm] = useState({
-    title: '', description: '', deliverables: '', category: 'development',
+    title: '', description: '', deliverables: '', rules: '', category: 'development',
     amount: '', deadline: '', projectAdId: projects[0]?.id || ''
   });
   const [submitting, setSubmitting] = useState(false);
@@ -419,6 +419,12 @@ const PostBountyModal = ({ currentUser, projects, onClose, onCreated, notify }) 
               placeholder="What must be submitted to win (files, links, format...)"
               className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 focus:border-cyan-500 rounded-lg text-white text-sm focus:outline-none resize-none" />
           </div>
+          <div>
+            <label className="block text-sm text-slate-400 mb-1">Rules & Eligibility</label>
+            <textarea value={form.rules} onChange={e => update('rules', e.target.value)} rows={3}
+              placeholder="Rules participants must follow — eligibility, judging criteria, do's & don'ts, deadlines, originality, etc."
+              className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 focus:border-cyan-500 rounded-lg text-white text-sm focus:outline-none resize-none" />
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-sm text-slate-400 mb-1">Category</label>
@@ -466,6 +472,7 @@ const EditBountyModal = ({ bountyId, bounty, currentUser, onClose, onSaved, noti
     title: bounty.title || '',
     description: bounty.description || '',
     deliverables: bounty.deliverables || '',
+    rules: bounty.rules || '',
     category: bounty.category || 'other',
     deadline: toDateInput(bounty.deadline)
   });
@@ -483,6 +490,7 @@ const EditBountyModal = ({ bountyId, bounty, currentUser, onClose, onSaved, noti
         title: form.title,
         description: form.description,
         deliverables: form.deliverables,
+        rules: form.rules,
         category: form.category,
         deadline: form.deadline || null
       }, { headers: { Authorization: `Bearer ${currentUser.token}` } });
@@ -517,6 +525,12 @@ const EditBountyModal = ({ bountyId, bounty, currentUser, onClose, onSaved, noti
           <div>
             <label className="block text-sm text-slate-400 mb-1">Deliverables</label>
             <textarea value={form.deliverables} onChange={e => update('deliverables', e.target.value)} rows={3}
+              className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 focus:border-cyan-500 rounded-lg text-white text-sm focus:outline-none resize-none" />
+          </div>
+          <div>
+            <label className="block text-sm text-slate-400 mb-1">Rules & Eligibility</label>
+            <textarea value={form.rules} onChange={e => update('rules', e.target.value)} rows={3}
+              placeholder="Rules participants must follow — eligibility, judging criteria, do's & don'ts, deadlines, originality, etc."
               className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 focus:border-cyan-500 rounded-lg text-white text-sm focus:outline-none resize-none" />
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -771,6 +785,14 @@ const BountyDetailModal = ({ bountyId, bounty, loading, currentUser, onClose, on
                 <div>
                   <h4 className="text-sm font-semibold text-slate-300 mb-1">Deliverables</h4>
                   <p className="text-sm text-slate-400 whitespace-pre-wrap">{bounty.deliverables}</p>
+                </div>
+              )}
+              {bounty.rules && (
+                <div className="bg-slate-800/40 border border-slate-700/60 rounded-lg p-3">
+                  <h4 className="text-sm font-semibold text-cyan-300 mb-1 flex items-center gap-1.5">
+                    <span>📋</span> Rules & Eligibility
+                  </h4>
+                  <p className="text-sm text-slate-300 whitespace-pre-wrap">{bounty.rules}</p>
                 </div>
               )}
 

@@ -76,6 +76,12 @@ const bountySchema = new mongoose.Schema({
     default: '',
     maxlength: 4000
   },
+  // Rules / eligibility / judging criteria participants must follow
+  rules: {
+    type: String,
+    default: '',
+    maxlength: 4000
+  },
   category: {
     type: String,
     enum: ['development', 'design', 'content', 'marketing', 'community', 'research', 'other'],
