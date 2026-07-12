@@ -13,6 +13,20 @@ const HYPERSPACE_ADMIN_ROOM = 'hyperSpaceAdmin';
 // Store connected users
 const connectedUsers = new Map();
 
+// True if the user has at least one active socket connection (optionally excluding one socket id).
+// Used to dedupe presence broadcasts: we only tell every client about a status change on a real
+// offline->online (first socket) or online->offline (last socket) transition, not on every tab /
+// component that emits 'userOnline' or on every individual tab disconnect.
+function userHasActiveSocket(userId, excludeSocketId = null) {
+  if (!userId) return false;
+  const target = userId.toString();
+  for (const [sid, info] of connectedUsers.entries()) {
+    if (sid === excludeSocketId) continue;
+    if (info && info.userId && info.userId.toString() === target) return true;
+  }
+  return false;
+}
+
 const { getFreeRaidDailyLimitForUsername, FREE_RAIDS_REQUIRES_LISTING_REASON } = require('./utils/listingTier');
 
 // Initialize the socket.io instance
@@ -469,6 +483,10 @@ function init(server) {
             return;
           }
           
+          // Whether this user already had a live socket before this connection.
+          const userWasConnected = userHasActiveSocket(userData.userId);
+          const alreadyRegistered = connectedUsers.has(socket.id);
+
           // Update user online status in database
           const result = await User.findByIdAndUpdate(userData.userId, {
             isOnline: true,
@@ -485,12 +503,16 @@ function init(server) {
           // Join user to their own room for direct messages
           socket.join(`user_${userData.userId}`);
 
-          // Broadcast user online status to all clients
-          socket.broadcast.emit('userStatusChanged', {
-            userId: userData.userId,
-            username: userData.username,
-            isOnline: true
-          });
+          // Only broadcast to every client on a genuine offline->online transition.
+          // Multiple components/tabs emit 'userOnline'; without this guard each one fans
+          // out an identical status update to all connected clients (large egress cost).
+          if (!userWasConnected && !alreadyRegistered) {
+            socket.broadcast.emit('userStatusChanged', {
+              userId: userData.userId,
+              username: userData.username,
+              isOnline: true
+            });
+          }
 
         } catch (error) {
           // Silent error handling
@@ -898,23 +920,29 @@ function init(server) {
       if (userInfo) {
         try {
           const User = require('./models/User');
-          
-          // Update user offline status in database
-          await User.findByIdAndUpdate(userInfo.userId, {
-            isOnline: false,
-            lastSeen: new Date()
-          });
 
-          // Remove from connected users
+          // Remove this socket first, then check if the user still has other live sockets
+          // (e.g. multiple tabs). Only mark offline + broadcast when the LAST one closes.
           connectedUsers.delete(socket.id);
+          const stillConnected = userHasActiveSocket(userInfo.userId);
 
-          // Broadcast user offline status to all clients
-          socket.broadcast.emit('userStatusChanged', {
-            userId: userInfo.userId,
-            username: userInfo.username,
-            isOnline: false,
-            lastSeen: new Date()
-          });
+          if (!stillConnected) {
+            const lastSeen = new Date();
+
+            // Update user offline status in database
+            await User.findByIdAndUpdate(userInfo.userId, {
+              isOnline: false,
+              lastSeen
+            });
+
+            // Broadcast user offline status to all clients
+            socket.broadcast.emit('userStatusChanged', {
+              userId: userInfo.userId,
+              username: userInfo.username,
+              isOnline: false,
+              lastSeen
+            });
+          }
 
         } catch (error) {
           // Silent error handling
