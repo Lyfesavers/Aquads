@@ -957,6 +957,14 @@ const BountyDetailModal = ({ bountyId, bounty, loading, currentUser, onClose, on
                   ) : (
                     <>
                       <h4 className="text-sm font-semibold text-slate-300 mb-2">Submit your work</h4>
+                      <div className="flex items-start gap-2 bg-amber-500/10 border border-amber-500/25 rounded-lg p-3 mb-3 text-xs text-amber-200">
+                        <span className="text-base leading-none mt-0.5">💸</span>
+                        <p>
+                          To participate and receive your reward, you must have{' '}
+                          <Link to="/aquapay" className="font-semibold text-amber-100 underline hover:text-white">AquaPay</Link>{' '}
+                          set up and activated on your account. Winners are paid out through AquaPay escrow — set it up before submitting.
+                        </p>
+                      </div>
                       <input value={submissionUrl} onChange={e => setSubmissionUrl(e.target.value)}
                         placeholder="Link to your deliverable (GitHub, Figma, tweet, doc...)"
                         className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 focus:border-cyan-500 rounded-lg text-white text-sm focus:outline-none mb-2" />
