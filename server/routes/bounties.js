@@ -17,6 +17,24 @@ function emitBounty(type, bounty, extra = {}) {
   }
 }
 
+// Fill in posterImage for lean bounty objects that don't have one stored yet
+// (e.g. bounties created before the posterImage field was added). Mutates in place.
+async function attachPosterImages(bounties) {
+  try {
+    const list = Array.isArray(bounties) ? bounties : [bounties];
+    const needing = list.filter(b => b && !b.posterImage && !b.projectLogo && b.posterId);
+    if (!needing.length) return;
+    const User = require('../models/User');
+    const posterIds = [...new Set(needing.map(b => b.posterId.toString()))];
+    const users = await User.find({ _id: { $in: posterIds } }).select('image').lean();
+    const imageMap = {};
+    users.forEach(u => { imageMap[u._id.toString()] = u.image || null; });
+    needing.forEach(b => { b.posterImage = imageMap[b.posterId.toString()] || null; });
+  } catch (e) {
+    console.error('attachPosterImages error:', e.message);
+  }
+}
+
 // Public list of bounties. Defaults to open bounties; supports ?status= & ?category=.
 router.get('/', async (req, res) => {
   try {
@@ -48,6 +66,9 @@ router.get('/', async (req, res) => {
     counts.forEach(c => { countMap[c._id.toString()] = c.count; });
     bounties.forEach(b => { b.submissionCount = countMap[b._id.toString()] || 0; });
 
+    // Backfill poster avatar for bounties created before posterImage existed.
+    await attachPosterImages(bounties);
+
     res.json({ success: true, bounties });
   } catch (error) {
     console.error('Error listing bounties:', error);
@@ -76,6 +97,7 @@ router.get('/mine', auth, async (req, res) => {
     const bounties = await Bounty.find({ posterId: req.user.userId })
       .sort({ createdAt: -1 })
       .lean();
+    await attachPosterImages(bounties);
     res.json({ success: true, bounties });
   } catch (error) {
     console.error('Error fetching my bounties:', error);
@@ -113,6 +135,9 @@ router.get('/:id', async (req, res) => {
       bounty.mySubmission = mySubmission || null;
       delete bounty.submissions;
     }
+
+    // Backfill poster avatar for bounties created before posterImage existed.
+    await attachPosterImages(bounty);
 
     res.json({ success: true, bounty });
   } catch (error) {
