@@ -2891,6 +2891,7 @@ function App() {
               onLogout={handleLogout}
               onCreateAccount={handleCreateAccount}
               showNotification={showNotification}
+              openMintFunnelPlatform={openMintFunnelPlatform}
             />
           } />
           <Route path="/bounty-pay/:escrowId" element={

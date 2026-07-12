@@ -7,6 +7,8 @@ import { API_URL, socket } from '../services/api';
 import LoginModal from './LoginModal';
 import CreateAccountModal from './CreateAccountModal';
 import Footer from './Footer';
+import NotificationBell from './NotificationBell';
+import { getDisplayName } from '../utils/nameUtils';
 
 const CATEGORIES = [
   { id: 'development', label: 'Development', icon: '💻' },
@@ -70,7 +72,7 @@ const deadlineInfo = (bounty) => {
   return { text: days <= 1 ? 'Ends today' : `${days} days left`, color, pct, hasBar: true };
 };
 
-const Bounties = ({ currentUser, onLogin, onLogout, onCreateAccount, showNotification }) => {
+const Bounties = ({ currentUser, onLogin, onLogout, onCreateAccount, showNotification, openMintFunnelPlatform }) => {
   const navigate = useNavigate();
 
   const [bounties, setBounties] = useState([]);
@@ -80,6 +82,8 @@ const Bounties = ({ currentUser, onLogin, onLogout, onCreateAccount, showNotific
 
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showCreateAccountModal, setShowCreateAccountModal] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
 
   const [myProjects, setMyProjects] = useState([]);
   const [showPostModal, setShowPostModal] = useState(false);
@@ -108,6 +112,16 @@ const Bounties = ({ currentUser, onLogin, onLogout, onCreateAccount, showNotific
   useEffect(() => {
     fetchBounties();
   }, [fetchBounties]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showUserDropdown && !event.target.closest('.user-dropdown')) {
+        setShowUserDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showUserDropdown]);
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -162,25 +176,156 @@ const Bounties = ({ currentUser, onLogin, onLogout, onCreateAccount, showNotific
         <link rel="canonical" href="https://www.aquads.xyz/bounties" />
       </Helmet>
 
-      {/* Navigation */}
+      {/* Navigation - consistent with home/marketplace header */}
       <nav className="sticky top-0 bg-gray-800/80 backdrop-blur-sm shadow-lg shadow-blue-500/20 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <Link to="/home" className="flex items-center">
-              <img src="/alogo.png" alt="AQUADS" className="aquads-nav-logo" />
-            </Link>
-            <div className="flex items-center space-x-2 sm:space-x-3">
-              <Link to="/home" className="hidden sm:inline-block bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm transition-all text-yellow-400">Home</Link>
-              <Link to="/marketplace" className="hidden sm:inline-block bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm transition-all text-yellow-400">Freelancer</Link>
+            <div className="flex items-center">
+              <Link to="/home" className="flex items-center">
+                <img src="/alogo.png" alt="AQUADS" className="aquads-nav-logo" />
+              </Link>
+            </div>
+
+            {/* Mobile menu button */}
+            <div className="md:hidden">
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="text-gray-300 hover:text-white p-3 rounded-md"
+                aria-label="Toggle menu"
+              >
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  {isMobileMenuOpen ? (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  ) : (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  )}
+                </svg>
+              </button>
+            </div>
+
+            {/* Desktop menu */}
+            <div className="hidden md:flex items-center space-x-3">
+              <Link to="/marketplace" className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400">
+                Freelancer
+              </Link>
+              <Link to="/games" className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400">
+                Games
+              </Link>
+              <button onClick={openMintFunnelPlatform} className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400">
+                Paid Ads
+              </button>
+              <Link to="/learn" className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400">
+                Learn
+              </Link>
+              <Link to="/list-token-free" className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400">
+                List token free
+              </Link>
+              <Link to="/claim-bubble" className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400">
+                Claim bubble
+              </Link>
+
               {currentUser ? (
                 <>
-                  <Link to="/dashboard" className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm transition-all text-yellow-400">Dashboard</Link>
-                  <button onClick={onLogout} className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm transition-all text-yellow-400">Logout</button>
+                  <NotificationBell currentUser={currentUser} />
+
+                  {/* User Dropdown */}
+                  <div className="relative user-dropdown">
+                    <button
+                      onClick={() => setShowUserDropdown(!showUserDropdown)}
+                      className="flex items-center bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
+                    >
+                      <span className="mr-1">{getDisplayName(currentUser)}</span>
+                      <svg className={`w-4 h-4 ml-1 transition-transform ${showUserDropdown ? 'rotate-180' : ''}`} fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+
+                    {showUserDropdown && (
+                      <div className="absolute right-0 mt-2 w-52 bg-gray-800/95 backdrop-blur-sm rounded-lg shadow-xl border border-gray-700/50 z-[60]">
+                        <div className="py-2">
+                          <Link to="/dashboard" onClick={() => setShowUserDropdown(false)} className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-blue-600/50 transition-colors">📊 Dashboard</Link>
+                          <Link to="/claim-bubble" onClick={() => setShowUserDropdown(false)} className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-teal-600/50 transition-colors">🫧 Claim your bubble</Link>
+                          <hr className="my-2 border-gray-700" />
+                          <Link to="/aquafi" onClick={() => setShowUserDropdown(false)} className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-cyan-600/30 transition-colors">💧 AquaFi</Link>
+                          <Link to="/aquaswap" onClick={() => setShowUserDropdown(false)} className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-cyan-600/30 transition-colors">💱 AquaSwap</Link>
+                          <Link to="/partner-rewards" onClick={() => setShowUserDropdown(false)} className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-cyan-600/30 transition-colors">🤝 Partners</Link>
+                          <Link to="/telegram-bot" onClick={() => setShowUserDropdown(false)} className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-cyan-600/30 transition-colors">🤖 Telegram Bot</Link>
+                          <Link to="/aquapay" onClick={() => setShowUserDropdown(false)} className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-cyan-600/30 transition-colors">💸 AquaPay</Link>
+                          <Link to="/hyperspace" onClick={() => setShowUserDropdown(false)} className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-cyan-600/30 transition-colors">🚀 HyperSpace</Link>
+                          <hr className="my-2 border-gray-700" />
+                          <button onClick={() => { onLogout(); setShowUserDropdown(false); }} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-red-600/50 transition-colors">🚪 Logout</button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </>
               ) : (
                 <>
-                  <button onClick={() => setShowLoginModal(true)} className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm transition-all text-yellow-400">Login</button>
-                  <button onClick={() => setShowCreateAccountModal(true)} className="bg-blue-600/90 hover:bg-blue-500/90 px-3 py-1.5 rounded text-sm transition-all text-white">Sign Up</button>
+                  <button onClick={() => setShowLoginModal(true)} className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400">
+                    Login
+                  </button>
+                  <button onClick={() => setShowCreateAccountModal(true)} className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400">
+                    Create Account
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Mobile menu */}
+          <div className={`${isMobileMenuOpen ? 'block' : 'hidden'} md:hidden py-2 relative z-50`}>
+            <div className="flex flex-col space-y-2">
+              <Link to="/home" onClick={() => setIsMobileMenuOpen(false)} className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg transition-all duration-300 backdrop-blur-sm text-center text-yellow-400">
+                Home
+              </Link>
+              <Link to="/marketplace" onClick={() => setIsMobileMenuOpen(false)} className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg transition-all duration-300 backdrop-blur-sm text-center text-yellow-400">
+                Freelancer
+              </Link>
+              <Link to="/games" onClick={() => setIsMobileMenuOpen(false)} className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg transition-all duration-300 backdrop-blur-sm text-center text-yellow-400">
+                GameHub
+              </Link>
+              <button onClick={() => { openMintFunnelPlatform(); setIsMobileMenuOpen(false); }} className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg transition-all duration-300 backdrop-blur-sm text-center text-yellow-400">
+                Paid Ads
+              </button>
+              <Link to="/learn" onClick={() => setIsMobileMenuOpen(false)} className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg transition-all duration-300 backdrop-blur-sm text-center text-yellow-400">
+                Learn
+              </Link>
+              <Link to="/list-token-free" onClick={() => setIsMobileMenuOpen(false)} className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg transition-all duration-300 backdrop-blur-sm text-center text-yellow-400">
+                List token free
+              </Link>
+              <Link to="/claim-bubble" onClick={() => setIsMobileMenuOpen(false)} className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg transition-all duration-300 backdrop-blur-sm text-center text-yellow-400">
+                Claim bubble
+              </Link>
+              {currentUser ? (
+                <>
+                  <div className="flex justify-center">
+                    <NotificationBell currentUser={currentUser} />
+                  </div>
+                  <span className="text-blue-300 text-center">Welcome, {getDisplayName(currentUser)}!</span>
+                  <Link to="/dashboard" onClick={() => setIsMobileMenuOpen(false)} className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg transition-all duration-300 backdrop-blur-sm text-yellow-400 block text-center">
+                    Dashboard
+                  </Link>
+                  <Link to="/aquafi" onClick={() => setIsMobileMenuOpen(false)} className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg transition-all duration-300 backdrop-blur-sm text-yellow-400 block text-center">
+                    AquaFi
+                  </Link>
+                  <Link to="/aquaswap" onClick={() => setIsMobileMenuOpen(false)} className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg transition-all duration-300 backdrop-blur-sm text-yellow-400 block text-center">
+                    AquaSwap
+                  </Link>
+                  <Link to="/aquapay" onClick={() => setIsMobileMenuOpen(false)} className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg transition-all duration-300 backdrop-blur-sm text-yellow-400 block text-center">
+                    AquaPay
+                  </Link>
+                  <button onClick={() => { onLogout(); setIsMobileMenuOpen(false); }} className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg transition-all duration-300 backdrop-blur-sm text-yellow-400">
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button onClick={() => { setShowLoginModal(true); setIsMobileMenuOpen(false); }} className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg transition-all duration-300 backdrop-blur-sm text-yellow-400">
+                    Login
+                  </button>
+                  <button onClick={() => { setShowCreateAccountModal(true); setIsMobileMenuOpen(false); }} className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg transition-all duration-300 backdrop-blur-sm text-yellow-400">
+                    Create Account
+                  </button>
                 </>
               )}
             </div>
@@ -272,7 +417,10 @@ const Bounties = ({ currentUser, onLogin, onLogout, onCreateAccount, showNotific
                     </div>
                     <h3 className="text-base sm:text-lg font-semibold text-white group-hover:text-cyan-300 transition-colors line-clamp-2">{b.title}</h3>
                     <div className="flex items-center gap-2 mt-3">
-                      {b.projectLogo && <img src={b.projectLogo} alt="" className="w-5 h-5 rounded-full object-cover flex-shrink-0" />}
+                      {(b.projectLogo || b.posterImage) && (
+                        <img src={b.projectLogo || b.posterImage} alt="" className="w-5 h-5 rounded-full object-cover flex-shrink-0 bg-slate-700"
+                          onError={(e) => { e.target.style.display = 'none'; }} />
+                      )}
                       <span className="text-sm text-slate-400 truncate">{b.projectName || b.posterUsername}</span>
                     </div>
 
@@ -737,7 +885,10 @@ const BountyDetailModal = ({ bountyId, bounty, loading, currentUser, onClose, on
                 </div>
                 <h3 className="text-xl font-semibold text-white">{bounty.title}</h3>
                 <div className="flex items-center gap-2 mt-2">
-                  {bounty.projectLogo && <img src={bounty.projectLogo} alt="" className="w-5 h-5 rounded-full object-cover" />}
+                  {(bounty.projectLogo || bounty.posterImage) && (
+                    <img src={bounty.projectLogo || bounty.posterImage} alt="" className="w-5 h-5 rounded-full object-cover bg-slate-700"
+                      onError={(e) => { e.target.style.display = 'none'; }} />
+                  )}
                   <span className="text-sm text-slate-400">{bounty.projectName || bounty.posterUsername}</span>
                 </div>
               </div>

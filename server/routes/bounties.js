@@ -152,6 +152,14 @@ router.post('/', auth, async (req, res) => {
       }
     }
 
+    // Poster's profile image — used as the bounty avatar when no project is selected.
+    let posterImage = null;
+    try {
+      const User = require('../models/User');
+      const posterUser = await User.findById(req.user.userId).select('image').lean();
+      posterImage = posterUser?.image || null;
+    } catch (e) { /* non-fatal */ }
+
     const bounty = new Bounty({
       title: title.trim(),
       description,
@@ -162,6 +170,7 @@ router.post('/', auth, async (req, res) => {
       currency: 'USDC',
       posterId: req.user.userId,
       posterUsername: req.user.username,
+      posterImage,
       projectAdId: project ? project.id : null,
       projectName: project ? project.title : null,
       projectLogo: project ? project.logo : null,

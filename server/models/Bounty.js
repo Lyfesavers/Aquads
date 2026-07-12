@@ -109,6 +109,11 @@ const bountySchema = new mongoose.Schema({
     type: String,
     default: null
   },
+  // Poster's account profile image — shown when no project is selected
+  posterImage: {
+    type: String,
+    default: null
+  },
   // Optional link to the project listing (Ad.id string) the bounty is posted for
   projectAdId: {
     type: String,
