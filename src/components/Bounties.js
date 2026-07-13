@@ -48,17 +48,80 @@ const initialOf = (name) => (name || '?').trim().charAt(0).toUpperCase();
 
 // Bounty avatar: shows the project logo / poster image, falling back to a
 // gradient initial only when there's no image or it fails to load.
-const BountyAvatar = ({ src, name, className = 'w-14 h-14', textClass = 'text-xl' }) => {
+const BountyAvatar = ({ src, name, className = 'w-14 h-14', textClass = 'text-xl', variant = 'default' }) => {
   const [failed, setFailed] = useState(false);
   const showImg = src && !failed;
+  const isPoster = variant === 'poster';
   return (
-    <div className={`${className} rounded-xl flex-shrink-0 border border-slate-600/50 overflow-hidden flex items-center justify-center ${showImg ? 'bg-slate-800' : 'bg-gradient-to-br from-cyan-500/30 to-blue-600/30'}`}>
+    <div className={
+      isPoster
+        ? 'w-full h-full flex items-center justify-center bg-[#b8a078]'
+        : `${className} rounded-xl flex-shrink-0 border border-slate-600/50 overflow-hidden flex items-center justify-center ${showImg ? 'bg-slate-800' : 'bg-gradient-to-br from-cyan-500/30 to-blue-600/30'}`
+    }>
       {showImg ? (
         <img src={src} alt={name || ''} className="w-full h-full object-cover" onError={() => setFailed(true)} />
       ) : (
-        <span className={`${textClass} font-bold text-cyan-200`}>{initialOf(name)}</span>
+        <span className={isPoster ? 'text-2xl font-bold text-[#3d2914]' : `${textClass} font-bold text-cyan-200`}>{initialOf(name)}</span>
       )}
     </div>
+  );
+};
+
+const posterStatusClass = (status) => {
+  if (status === 'open') return 'is-open';
+  if (status === 'completed') return 'is-awarded';
+  return 'is-cancelled';
+};
+
+const BountyPosterCard = ({ bounty, index, onClick }) => {
+  const cat = categoryMeta(bounty.category);
+  const badge = statusBadge(bounty.status);
+  const di = deadlineInfo(bounty);
+  const tilt = index % 3 === 0 ? '-0.6deg' : index % 3 === 1 ? '0.4deg' : '0deg';
+
+  return (
+    <motion.button
+      onClick={onClick}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.25, delay: Math.min(index * 0.03, 0.3) }}
+      className="bounty-poster text-left group flex flex-col"
+      style={{ '--poster-tilt': tilt }}
+    >
+      <span className={`bounty-poster-status ${posterStatusClass(bounty.status)}`}>{badge.label}</span>
+      <div className="bounty-poster-inner">
+        <div className="bounty-poster-wanted">Wanted</div>
+        <div className="bounty-poster-portrait">
+          <BountyAvatar
+            variant="poster"
+            src={bounty.projectLogo || bounty.posterImage}
+            name={bounty.projectName || bounty.posterUsername}
+          />
+        </div>
+        <h3 className="bounty-poster-title group-hover:text-[#8b1a1a] transition-colors">{bounty.title}</h3>
+        <p className="bounty-poster-project" title={bounty.projectName || bounty.posterUsername}>
+          {bounty.projectName || bounty.posterUsername}
+        </p>
+        <p className="bounty-poster-project">{cat.icon} {cat.label}</p>
+        <div className="bounty-poster-reward">
+          Reward ${bounty.amount} {bounty.currency}
+        </div>
+        <div className={`bounty-poster-escrow ${bounty.status === 'completed' ? 'is-awarded' : ''}`}>
+          {bounty.status === 'completed' ? '✓ Paid from escrow' : '🔒 Secured in escrow'}
+        </div>
+        <div className="bounty-poster-footer">
+          <span>{bounty.submissionCount || 0} hunter{(bounty.submissionCount || 0) === 1 ? '' : 's'}</span>
+          <div className="bounty-poster-deadline">
+            <span className={`bounty-poster-deadline-text is-${di.color}`}>{di.text}</span>
+            {di.hasBar && (
+              <div className="bounty-poster-deadline-bar">
+                <div className={`bounty-poster-deadline-fill is-${di.color}`} style={{ width: `${di.pct}%` }} />
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </motion.button>
   );
 };
 
@@ -190,6 +253,7 @@ const Bounties = ({ currentUser, onLogin, onLogout, onCreateAccount, showNotific
         <title>Web3 Bounties — Earn crypto for tasks | Aquads</title>
         <meta name="description" content="Browse and complete Web3 bounties on Aquads. Projects post paid tasks with rewards held in Aquads escrow and paid out on approval." />
         <link rel="canonical" href="https://www.aquads.xyz/bounties" />
+        <link href="https://fonts.googleapis.com/css2?family=Rye&family=Special+Elite&display=swap" rel="stylesheet" />
       </Helmet>
 
       {/* Navigation - consistent with home/marketplace header */}
@@ -353,16 +417,17 @@ const Bounties = ({ currentUser, onLogin, onLogout, onCreateAccount, showNotific
         {/* Hero */}
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
-              Web3 Bounties
+            <p className="bounty-hero-western text-amber-500/90 text-sm mb-1">★ Bounty Board ★</p>
+            <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-400 bg-clip-text text-transparent bounty-hero-western">
+              Wanted: Hunters
             </h1>
             <p className="text-slate-400 mt-2 max-w-2xl">
-              Projects post paid tasks. Complete a bounty, submit your work, and get paid in crypto — rewards are secured in Aquads escrow and released when your submission is approved.
+              Projects post paid tasks on the board. Claim a bounty, submit your work, and collect the reward in crypto — funds are secured in Aquads escrow until the poster approves a winner.
             </p>
           </div>
           <button
             onClick={handlePostClick}
-            className="self-start md:self-auto px-5 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 rounded-xl font-semibold shadow-lg transition-all whitespace-nowrap"
+            className="self-start md:self-auto px-5 py-3 bg-gradient-to-r from-amber-700 to-amber-900 hover:from-amber-600 hover:to-amber-800 border-2 border-amber-950/50 rounded-sm font-semibold shadow-lg transition-all whitespace-nowrap bounty-hero-western text-amber-50 text-sm tracking-wide"
           >
             + Post a Bounty
           </button>
@@ -399,67 +464,15 @@ const Bounties = ({ currentUser, onLogin, onLogout, onCreateAccount, showNotific
           </div>
         ) : visibleBounties.length === 0 ? (
           <div className="text-center py-20">
-            <div className="text-5xl mb-4">🏆</div>
-            <h3 className="text-xl font-semibold text-slate-300">No bounties yet</h3>
-            <p className="text-slate-500 mt-2">Be the first project to post a bounty and attract top talent.</p>
+            <div className="text-5xl mb-4">🤠</div>
+            <h3 className="text-xl font-semibold text-slate-300 bounty-hero-western tracking-wide">No bounties posted yet</h3>
+            <p className="text-slate-500 mt-2">Be the first to pin a wanted poster and attract hunters.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
-            {visibleBounties.map((b, i) => {
-              const cat = categoryMeta(b.category);
-              const badge = statusBadge(b.status);
-              const di = deadlineInfo(b);
-              const u = URGENCY[di.color];
-              return (
-                <motion.button key={b._id} onClick={() => openDetail(b._id)}
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.25, delay: Math.min(i * 0.03, 0.3) }}
-                  className="text-left bg-slate-800/50 hover:bg-slate-800/80 border border-slate-700/50 hover:border-cyan-500/40 rounded-xl overflow-hidden transition-all group flex flex-col">
-                  {/* Escrow trust ribbon */}
-                  <div className={`flex items-center gap-1 px-3 py-1 text-[10px] font-medium border-b ${
-                    b.status === 'completed'
-                      ? 'bg-blue-500/10 border-blue-500/20 text-blue-300'
-                      : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-300'
-                  }`}>
-                    <span>{b.status === 'completed' ? '✓' : '🔒'}</span>
-                    <span className="truncate">{b.status === 'completed' ? 'Released from escrow' : 'Secured in escrow'}</span>
-                  </div>
-
-                  <div className="p-3 flex flex-col flex-1">
-                    {/* Poster header: big logo/avatar + status */}
-                    <div className="flex items-start gap-2.5">
-                      <BountyAvatar src={b.projectLogo || b.posterImage} name={b.projectName || b.posterUsername} />
-                      <div className="min-w-0 flex-1">
-                        <span className={`inline-block text-[10px] px-1.5 py-0.5 rounded border whitespace-nowrap ${badge.cls}`}>{badge.label}</span>
-                        <p className="text-xs text-slate-400 truncate mt-1.5" title={b.projectName || b.posterUsername}>{b.projectName || b.posterUsername}</p>
-                        <p className="text-[10px] text-slate-500 truncate mt-0.5">{cat.icon} {cat.label}</p>
-                      </div>
-                    </div>
-
-                    <h3 className="text-sm font-semibold text-white group-hover:text-cyan-300 transition-colors line-clamp-2 mt-2.5 leading-snug">{b.title}</h3>
-
-                    <div className="mt-auto pt-2.5">
-                      <div className="flex items-end justify-between gap-2">
-                        <span className="text-lg font-bold text-emerald-400 leading-none">${b.amount} <span className="text-[10px] text-slate-500 font-normal">{b.currency}</span></span>
-                        <span className="text-[10px] text-slate-500 whitespace-nowrap">{b.submissionCount || 0} subs</span>
-                      </div>
-                      {/* Deadline urgency + progress bar */}
-                      <div className="mt-2">
-                        <div className="flex justify-between text-[10px] mb-1">
-                          <span className={u.text}>{di.text}</span>
-                        </div>
-                        {di.hasBar && (
-                          <div className="h-1 rounded-full bg-slate-700/60 overflow-hidden">
-                            <div className={`h-full rounded-full ${u.bar}`} style={{ width: `${di.pct}%` }} />
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </motion.button>
-              );
-            })}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-5">
+            {visibleBounties.map((b, i) => (
+              <BountyPosterCard key={b._id} bounty={b} index={i} onClick={() => openDetail(b._id)} />
+            ))}
           </div>
         )}
       </main>
@@ -892,13 +905,14 @@ const BountyDetailModal = ({ bountyId, bounty, loading, currentUser, onClose, on
           </div>
         ) : (
           <>
-            <div className="flex items-start justify-between p-4 sm:p-5 border-b border-slate-800 flex-shrink-0">
+            <div className="bounty-detail-wanted-band flex-shrink-0">★ Wanted ★</div>
+            <div className="flex items-start justify-between p-4 sm:p-5 border-b border-slate-800 flex-shrink-0 bg-[#f7ebd0]/5">
               <div className="pr-4">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-xs px-2 py-1 rounded-md bg-slate-700/60 text-slate-300">{cat.icon} {cat.label}</span>
                   <span className={`text-xs px-2 py-1 rounded-md border ${badge.cls}`}>{badge.label}</span>
                 </div>
-                <h3 className="text-xl font-semibold text-white">{bounty.title}</h3>
+                <h3 className="text-xl font-semibold text-white" style={{ fontFamily: "'Special Elite', monospace" }}>{bounty.title}</h3>
                 <div className="flex items-center gap-2 mt-2">
                   {(bounty.projectLogo || bounty.posterImage) && (
                     <img src={bounty.projectLogo || bounty.posterImage} alt="" className="w-5 h-5 rounded-full object-cover bg-slate-700"
@@ -915,15 +929,15 @@ const BountyDetailModal = ({ bountyId, bounty, loading, currentUser, onClose, on
                 const di = deadlineInfo(bounty);
                 const u = URGENCY[di.color];
                 return (
-                  <div className="bg-slate-800/50 rounded-xl p-4">
-                    <div className="flex items-center gap-1.5 text-xs font-medium mb-3 text-emerald-300">
+                  <div className="bg-slate-800/50 rounded-xl p-4 border border-amber-900/20">
+                    <div className="flex items-center gap-1.5 text-xs font-medium mb-3 text-emerald-300" style={{ fontFamily: "'Special Elite', monospace" }}>
                       <span>{bounty.status === 'completed' ? '✓' : '🔒'}</span>
                       <span>{bounty.status === 'completed' ? 'Reward released from escrow' : 'Reward secured in Aquads escrow'}</span>
                     </div>
                     <div className="flex items-end justify-between gap-4">
                       <div>
-                        <p className="text-xs text-slate-500">Reward</p>
-                        <p className="text-2xl font-bold text-emerald-400">${bounty.amount} <span className="text-sm text-slate-500 font-normal">{bounty.currency}</span></p>
+                        <p className="text-xs text-slate-500" style={{ fontFamily: "'Special Elite', monospace" }}>Reward</p>
+                        <p className="text-2xl font-bold text-amber-400" style={{ fontFamily: "'Rye', serif" }}>${bounty.amount} <span className="text-sm text-slate-500 font-normal" style={{ fontFamily: "'Special Elite', monospace" }}>{bounty.currency}</span></p>
                       </div>
                       <div className="text-right flex-1 max-w-[55%]">
                         <p className={`text-sm font-medium ${u.text}`}>{di.text}</p>
