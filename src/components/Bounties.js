@@ -98,7 +98,7 @@ const BountyPosterCard = ({ bounty, index, onClick }) => {
             name={bounty.projectName || bounty.posterUsername}
           />
         </div>
-        <h3 className="bounty-poster-title group-hover:text-[#8b1a1a] transition-colors">{bounty.title}</h3>
+        <h3 className="bounty-poster-title group-hover:text-[#6b1010] transition-colors">{bounty.title}</h3>
         <p className="bounty-poster-project" title={bounty.projectName || bounty.posterUsername}>
           {bounty.projectName || bounty.posterUsername}
         </p>
@@ -469,7 +469,7 @@ const Bounties = ({ currentUser, onLogin, onLogout, onCreateAccount, showNotific
             <p className="text-slate-500 mt-2">Be the first to pin a wanted poster and attract hunters.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-5">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
             {visibleBounties.map((b, i) => (
               <BountyPosterCard key={b._id} bounty={b} index={i} onClick={() => openDetail(b._id)} />
             ))}

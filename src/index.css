@@ -2001,8 +2001,8 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
   content: '';
   position: absolute;
   inset: 0;
-  background-image: radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.35) 0%, transparent 50%),
-    radial-gradient(circle at 80% 70%, rgba(61, 41, 20, 0.08) 0%, transparent 45%);
+  background-image: radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.2) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(61, 41, 20, 0.06) 0%, transparent 45%);
   pointer-events: none;
   z-index: 0;
 }
@@ -2020,26 +2020,26 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
   display: flex;
   flex-direction: column;
   flex: 1;
-  padding: 0.5rem 0.65rem 0.65rem;
+  padding: 0.65rem 0.75rem 0.75rem;
   min-height: 100%;
 }
 
 .bounty-poster-wanted {
   font-family: 'Rye', serif;
   text-align: center;
-  font-size: 1.05rem;
-  line-height: 1.1;
-  letter-spacing: 0.12em;
-  color: #2a1810;
+  font-size: 1.2rem;
+  line-height: 1.15;
+  letter-spacing: 0.1em;
+  color: #1a0f08;
   border-bottom: 2px solid #3d2914;
-  padding: 0.35rem 0.25rem 0.3rem;
+  padding: 0.4rem 0.25rem 0.35rem;
   text-transform: uppercase;
 }
 
 .bounty-poster-portrait {
-  margin: 0.6rem auto 0.4rem;
-  width: 3.75rem;
-  height: 3.75rem;
+  margin: 0.65rem auto 0.5rem;
+  width: 4.25rem;
+  height: 4.25rem;
   border: 3px solid #3d2914;
   background: #c4b08a;
   display: flex;
@@ -2050,19 +2050,24 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
 }
 
 @media (min-width: 640px) {
+  .bounty-poster-wanted {
+    font-size: 1.35rem;
+  }
+
   .bounty-poster-portrait {
-    width: 4.25rem;
-    height: 4.25rem;
+    width: 4.75rem;
+    height: 4.75rem;
   }
 }
 
 .bounty-poster-title {
   font-family: 'Special Elite', 'Courier New', monospace;
   text-align: center;
-  font-size: 0.72rem;
-  line-height: 1.35;
-  color: #2a1810;
-  margin: 0.35rem 0 0.15rem;
+  font-size: 0.88rem;
+  font-weight: 700;
+  line-height: 1.4;
+  color: #1a0f08;
+  margin: 0.4rem 0 0.2rem;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -2071,65 +2076,92 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
 
 @media (min-width: 640px) {
   .bounty-poster-title {
-    font-size: 0.78rem;
+    font-size: 0.98rem;
   }
 }
 
 .bounty-poster-project {
   text-align: center;
-  font-size: 0.58rem;
-  color: #5c4030;
-  opacity: 0.9;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #2a1810;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+@media (min-width: 640px) {
+  .bounty-poster-project {
+    font-size: 0.78rem;
+  }
+}
+
 .bounty-poster-reward {
-  margin: 0.45rem auto 0.35rem;
-  padding: 0.2rem 0.55rem;
-  border: 2px solid #8b1a1a;
-  color: #8b1a1a;
+  margin: 0.5rem auto 0.4rem;
+  padding: 0.3rem 0.7rem;
+  border: 2px solid #6b1010;
+  color: #6b1010;
   font-family: 'Rye', serif;
-  font-size: 0.72rem;
-  line-height: 1.2;
+  font-size: 0.92rem;
+  line-height: 1.25;
   text-align: center;
   transform: rotate(-1.5deg);
-  background: rgba(255, 252, 245, 0.55);
+  background: rgba(255, 252, 245, 0.75);
   display: block;
   width: fit-content;
   max-width: 100%;
 }
 
+@media (min-width: 640px) {
+  .bounty-poster-reward {
+    font-size: 1.05rem;
+  }
+}
+
 .bounty-poster-escrow {
   text-align: center;
-  font-size: 0.52rem;
+  font-size: 0.7rem;
+  font-weight: 600;
   letter-spacing: 0.02em;
-  padding: 0.15rem 0.25rem;
-  border-top: 1px dashed #8b7355;
-  border-bottom: 1px dashed #8b7355;
-  color: #3d5c2a;
+  padding: 0.2rem 0.35rem;
+  border-top: 1px dashed #5c4030;
+  border-bottom: 1px dashed #5c4030;
+  color: #1f3d14;
+}
+
+@media (min-width: 640px) {
+  .bounty-poster-escrow {
+    font-size: 0.75rem;
+  }
 }
 
 .bounty-poster-escrow.is-awarded {
-  color: #1e3a5f;
+  color: #122a4a;
 }
 
 .bounty-poster-footer {
   margin-top: auto;
-  padding-top: 0.35rem;
-  font-size: 0.52rem;
-  color: #5c4030;
+  padding-top: 0.4rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #2a1810;
   text-align: center;
+}
+
+@media (min-width: 640px) {
+  .bounty-poster-footer {
+    font-size: 0.75rem;
+  }
 }
 
 .bounty-poster-status {
   position: absolute;
   top: 0.4rem;
   right: 0.35rem;
-  font-size: 0.48rem;
-  padding: 0.1rem 0.3rem;
-  border: 1px solid;
+  font-size: 0.62rem;
+  font-weight: 700;
+  padding: 0.15rem 0.4rem;
+  border: 1.5px solid;
   border-radius: 2px;
   font-family: 'Special Elite', monospace;
   text-transform: uppercase;
@@ -2137,34 +2169,51 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
   z-index: 2;
 }
 
+@media (min-width: 640px) {
+  .bounty-poster-status {
+    font-size: 0.68rem;
+  }
+}
+
 .bounty-poster-status.is-open {
-  border-color: #3d5c2a;
-  color: #3d5c2a;
-  background: rgba(61, 92, 42, 0.1);
+  border-color: #1f3d14;
+  color: #1f3d14;
+  background: rgba(255, 252, 245, 0.85);
 }
 
 .bounty-poster-status.is-awarded {
-  border-color: #1e3a5f;
-  color: #1e3a5f;
-  background: rgba(30, 58, 95, 0.1);
+  border-color: #122a4a;
+  color: #122a4a;
+  background: rgba(255, 252, 245, 0.85);
 }
 
 .bounty-poster-status.is-cancelled {
-  border-color: #5c4030;
-  color: #5c4030;
-  background: rgba(92, 64, 48, 0.1);
+  border-color: #3d2914;
+  color: #3d2914;
+  background: rgba(255, 252, 245, 0.85);
 }
 
 .bounty-poster-deadline {
-  margin-top: 0.25rem;
+  margin-top: 0.3rem;
+}
+
+.bounty-poster-deadline-text {
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+@media (min-width: 640px) {
+  .bounty-poster-deadline-text {
+    font-size: 0.75rem;
+  }
 }
 
 .bounty-poster-deadline-bar {
-  height: 3px;
+  height: 4px;
   border-radius: 1px;
-  background: rgba(61, 41, 20, 0.15);
+  background: rgba(61, 41, 20, 0.2);
   overflow: hidden;
-  margin-top: 0.15rem;
+  margin-top: 0.2rem;
 }
 
 .bounty-poster-deadline-fill {
@@ -2172,15 +2221,15 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
   border-radius: 1px;
 }
 
-.bounty-poster-deadline-fill.is-green { background: #3d5c2a; }
-.bounty-poster-deadline-fill.is-amber { background: #8b6914; }
-.bounty-poster-deadline-fill.is-red { background: #8b1a1a; }
-.bounty-poster-deadline-fill.is-slate { background: #8b7355; }
+.bounty-poster-deadline-fill.is-green { background: #1f3d14; }
+.bounty-poster-deadline-fill.is-amber { background: #6b4f0a; }
+.bounty-poster-deadline-fill.is-red { background: #6b1010; }
+.bounty-poster-deadline-fill.is-slate { background: #3d2914; }
 
-.bounty-poster-deadline-text.is-green { color: #3d5c2a; }
-.bounty-poster-deadline-text.is-amber { color: #8b6914; }
-.bounty-poster-deadline-text.is-red { color: #8b1a1a; }
-.bounty-poster-deadline-text.is-slate { color: #8b7355; }
+.bounty-poster-deadline-text.is-green { color: #1f3d14; }
+.bounty-poster-deadline-text.is-amber { color: #6b4f0a; }
+.bounty-poster-deadline-text.is-red { color: #6b1010; }
+.bounty-poster-deadline-text.is-slate { color: #3d2914; }
 
 .bounty-detail-wanted-band {
   font-family: 'Rye', serif;
