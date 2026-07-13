@@ -145,10 +145,11 @@ setInterval(async () => {
             const bumpSync = getBumpSyncUpdate(ad, ad.bullishVotes);
             if (bumpSync.changed) {
               finalAd = await Ad.findByIdAndUpdate(ad._id, { $set: bumpSync.$set }, { new: true });
-              if (typeof adsRoutesForCache.invalidatePublicAdsCache === 'function') {
-                adsRoutesForCache.invalidatePublicAdsCache();
-              }
               socketModule.emitAdUpdate('update', finalAd);
+            }
+
+            if (typeof adsRoutesForCache.invalidatePublicAdsCache === 'function') {
+              adsRoutesForCache.invalidatePublicAdsCache();
             }
 
             socketModule.getIO().emit('adVoteUpdated', {

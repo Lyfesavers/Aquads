@@ -431,8 +431,7 @@ export const fetchAds = async () => {
       
       const data = await response.json();
       
-      // Cache the ads
-      localStorage.setItem('cachedAds', JSON.stringify(data));
+      // Caller persists merged ads; avoid overwriting fresher vote counts from a recent vote.
       return data;
       
     } catch (error) {

@@ -842,7 +842,7 @@ const AquaSwap = ({
   useEffect(() => {
     const fetchBubbleTokens = async () => {
       try {
-        const response = await fetch(`${API_URL}/api/ads`);
+        const response = await fetch(`${API_URL}/ads`);
         if (!response.ok) {
           throw new Error('Failed to fetch ads');
         }

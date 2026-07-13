@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { API_URL, fetchPendingAds, approveAd, rejectAd, fetchPendingServices, approveService, rejectService, getClickStats, getClickTrends, getRecentClicks, upgradePremiumListing, fetchMyBubbleAnalytics, transferDexFeedOwnership, approveListingClaim, rejectListingClaim } from '../services/api';
 import BookingManagement from './BookingManagement';
 import ServiceReviews from './ServiceReviews';
@@ -1403,9 +1403,17 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
 
   const userAds = ads.filter(ad => ad.owner === currentUser?.username);
 
+  const userAdsVoteSignature = useMemo(
+    () =>
+      userAds
+        .map((a) => `${a.id}:${a.bullishVotes ?? 0}:${a.bearishVotes ?? 0}:${a.isBumped ? 1 : 0}`)
+        .join('|'),
+    [userAds]
+  );
+
   useEffect(() => {
     if (!currentUser?.token || activeTab !== 'ads') return;
-    if (currentUser?.userType === 'freelancer' && ads.filter((ad) => ad.owner === currentUser?.username).length === 0) {
+    if (currentUser?.userType === 'freelancer' && userAds.length === 0) {
       return;
     }
 
@@ -1424,7 +1432,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
 
     loadBubbleAnalytics();
     return () => { cancelled = true; };
-  }, [currentUser?.token, currentUser?.username, currentUser?.userType, activeTab, ads.length]);
+  }, [currentUser?.token, currentUser?.username, currentUser?.userType, activeTab, userAds.length, userAdsVoteSignature]);
 
   const handleUpgradeListingToPremium = async (ad) => {
     if (!['active', 'approved'].includes(ad.status)) {
@@ -3929,12 +3937,11 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
                     {userAds.map(ad => {
                       const stats = bubbleAnalytics?.bubbles?.[ad.id];
                       const raids = bubbleAnalytics?.raids;
-                      const totalVotes = stats
-                        ? (stats.bullishVotes || 0) + (stats.bearishVotes || 0)
-                        : (ad.bullishVotes || 0) + (ad.bearishVotes || 0);
-                      const bullishVotes = stats?.bullishVotes ?? ad.bullishVotes ?? 0;
+                      const bullishVotes = ad.bullishVotes ?? stats?.bullishVotes ?? 0;
+                      const bearishVotes = ad.bearishVotes ?? stats?.bearishVotes ?? 0;
+                      const totalVotes = bullishVotes + bearishVotes;
                       const bullishPercentage = totalVotes > 0 ? Math.round((bullishVotes / totalVotes) * 100) : 0;
-                      const isBumped = stats?.isBumped ?? ad.isBumped;
+                      const isBumped = ad.isBumped ?? stats?.isBumped;
                       const votesToBump = Math.max(0, 100 - bullishVotes);
 
                       return (

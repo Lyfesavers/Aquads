@@ -187,6 +187,39 @@ function parseRaidMessageIdsCompositeKey(compositeKey) {
   return { chatIdStr: m[1], creatorSuffix: m[2] };
 }
 
+/** Keep web clients and ads list cache in sync after Telegram/Discord bubble votes. */
+async function emitBubbleVoteSync(projectDoc) {
+  const { getBumpSyncUpdate } = require('./bumpFromVotes');
+  const socket = require('../socket');
+
+  let finalAd = projectDoc;
+  const bumpSync = getBumpSyncUpdate(projectDoc, projectDoc.bullishVotes);
+  if (bumpSync.changed) {
+    finalAd = await Ad.findByIdAndUpdate(projectDoc._id, { $set: bumpSync.$set }, { new: true });
+    if (finalAd) {
+      socket.emitAdUpdate('update', finalAd);
+    }
+  }
+
+  const { invalidatePublicAdsCache } = require('../routes/ads');
+  if (typeof invalidatePublicAdsCache === 'function') {
+    invalidatePublicAdsCache();
+  }
+
+  const io = socket.getIO();
+  if (io && finalAd) {
+    io.emit('adVoteUpdated', {
+      adId: finalAd.id,
+      bullishVotes: finalAd.bullishVotes,
+      bearishVotes: finalAd.bearishVotes,
+      isBumped: finalAd.isBumped,
+      size: finalAd.size
+    });
+  }
+
+  return finalAd;
+}
+
 const telegramService = {
   // Store group IDs where bot is active
   activeGroups: new Set(),
@@ -6136,11 +6169,12 @@ Tap to update:`;
           project.bullishVotes = Math.max(0, (project.bullishVotes || 0) - 1);
         }
         await project.save();
-        await telegramService.sendVoteNotificationToGroup(project);
+        const finalAd = await emitBubbleVoteSync(project);
+        await telegramService.sendVoteNotificationToGroup(finalAd);
         return {
           success: true,
           message:
-            `✅ Vote updated to ${voteType}!\n\n📊 ${project.title}: 👍 ${project.bullishVotes} | 👎 ${project.bearishVotes}\n\n💡 ${BUBBLE_VOTE_POINTS} points are a one-time reward per bubble (first vote only); switching bullish/bearish updates counts only.`
+            `✅ Vote updated to ${voteType}!\n\n📊 ${finalAd.title}: 👍 ${finalAd.bullishVotes} | 👎 ${finalAd.bearishVotes}\n\n💡 ${BUBBLE_VOTE_POINTS} points are a one-time reward per bubble (first vote only); switching bullish/bearish updates counts only.`
         };
       }
 
@@ -6152,6 +6186,7 @@ Tap to update:`;
         project.bearishVotes = (project.bearishVotes || 0) + 1;
       }
       await project.save();
+      const finalAd = await emitBubbleVoteSync(project);
 
       const bubblePointsKey = `Voted on bubble: ${project.id}`;
       const legacyProjectTitleReason = `Voted on project: ${project.title}`;
@@ -6178,15 +6213,15 @@ Tap to update:`;
         pointsLine = `\n\n💰 +${BUBBLE_VOTE_POINTS} points (one time per bubble — your first vote here)`;
       }
 
-      await telegramService.sendVoteNotificationToGroup(project);
-      const tally = `\n\n📊 ${project.title}: 👍 ${project.bullishVotes} | 👎 ${project.bearishVotes}`;
+      await telegramService.sendVoteNotificationToGroup(finalAd);
+      const tally = `\n\n📊 ${finalAd.title}: 👍 ${finalAd.bullishVotes} | 👎 ${finalAd.bearishVotes}`;
       if (alreadyReceivedBubblePoints) {
         return {
           success: true,
-          message: `✅ Voted ${voteType} on ${project.title}!${tally}\n\n💡 No extra points — you already earned the one-time ${BUBBLE_VOTE_POINTS} for this bubble (you can still change your vote anytime).`
+          message: `✅ Voted ${voteType} on ${finalAd.title}!${tally}\n\n💡 No extra points — you already earned the one-time ${BUBBLE_VOTE_POINTS} for this bubble (you can still change your vote anytime).`
         };
       }
-      return { success: true, message: `✅ Voted ${voteType} on ${project.title}!${pointsLine}${tally}` };
+      return { success: true, message: `✅ Voted ${voteType} on ${finalAd.title}!${pointsLine}${tally}` };
     } catch (error) {
       console.error('processVoteByUser error:', error);
       return { success: false, message: '❌ Error processing vote. Please try again later.' };

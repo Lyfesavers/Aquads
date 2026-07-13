@@ -722,7 +722,31 @@ function App() {
   const [votePopup, setVotePopup] = useState(null);
   const [partnershipPopup, setPartnershipPopup] = useState(null);
   const [votingAdId, setVotingAdId] = useState(null); // Track which ad is currently being voted on
-  
+  const recentVoteUpdatesRef = useRef({});
+  const RECENT_VOTE_TTL_MS = 2 * 60 * 1000;
+
+  const mergeRecentVoteFields = useCallback((ad) => {
+    const recent = recentVoteUpdatesRef.current[ad.id];
+    if (!recent || Date.now() - recent.ts > RECENT_VOTE_TTL_MS) return ad;
+    return {
+      ...ad,
+      bullishVotes: recent.bullishVotes,
+      bearishVotes: recent.bearishVotes,
+      ...(recent.isBumped !== undefined && { isBumped: recent.isBumped }),
+      ...(recent.size !== undefined && { size: recent.size }),
+      ...(recent.userVote !== undefined && { userVote: recent.userVote }),
+    };
+  }, []);
+
+  const applyVoteUpdateToAds = useCallback((adId, fields) => {
+    recentVoteUpdatesRef.current[adId] = { ...fields, ts: Date.now() };
+    setAds((prevAds) => {
+      const newAds = prevAds.map((ad) => (ad.id === adId ? { ...ad, ...fields } : ad));
+      localStorage.setItem('cachedAds', JSON.stringify(newAds));
+      return newAds;
+    });
+  }, []);
+
   // Initialize user presence tracking across all pages
   useUserPresence(currentUser);
 
@@ -913,11 +937,13 @@ function App() {
       }
 
       const data = await fetchAds();
-      const processedAds = data.map((ad) => ({
-        ...ad,
-        bullishVotes: ad.bullishVotes || 0,
-        bearishVotes: ad.bearishVotes || 0,
-      }));
+      const processedAds = data.map((ad) =>
+        mergeRecentVoteFields({
+          ...ad,
+          bullishVotes: ad.bullishVotes || 0,
+          bearishVotes: ad.bearishVotes || 0,
+        })
+      );
 
       localStorage.setItem('cachedAds', JSON.stringify(processedAds));
 
@@ -1006,7 +1032,7 @@ function App() {
       }
       isFirstAdsLoadRef.current = false;
     }
-  }, [currentUser?.userId, currentUser?.isAdmin]);
+  }, [currentUser?.userId, currentUser?.isAdmin, mergeRecentVoteFields]);
 
   // Update socket connection handling
   useEffect(() => {
@@ -1769,19 +1795,14 @@ function App() {
         return;
       }
       
-      // Update the ads state with the new vote counts and user's vote
-      setAds(prevAds => prevAds.map(ad => {
-        if (ad.id !== adId) return ad;
-        const next = {
-          ...ad,
-          bullishVotes: data.bullishVotes,
-          bearishVotes: data.bearishVotes,
-          userVote: data.userVote
-        };
-        if (data.isBumped !== undefined) next.isBumped = data.isBumped;
-        if (data.size !== undefined) next.size = data.size;
-        return next;
-      }));
+      const voteFields = {
+        bullishVotes: data.bullishVotes,
+        bearishVotes: data.bearishVotes,
+        userVote: data.userVote,
+      };
+      if (data.isBumped !== undefined) voteFields.isBumped = data.isBumped;
+      if (data.size !== undefined) voteFields.size = data.size;
+      applyVoteUpdateToAds(adId, voteFields);
       
       // Bubble votes: 2 points once per bubble; users can change bullish/bearish anytime
       if (data.pointsAwarded > 0) {
@@ -1841,17 +1862,13 @@ function App() {
   useEffect(() => {
     // Add listener for vote updates
     socket.on('adVoteUpdated', (voteData) => {
-      setAds(prevAds => prevAds.map(ad => {
-        if (ad.id !== voteData.adId) return ad;
-        const next = {
-          ...ad,
-          bullishVotes: voteData.bullishVotes,
-          bearishVotes: voteData.bearishVotes
-        };
-        if (voteData.isBumped !== undefined) next.isBumped = voteData.isBumped;
-        if (voteData.size !== undefined) next.size = voteData.size;
-        return next;
-      }));
+      const voteFields = {
+        bullishVotes: voteData.bullishVotes,
+        bearishVotes: voteData.bearishVotes,
+      };
+      if (voteData.isBumped !== undefined) voteFields.isBumped = voteData.isBumped;
+      if (voteData.size !== undefined) voteFields.size = voteData.size;
+      applyVoteUpdateToAds(voteData.adId, voteFields);
     });
 
     // Listen for token purchase approval (after successful payment)
@@ -1865,7 +1882,7 @@ function App() {
       socket.off('adVoteUpdated');
       socket.off('tokenPurchaseApproved');
     };
-  }, [currentUser]);
+  }, [currentUser, applyVoteUpdateToAds]);
 
   // Pick up token refreshes that happen inside the fetch interceptor (outside React).
   // Without this, React state would hold a stale token and the sync effect would
