@@ -68,9 +68,9 @@ The Telegram points are prominently displayed with:
 1. **2.5 pts** - Daily Telegram message (NEW)
 2. **2.5 pts** - Daily Telegram reaction (NEW)
 3. **5 pts** - AquaSwap trade (minimum **$5 USD** notional per qualifying swap)
-4. **2 pts** - Vote on bubble
+4. **1 pt** - Vote on bubble
 5. **20 pts** - Complete raid
-6. **20 pts** - New affiliate
+6. **5 pts** - New affiliate
 7. **20 pts** - Game vote
 8. **20 pts** - Affiliate lists service/ad
 9. **20 pts** - Leave review
@@ -78,6 +78,8 @@ The Telegram points are prominently displayed with:
 11. **1000 pts** - Signup with referral
 
 **Redemption:** 10,000 points = $100 CAD
+
+**Referrer bonus gate:** Referrers earn +1 pt when a referred user earns points only after that user has accumulated at least 5 pts from their own activity.
 
 ---
 

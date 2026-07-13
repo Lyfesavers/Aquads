@@ -259,7 +259,7 @@ const Affiliate = () => {
                         </div>
                         <div className="flex justify-between items-center py-2 border-b border-gray-600">
                           <span className="text-gray-300">Voting on project bubbles</span>
-                          <span className="text-green-400 font-bold">2 pts</span>
+                          <span className="text-green-400 font-bold">1 pt</span>
                         </div>
                         <div className="flex justify-between items-center py-2 border-b border-gray-600">
                           <span className="text-gray-300">Completing social media raids</span>
@@ -267,7 +267,7 @@ const Affiliate = () => {
                         </div>
                         <div className="flex justify-between items-center py-2 border-b border-gray-600">
                           <span className="text-gray-300">Each new affiliate referral</span>
-                          <span className="text-green-400 font-bold">20 pts</span>
+                          <span className="text-green-400 font-bold">5 pts</span>
                         </div>
                         <div className="flex justify-between items-center py-2 border-b border-gray-600">
                           <span className="text-gray-300">Game votes in GameHub</span>
@@ -288,6 +288,10 @@ const Affiliate = () => {
                           <span className="text-green-400 font-bold">20 pts</span>
                         </div>
                         <div className="flex justify-between items-center py-2 border-b border-gray-600">
+                          <span className="text-gray-300">Referrer bonus (referred user earns points)</span>
+                          <span className="text-green-400 font-bold">1 pt*</span>
+                        </div>
+                        <div className="flex justify-between items-center py-2 border-b border-gray-600">
                           <span className="text-gray-300">Signup with referral code</span>
                           <span className="text-green-400 font-bold">1000 pts</span>
                         </div>
@@ -296,6 +300,9 @@ const Affiliate = () => {
                     <div className="mt-4 p-3 bg-purple-900/30 border border-purple-600/50 rounded-lg">
                       <p className="text-sm text-purple-300">
                         💡 <strong>New!</strong> Join our Telegram and Discord and link your account with @aquadsbumpbot to earn points daily for messages and reactions!
+                      </p>
+                      <p className="text-sm text-purple-300 mt-2">
+                        *Referrer bonus: +1 pt each time a referred user earns points, after they have earned at least 5 pts from their own activity.
                       </p>
                     </div>
 

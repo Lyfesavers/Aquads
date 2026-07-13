@@ -531,7 +531,7 @@ export const TokenVotingMockup = () => (
       </div>
 
       <p className="text-gray-500 text-xs text-center mt-4">
-        2 points once per bubble (first vote); switch bullish/bearish anytime
+        1 point once per bubble (first vote); switch bullish/bearish anytime
       </p>
     </div>
   </MockupContainer>
@@ -1290,9 +1290,9 @@ export const AffiliateMockup = () => (
         <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
           <h3 className="text-green-400 font-medium mb-2">Points rewards</h3>
           <ul className="text-gray-300 text-xs sm:text-sm space-y-1 leading-relaxed">
-            <li>• <strong className="text-gray-100">20 pts</strong> — new signup (email verified)</li>
+            <li>• <strong className="text-gray-100">5 pts</strong> — new affiliate referral (email verified)</li>
             <li>• <strong className="text-gray-100">20 pts</strong> — referred user lists a service or ad</li>
-            <li>• <strong className="text-gray-100">+1 pt</strong> — each time they earn points (referrer bonus)</li>
+            <li>• <strong className="text-gray-100">+1 pt</strong> — each time they earn points (referrer bonus; they must earn ≥5 pts first)</li>
           </ul>
         </div>
       </div>
@@ -1504,7 +1504,7 @@ export const TelegramBotMockup = () => (
                 👎 Bearish
               </button>
             </div>
-            <p className="text-gray-500 text-xs mt-1">Earn 2 pts for first vote</p>
+            <p className="text-gray-500 text-xs mt-1">Earn 1 pt for first vote</p>
           </div>
         </div>
       </div>

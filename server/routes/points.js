@@ -7,7 +7,17 @@ const { emitAffiliateEarningUpdate, emitRedemptionCreated, emitRedemptionProcess
 
 const REFERRER_BONUS_POINTS = 1;
 const LEGACY_REFERRER_BONUS_POINTS = 5;
-const BUBBLE_VOTE_POINTS = 2;
+const BUBBLE_VOTE_POINTS = 1;
+const NEW_AFFILIATE_POINTS = 5;
+const REFERRER_BONUS_MIN_EARNED_POINTS = 5;
+
+function getEarnedPointsTotal(pointsHistory) {
+  if (!pointsHistory?.length) return 0;
+  return pointsHistory.reduce((sum, entry) => {
+    const amount = entry.amount || 0;
+    return amount > 0 ? sum + amount : sum;
+  }, 0);
+}
 
 // Test route to verify points router is working
 router.get('/test', (req, res) => {
@@ -307,10 +317,10 @@ function awardAffiliatePoints(referrerId, referredUserId) {
       return User.findByIdAndUpdate(
         referrerId,
         {
-          $inc: { points: 20 },
+          $inc: { points: NEW_AFFILIATE_POINTS },
           $push: {
             pointsHistory: {
-              amount: 20,
+              amount: NEW_AFFILIATE_POINTS,
               reason: 'New affiliate referral',
               referredUser: referredUserId,
               createdAt: new Date()
@@ -339,10 +349,10 @@ function awardPendingAffiliatePoints(userId) {
       return User.findByIdAndUpdate(
         user.referredBy,
         {
-          $inc: { points: 20 },
+          $inc: { points: NEW_AFFILIATE_POINTS },
           $push: {
             pointsHistory: {
-              amount: 20,
+              amount: NEW_AFFILIATE_POINTS,
               reason: 'New affiliate referral (email verified)',
               referredUser: userId,
               createdAt: new Date()
@@ -396,15 +406,17 @@ async function awardSocialMediaPoints(userId, platform, raidId) {
 }
 
 /**
- * Rule: when a user (earner) receives positive points, their referrer gets REFERRER_BONUS_POINTS.
+ * Rule: when a user (earner) receives positive points, their referrer gets REFERRER_BONUS_POINTS
+ * only after the earner has accumulated REFERRER_BONUS_MIN_EARNED_POINTS from their own activity.
  * Only call this after awarding positive points to the earner. Do not call when awarding
  * to the referrer (e.g. signup/listing) or on deductions. Exclude admin-award and refunds.
  * @param {Object} [options] - optional { gameId } for one-time-per-game dedupe (game votes)
  */
 async function creditReferrerBonus(referredUserId, sourceReason, options = {}) {
   try {
-    const earner = await User.findById(referredUserId).select('referredBy').lean();
+    const earner = await User.findById(referredUserId).select('referredBy pointsHistory').lean();
     if (!earner?.referredBy) return;
+    if (getEarnedPointsTotal(earner.pointsHistory) < REFERRER_BONUS_MIN_EARNED_POINTS) return;
     const referrerId = earner.referredBy;
 
     if (options.gameId) {

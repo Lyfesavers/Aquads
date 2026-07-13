@@ -1819,7 +1819,7 @@ function App() {
       if (data.size !== undefined) voteFields.size = data.size;
       applyVoteUpdateToAds(adId, voteFields);
       
-      // Bubble votes: 2 points once per bubble; users can change bullish/bearish anytime
+      // Bubble votes: 1 point once per bubble; users can change bullish/bearish anytime
       if (data.pointsAwarded > 0) {
         showNotification(
           `Voted ${voteType}! +${data.pointsAwarded} points (one time per this bubble). You can change your vote anytime.`,
@@ -3456,7 +3456,7 @@ function App() {
                                   }}
                                   disabled={votingAdId === ad.id}
                                   aria-label="Vote bearish"
-                                  title="2 points once per bubble on your first vote here; you can change to bullish anytime."
+                                  title="1 point once per bubble on your first vote here; you can change to bullish anytime."
                                 >
                                   {votingAdId === ad.id ? (
                                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
@@ -3476,7 +3476,7 @@ function App() {
                                   }}
                                   disabled={votingAdId === ad.id}
                                   aria-label="Vote bullish"
-                                  title="2 points once per bubble on your first vote here; you can change to bearish anytime."
+                                  title="1 point once per bubble on your first vote here; you can change to bearish anytime."
                                 >
                                   {votingAdId === ad.id ? (
                                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>

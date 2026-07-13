@@ -4290,13 +4290,13 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
                       <p>• Earn 5 points for reacting to posts in our Telegram group (once per day)</p>
                       <p>• Earn 5 points for each qualifying swap completed on AquaSwap (minimum <strong>$5 USD</strong> notional on the From side)</p>
                       <p>• Earn 5 points for shilling a project from AquaSwap DEX charts (once per day)</p>
-                      <p>• Earn 2 points for your first vote on each project bubble (one time per bubble; you can change bullish/bearish anytime)</p>
+                      <p>• Earn 1 point for your first vote on each project bubble (one time per bubble; you can change bullish/bearish anytime)</p>
                       <p>• Social media raids: you must <strong>Like + Retweet/Share + Comment</strong> (all 3 every time!). Points: 5–50 based on your comment type and verified ✓ status</p>
                       <p>• Earn 100 points per day for hosting or pitching on live streams & spaces (X, YouTube, Twitch, Kick, etc.) - Read more in the Affiliate documents for full requirements</p>
-                      <p>• Earn 20 points for each new affiliate</p>
+                      <p>• Earn 5 points for each new affiliate</p>
                       <p>• Earn 20 points for each game vote in the gamehub</p>
                       <p>• Earn 20 points when your affiliates list a freelancer service or bubble ad</p>
-                      <p>• Earn <strong>1 point</strong> whenever a referred user earns points anywhere (raids, swaps, votes, games, etc.) — referrer bonus</p>
+                      <p>• Earn <strong>1 point</strong> whenever a referred user earns points anywhere (raids, swaps, votes, games, etc.) — referrer bonus (referred user must earn at least 5 points first)</p>
                       <p>• Earn 20 points when you leave a review in the freelancer hub</p>
                       <p>• Earn 1000 points when you sign up with a referral link</p>
 
