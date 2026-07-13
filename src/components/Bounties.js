@@ -730,16 +730,16 @@ const PostBountyModal = ({ currentUser, projects, onClose, onCreated, notify }) 
               placeholder="Describe the task and what a great result looks like."
               className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 focus:border-cyan-500 rounded-lg text-white text-sm focus:outline-none resize-none" />
           </div>
-          <BountyResourcesEditor
-            resources={form.resources}
-            onChange={(resources) => update('resources', resources)}
-          />
           <div>
             <label className="block text-sm text-slate-400 mb-1">Deliverables</label>
             <textarea value={form.deliverables} onChange={e => update('deliverables', e.target.value)} rows={3}
               placeholder="What must be submitted to win (files, links, format...)"
               className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 focus:border-cyan-500 rounded-lg text-white text-sm focus:outline-none resize-none" />
           </div>
+          <BountyResourcesEditor
+            resources={form.resources}
+            onChange={(resources) => update('resources', resources)}
+          />
           <div>
             <label className="block text-sm text-slate-400 mb-1">Rules & Eligibility</label>
             <textarea value={form.rules} onChange={e => update('rules', e.target.value)} rows={3}
@@ -850,15 +850,15 @@ const EditBountyModal = ({ bountyId, bounty, currentUser, onClose, onSaved, noti
             <textarea value={form.description} onChange={e => update('description', e.target.value)} rows={4}
               className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 focus:border-cyan-500 rounded-lg text-white text-sm focus:outline-none resize-none" />
           </div>
-          <BountyResourcesEditor
-            resources={form.resources}
-            onChange={(resources) => update('resources', resources)}
-          />
           <div>
             <label className="block text-sm text-slate-400 mb-1">Deliverables</label>
             <textarea value={form.deliverables} onChange={e => update('deliverables', e.target.value)} rows={3}
               className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 focus:border-cyan-500 rounded-lg text-white text-sm focus:outline-none resize-none" />
           </div>
+          <BountyResourcesEditor
+            resources={form.resources}
+            onChange={(resources) => update('resources', resources)}
+          />
           <div>
             <label className="block text-sm text-slate-400 mb-1">Rules & Eligibility</label>
             <textarea value={form.rules} onChange={e => update('rules', e.target.value)} rows={3}
@@ -1117,13 +1117,13 @@ const BountyDetailModal = ({ bountyId, bounty, loading, currentUser, onClose, on
                 <h4 className="text-sm font-semibold text-slate-300 mb-1">Description</h4>
                 <p className="text-sm text-slate-400 whitespace-pre-wrap">{bounty.description}</p>
               </div>
-              <BountyResourcesList resources={bounty.resources} />
               {bounty.deliverables && (
                 <div>
                   <h4 className="text-sm font-semibold text-slate-300 mb-1">Deliverables</h4>
                   <p className="text-sm text-slate-400 whitespace-pre-wrap">{bounty.deliverables}</p>
                 </div>
               )}
+              <BountyResourcesList resources={bounty.resources} />
               {bounty.rules && (
                 <div className="bg-slate-800/40 border border-slate-700/60 rounded-lg p-3">
                   <h4 className="text-sm font-semibold text-cyan-300 mb-1 flex items-center gap-1.5">
