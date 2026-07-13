@@ -7,6 +7,51 @@ const auth = require('../middleware/auth');
 const bountyEscrowService = require('../services/bountyEscrowService');
 
 const FEE_PERCENTAGE = 0.0125;
+const MAX_BOUNTY_RESOURCES = 10;
+const RESOURCE_LABEL_MAX = 80;
+const RESOURCE_URL_MAX = 2048;
+
+function normalizeHttpsUrl(raw) {
+  if (!raw || typeof raw !== 'string') return null;
+  const trimmed = raw.trim();
+  if (!trimmed || trimmed.length > RESOURCE_URL_MAX) return null;
+  let parsed;
+  try {
+    parsed = new URL(trimmed);
+  } catch {
+    return null;
+  }
+  if (parsed.protocol !== 'https:') return null;
+  if (!parsed.hostname) return null;
+  return parsed.href;
+}
+
+function parseBountyResources(raw) {
+  if (raw === undefined || raw === null) return { resources: [] };
+  if (!Array.isArray(raw)) return { error: 'Resources must be an array' };
+  if (raw.length > MAX_BOUNTY_RESOURCES) {
+    return { error: `Maximum ${MAX_BOUNTY_RESOURCES} resources allowed` };
+  }
+
+  const resources = [];
+  for (let i = 0; i < raw.length; i++) {
+    const item = raw[i] || {};
+    const label = (item.label || '').trim();
+    const urlInput = (item.url || '').trim();
+    if (!label && !urlInput) continue;
+    if (!label) return { error: `Resource ${i + 1}: label is required` };
+    if (label.length > RESOURCE_LABEL_MAX) return { error: `Resource ${i + 1}: label is too long` };
+    const url = normalizeHttpsUrl(urlInput);
+    if (!url) return { error: `Resource ${i + 1}: must be a valid https:// URL` };
+    resources.push({ label, url });
+  }
+  return { resources };
+}
+
+function resourcesChanged(existing, next) {
+  const norm = (list) => JSON.stringify((list || []).map(r => ({ label: r.label, url: r.url })));
+  return norm(existing) !== norm(next);
+}
 
 function emitBounty(type, bounty, extra = {}) {
   try {
@@ -149,10 +194,14 @@ router.get('/:id', async (req, res) => {
 // Create a bounty (project owners only). Also creates the escrow awaiting the poster's deposit.
 router.post('/', auth, async (req, res) => {
   try {
-    const { title, description, deliverables, rules, category, amount, deadline, projectAdId } = req.body;
+    const { title, description, deliverables, rules, resources, category, amount, deadline, projectAdId } = req.body;
 
     if (!title || !description || amount === undefined || amount === null) {
       return res.status(400).json({ error: 'Title, description and amount are required' });
+    }
+    const parsedResources = parseBountyResources(resources);
+    if (parsedResources.error) {
+      return res.status(400).json({ error: parsedResources.error });
     }
     const amountNum = parseFloat(amount);
     if (isNaN(amountNum) || amountNum < 1) {
@@ -190,6 +239,7 @@ router.post('/', auth, async (req, res) => {
       description,
       deliverables: deliverables || '',
       rules: rules || '',
+      resources: parsedResources.resources,
       category: category || 'other',
       amount: amountNum,
       currency: 'USDC',
@@ -239,7 +289,7 @@ router.patch('/:id', auth, async (req, res) => {
       return res.status(400).json({ error: 'Only open bounties can be edited' });
     }
 
-    const { title, description, deliverables, rules, category, deadline } = req.body;
+    const { title, description, deliverables, rules, resources, category, deadline } = req.body;
     let scopeChanged = false;
 
     if (title !== undefined && title.trim() && title.trim() !== bounty.title) {
@@ -253,6 +303,16 @@ router.patch('/:id', auth, async (req, res) => {
     }
     if (rules !== undefined && rules !== bounty.rules) {
       bounty.rules = rules; scopeChanged = true;
+    }
+    if (resources !== undefined) {
+      const parsedResources = parseBountyResources(resources);
+      if (parsedResources.error) {
+        return res.status(400).json({ error: parsedResources.error });
+      }
+      if (resourcesChanged(bounty.resources, parsedResources.resources)) {
+        bounty.resources = parsedResources.resources;
+        scopeChanged = true;
+      }
     }
     if (category !== undefined && category !== bounty.category) {
       bounty.category = category;

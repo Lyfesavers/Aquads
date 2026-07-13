@@ -22,6 +22,136 @@ const CATEGORIES = [
 
 const categoryMeta = (id) => CATEGORIES.find(c => c.id === id) || CATEGORIES[CATEGORIES.length - 1];
 
+const MAX_BOUNTY_RESOURCES = 10;
+const emptyResource = () => ({ label: '', url: '' });
+
+const packResources = (resources) =>
+  (resources || [])
+    .filter(r => (r.label || '').trim() || (r.url || '').trim())
+    .map(r => ({ label: r.label.trim(), url: r.url.trim() }));
+
+const validateResourcesClient = (resources) => {
+  const filled = packResources(resources);
+  if (filled.length > MAX_BOUNTY_RESOURCES) return `Maximum ${MAX_BOUNTY_RESOURCES} resources allowed.`;
+  for (const r of filled) {
+    if (!r.label) return 'Each resource needs a label (e.g. GitHub, Website, Brand kit).';
+    try {
+      const parsed = new URL(r.url);
+      if (parsed.protocol !== 'https:') return 'All resource links must use https://';
+    } catch {
+      return 'Each resource needs a valid https:// URL.';
+    }
+  }
+  return null;
+};
+
+const resourceHost = (url) => {
+  try {
+    return new URL(url).hostname.replace(/^www\./, '');
+  } catch {
+    return url;
+  }
+};
+
+const BountyResourcesEditor = ({ resources, onChange }) => {
+  const add = () => {
+    if (resources.length >= MAX_BOUNTY_RESOURCES) return;
+    onChange([...resources, emptyResource()]);
+  };
+  const update = (index, key, value) => {
+    onChange(resources.map((r, i) => (i === index ? { ...r, [key]: value } : r)));
+  };
+  const remove = (index) => {
+    onChange(resources.filter((_, i) => i !== index));
+  };
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-1">
+        <label className="block text-sm text-slate-400">Resources (optional)</label>
+        <button
+          type="button"
+          onClick={add}
+          disabled={resources.length >= MAX_BOUNTY_RESOURCES}
+          className="text-xs text-cyan-400 hover:text-cyan-300 disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          + Add link
+        </button>
+      </div>
+      <p className="text-xs text-slate-500 mb-2">
+        Help hunters with https links — GitHub repos, your platform website, brand kits, logos, docs, etc.
+      </p>
+      {resources.length === 0 ? (
+        <button
+          type="button"
+          onClick={add}
+          className="w-full py-2.5 border border-dashed border-slate-600 hover:border-cyan-500/50 rounded-lg text-sm text-slate-400 hover:text-slate-300 transition-colors"
+        >
+          Add a resource link
+        </button>
+      ) : (
+        <div className="space-y-2">
+          {resources.map((r, i) => (
+            <div key={i} className="flex gap-2 items-start">
+              <div className="flex-1 space-y-2">
+                <input
+                  value={r.label}
+                  onChange={e => update(i, 'label', e.target.value)}
+                  maxLength={80}
+                  placeholder="Label (e.g. Website, GitHub, Brand kit)"
+                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 focus:border-cyan-500 rounded-lg text-white text-sm focus:outline-none"
+                />
+                <input
+                  value={r.url}
+                  onChange={e => update(i, 'url', e.target.value)}
+                  maxLength={2048}
+                  placeholder="https://..."
+                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 focus:border-cyan-500 rounded-lg text-white text-sm focus:outline-none"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => remove(i)}
+                className="mt-2 px-2 py-1 text-slate-500 hover:text-red-400 text-sm flex-shrink-0"
+                aria-label="Remove resource"
+              >
+                ✕
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const BountyResourcesList = ({ resources }) => {
+  if (!resources?.length) return null;
+  return (
+    <div className="bg-slate-800/40 border border-slate-700/60 rounded-lg p-3">
+      <h4 className="text-sm font-semibold text-amber-300 mb-2 flex items-center gap-1.5">
+        <span>📎</span> Resources
+      </h4>
+      <ul className="space-y-2">
+        {resources.map((r, i) => (
+          <li key={`${r.url}-${i}`}>
+            <a
+              href={r.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-start gap-2 text-sm text-cyan-400 hover:text-cyan-300 group"
+            >
+              <span className="text-slate-300 font-medium min-w-[5rem] flex-shrink-0">{r.label}</span>
+              <span className="break-all group-hover:underline">{resourceHost(r.url)}</span>
+              <span className="text-slate-500 flex-shrink-0">↗</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+};
+
 const statusBadge = (status) => {
   switch (status) {
     case 'open': return { label: 'Open', cls: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' };
@@ -110,7 +240,12 @@ const BountyPosterCard = ({ bounty, index, onClick }) => {
           {bounty.status === 'completed' ? '✓ Paid from escrow' : '🔒 Secured in escrow'}
         </div>
         <div className="bounty-poster-footer">
-          <span>{bounty.submissionCount || 0} hunter{(bounty.submissionCount || 0) === 1 ? '' : 's'}</span>
+          <span>
+            {bounty.submissionCount || 0} hunter{(bounty.submissionCount || 0) === 1 ? '' : 's'}
+            {(bounty.resources || []).length > 0 && (
+              <> · {(bounty.resources || []).length} resource{(bounty.resources || []).length === 1 ? '' : 's'}</>
+            )}
+          </span>
           <div className="bounty-poster-deadline">
             <span className={`bounty-poster-deadline-text is-${di.color}`}>{di.text}</span>
             {di.hasBar && (
@@ -527,7 +662,7 @@ const Bounties = ({ currentUser, onLogin, onLogout, onCreateAccount, showNotific
 const PostBountyModal = ({ currentUser, projects, onClose, onCreated, notify }) => {
   const [form, setForm] = useState({
     title: '', description: '', deliverables: '', rules: '', category: 'development',
-    amount: '', deadline: '', projectAdId: projects[0]?.id || ''
+    amount: '', deadline: '', projectAdId: projects[0]?.id || '', resources: []
   });
   const [submitting, setSubmitting] = useState(false);
 
@@ -542,10 +677,16 @@ const PostBountyModal = ({ currentUser, projects, onClose, onCreated, notify }) 
       notify('Reward must be at least 1 USDC.', 'error');
       return;
     }
+    const resourceError = validateResourcesClient(form.resources);
+    if (resourceError) {
+      notify(resourceError, 'error');
+      return;
+    }
     setSubmitting(true);
     try {
       const res = await axios.post(`${API_URL}/bounties`, {
         ...form,
+        resources: packResources(form.resources),
         amount: parseFloat(form.amount)
       }, { headers: { Authorization: `Bearer ${currentUser.token}` } });
       if (res.data.success) {
@@ -589,6 +730,10 @@ const PostBountyModal = ({ currentUser, projects, onClose, onCreated, notify }) 
               placeholder="Describe the task and what a great result looks like."
               className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 focus:border-cyan-500 rounded-lg text-white text-sm focus:outline-none resize-none" />
           </div>
+          <BountyResourcesEditor
+            resources={form.resources}
+            onChange={(resources) => update('resources', resources)}
+          />
           <div>
             <label className="block text-sm text-slate-400 mb-1">Deliverables</label>
             <textarea value={form.deliverables} onChange={e => update('deliverables', e.target.value)} rows={3}
@@ -649,6 +794,7 @@ const EditBountyModal = ({ bountyId, bounty, currentUser, onClose, onSaved, noti
     description: bounty.description || '',
     deliverables: bounty.deliverables || '',
     rules: bounty.rules || '',
+    resources: (bounty.resources || []).map(r => ({ label: r.label || '', url: r.url || '' })),
     category: bounty.category || 'other',
     deadline: toDateInput(bounty.deadline)
   });
@@ -660,6 +806,11 @@ const EditBountyModal = ({ bountyId, bounty, currentUser, onClose, onSaved, noti
       notify('Title and description are required.', 'error');
       return;
     }
+    const resourceError = validateResourcesClient(form.resources);
+    if (resourceError) {
+      notify(resourceError, 'error');
+      return;
+    }
     setSaving(true);
     try {
       await axios.patch(`${API_URL}/bounties/${bountyId}`, {
@@ -667,6 +818,7 @@ const EditBountyModal = ({ bountyId, bounty, currentUser, onClose, onSaved, noti
         description: form.description,
         deliverables: form.deliverables,
         rules: form.rules,
+        resources: packResources(form.resources),
         category: form.category,
         deadline: form.deadline || null
       }, { headers: { Authorization: `Bearer ${currentUser.token}` } });
@@ -698,6 +850,10 @@ const EditBountyModal = ({ bountyId, bounty, currentUser, onClose, onSaved, noti
             <textarea value={form.description} onChange={e => update('description', e.target.value)} rows={4}
               className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 focus:border-cyan-500 rounded-lg text-white text-sm focus:outline-none resize-none" />
           </div>
+          <BountyResourcesEditor
+            resources={form.resources}
+            onChange={(resources) => update('resources', resources)}
+          />
           <div>
             <label className="block text-sm text-slate-400 mb-1">Deliverables</label>
             <textarea value={form.deliverables} onChange={e => update('deliverables', e.target.value)} rows={3}
@@ -961,6 +1117,7 @@ const BountyDetailModal = ({ bountyId, bounty, loading, currentUser, onClose, on
                 <h4 className="text-sm font-semibold text-slate-300 mb-1">Description</h4>
                 <p className="text-sm text-slate-400 whitespace-pre-wrap">{bounty.description}</p>
               </div>
+              <BountyResourcesList resources={bounty.resources} />
               {bounty.deliverables && (
                 <div>
                   <h4 className="text-sm font-semibold text-slate-300 mb-1">Deliverables</h4>

@@ -82,6 +82,14 @@ const bountySchema = new mongoose.Schema({
     default: '',
     maxlength: 4000
   },
+  // Hunter reference links (repo, brand kit, platform site, etc.) — HTTPS only
+  resources: {
+    type: [{
+      label: { type: String, required: true, trim: true, maxlength: 80 },
+      url: { type: String, required: true, trim: true, maxlength: 2048 }
+    }],
+    default: []
+  },
   category: {
     type: String,
     enum: ['development', 'design', 'content', 'marketing', 'community', 'research', 'other'],
