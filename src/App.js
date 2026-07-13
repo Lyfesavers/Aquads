@@ -2916,7 +2916,7 @@ function App() {
               openMintFunnelPlatform={openMintFunnelPlatform}
             />
           } />
-          <Route path="/bounties" element={
+          <Route path="/bounties/:id?" element={
             <Bounties
               currentUser={currentUser}
               onLogin={handleLogin}

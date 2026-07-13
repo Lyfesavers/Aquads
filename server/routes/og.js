@@ -1351,5 +1351,154 @@ router.get('/external-job', async (req, res) => {
   }
 });
 
+// /og/bounty — Western wanted-poster OG card (1200×630) for social previews
+const BOUNTY_CATEGORY_LABEL = {
+  development: 'Development',
+  design: 'Design',
+  content: 'Content',
+  marketing: 'Marketing',
+  community: 'Community',
+  research: 'Research',
+  other: 'Other',
+};
+
+router.get('/bounty', async (req, res) => {
+  const { id } = req.query;
+  if (!id || !/^[a-f0-9]{24}$/i.test(id)) {
+    return res.status(400).send('Invalid bounty id');
+  }
+
+  const ogv = (req.query.ogv || '1').toString();
+  const cacheKey = `bounty:${id}:v${ogv}`;
+  const cached = imageCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    res.set('Content-Type', 'image/png');
+    res.set('Cache-Control', 'public, max-age=300');
+    res.set('X-Cache', 'HIT');
+    return res.send(cached.buffer);
+  }
+
+  try {
+    const Bounty = require('../models/Bounty');
+    const bounty = await Bounty.findById(id).lean();
+
+    if (!bounty || bounty.hidden || !['open', 'completed'].includes(bounty.status)) {
+      return res.status(404).send('Bounty not found');
+    }
+
+    if (!bounty.posterImage && !bounty.projectLogo && bounty.posterId) {
+      try {
+        const User = require('../models/User');
+        const poster = await User.findById(bounty.posterId).select('image').lean();
+        bounty.posterImage = poster?.image || null;
+      } catch { /* non-fatal */ }
+    }
+
+    const logoUrl = bounty.projectLogo || bounty.posterImage;
+    let logoBase64 = null;
+    if (logoUrl) {
+      logoBase64 = await fetchImageAsBase64(logoUrl, {
+        timeout: 8000,
+        normalize: true,
+        fit: { width: 360, height: 360, fit: 'cover' },
+      });
+    }
+
+    const projectName = (bounty.projectName || bounty.posterUsername || 'Project').trim();
+    const categoryLabel = BOUNTY_CATEGORY_LABEL[bounty.category] || 'Bounty';
+    const rewardText = `REWARD $${bounty.amount} ${bounty.currency || 'USDC'}`;
+    const rawTitle = (bounty.title || '').trim();
+    const titleLines = wrapTextToLines(rawTitle, 24, 3);
+    const escrowText = bounty.status === 'completed' ? 'PAID FROM ESCROW' : 'SECURED IN ESCROW';
+    const statusLabel = bounty.status === 'completed' ? 'AWARDED' : 'OPEN';
+    const placeholderLetter = (projectName.charAt(0) || 'A').toUpperCase();
+
+    const titleStartY = 360;
+    const titleLineHeight = 34;
+    const titleSvg = titleLines
+      .map(
+        (line, i) =>
+          `<text x="600" y="${titleStartY + i * titleLineHeight}" ${ogFontAttr()} font-size="26" font-weight="bold" fill="#1a0f08" text-anchor="middle">${escapeXml(line)}</text>`
+      )
+      .join('\n  ');
+
+    const projectDisplay = projectName.length > 34 ? `${projectName.slice(0, 33)}…` : projectName;
+    const fontCss = getEmbeddedFontFaceCss();
+
+    const svg = `
+<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    ${fontCss ? `<style type="text/css"><![CDATA[${fontCss}]]></style>` : ''}
+    <linearGradient id="boardGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#14101a"/>
+      <stop offset="50%" style="stop-color:#1a1410"/>
+      <stop offset="100%" style="stop-color:#10141a"/>
+    </linearGradient>
+    <linearGradient id="paperGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f7ebd0"/>
+      <stop offset="55%" style="stop-color:#edd9a8"/>
+      <stop offset="100%" style="stop-color:#e2cc94"/>
+    </linearGradient>
+    <clipPath id="portraitClip">
+      <rect x="500" y="168" width="200" height="200"/>
+    </clipPath>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#boardGrad)"/>
+  <circle cx="120" cy="120" r="220" fill="rgba(180,130,60,0.04)"/>
+  <circle cx="1080" cy="520" r="200" fill="rgba(180,130,60,0.04)"/>
+
+  <rect x="190" y="28" width="820" height="574" fill="url(#paperGrad)" stroke="#3d2914" stroke-width="5"/>
+  <rect x="206" y="44" width="788" height="542" fill="none" stroke="#8b7355" stroke-width="1" stroke-dasharray="6 4" opacity="0.55"/>
+
+  <text x="1010" y="78" ${ogFontAttr()} font-size="22" font-weight="bold" fill="#8b6914" text-anchor="end">AQUADS</text>
+  <text x="1010" y="102" ${ogFontAttr()} font-size="13" fill="#5c4030" text-anchor="end">Bounty Board</text>
+
+  <rect x="220" y="58" width="${statusLabel.length * 11 + 36}" height="30" rx="2" fill="rgba(255,252,245,0.75)" stroke="#3d2914" stroke-width="1.5"/>
+  <text x="238" y="80" ${ogFontAttr()} font-size="16" font-weight="bold" fill="#1f3d14">${escapeXml(statusLabel)}</text>
+
+  <text x="600" y="118" ${ogFontAttr()} font-size="54" font-weight="bold" fill="#1a0f08" text-anchor="middle" letter-spacing="8">WANTED</text>
+  <rect x="330" y="132" width="540" height="3" fill="#3d2914"/>
+
+  <rect x="500" y="168" width="200" height="200" fill="#c4b08a" stroke="#3d2914" stroke-width="4"/>
+  ${logoBase64
+    ? `<image x="500" y="168" width="200" height="200" href="${logoBase64}" clip-path="url(#portraitClip)" preserveAspectRatio="xMidYMid slice"/>`
+    : `<text x="600" y="285" ${ogFontAttr()} font-size="88" font-weight="bold" fill="#3d2914" text-anchor="middle">${escapeXml(placeholderLetter)}</text>`}
+
+  ${titleSvg}
+
+  <text x="600" y="${titleStartY + titleLines.length * titleLineHeight + 18}" ${ogFontAttr()} font-size="18" font-weight="bold" fill="#5c4030" text-anchor="middle">${escapeXml(projectDisplay)}</text>
+  <text x="600" y="${titleStartY + titleLines.length * titleLineHeight + 42}" ${ogFontAttr()} font-size="15" fill="#5c4030" text-anchor="middle">${escapeXml(categoryLabel)}</text>
+
+  <g transform="rotate(-2 600 500)">
+    <rect x="360" y="468" width="480" height="58" rx="4" fill="rgba(255,252,245,0.72)" stroke="#6b1010" stroke-width="3"/>
+    <text x="600" y="506" ${ogFontAttr()} font-size="30" font-weight="bold" fill="#6b1010" text-anchor="middle">${escapeXml(rewardText)}</text>
+  </g>
+
+  <rect x="330" y="538" width="540" height="1" fill="#8b7355" stroke-dasharray="4 3"/>
+  <text x="600" y="562" ${ogFontAttr()} font-size="15" font-weight="bold" fill="#1f3d14" text-anchor="middle">${escapeXml(escrowText)}</text>
+  <text x="600" y="586" ${ogFontAttr()} font-size="13" fill="#5c4030" text-anchor="middle">aquads.xyz/bounties</text>
+</svg>`;
+
+    const pngBuffer = await sharp(Buffer.from(svg)).png().toBuffer();
+
+    imageCache.set(cacheKey, { buffer: pngBuffer, timestamp: Date.now() });
+    if (imageCache.size > 100) {
+      const now = Date.now();
+      for (const [key, value] of imageCache.entries()) {
+        if (now - value.timestamp > CACHE_TTL) imageCache.delete(key);
+      }
+    }
+
+    res.set('Content-Type', 'image/png');
+    res.set('Cache-Control', 'public, max-age=600');
+    res.set('X-Cache', 'MISS');
+    return res.send(pngBuffer);
+  } catch (error) {
+    console.error('OG bounty image error:', error);
+    return res.status(500).send('Failed to generate image');
+  }
+});
+
 module.exports = router;
 

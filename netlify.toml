@@ -61,6 +61,10 @@
   path = "/og/job-card"
 
 [[edge_functions]]
+  function = "og-bounty-card"
+  path = "/og/bounty-card"
+
+[[edge_functions]]
   function = "og-external-job-card"
   path = "/og/external-job-card"
 
@@ -127,6 +131,11 @@
 [[edge_functions]]
   function = "learn-blog"
   path = "/learn/*"
+
+# Canonical bounty URLs (/bounties/{id}): inject OG metadata + wanted-poster image
+[[edge_functions]]
+  function = "bounty-detail"
+  path = "/bounties/*"
 
 # Handle service pages
 [[redirects]]

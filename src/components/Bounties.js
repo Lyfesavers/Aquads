@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Helmet } from 'react-helmet';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useParams, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { API_URL, socket } from '../services/api';
@@ -288,6 +288,8 @@ const deadlineInfo = (bounty) => {
 
 const Bounties = ({ currentUser, onLogin, onLogout, onCreateAccount, showNotification, openMintFunnelPlatform }) => {
   const navigate = useNavigate();
+  const { id: routeBountyId } = useParams();
+  const location = useLocation();
 
   const [bounties, setBounties] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -351,6 +353,10 @@ const Bounties = ({ currentUser, onLogin, onLogout, onCreateAccount, showNotific
   }, [currentUser]);
 
   useEffect(() => {
+    document.getElementById('aquads-seo-content')?.remove();
+  }, []);
+
+  useEffect(() => {
     const onUpdate = () => fetchBounties();
     socket.on('bountyListUpdated', onUpdate);
     return () => socket.off('bountyListUpdated', onUpdate);
@@ -359,6 +365,9 @@ const Bounties = ({ currentUser, onLogin, onLogout, onCreateAccount, showNotific
   const openDetail = async (bountyId) => {
     setDetailLoading(true);
     setSelectedBounty({ _id: bountyId });
+    if (routeBountyId !== bountyId) {
+      navigate(`/bounties/${bountyId}`);
+    }
     try {
       const headers = currentUser?.token ? { Authorization: `Bearer ${currentUser.token}` } : {};
       const res = await axios.get(`${API_URL}/bounties/${bountyId}`, { headers });
@@ -368,6 +377,19 @@ const Bounties = ({ currentUser, onLogin, onLogout, onCreateAccount, showNotific
       setSelectedBounty(null);
     } finally {
       setDetailLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!routeBountyId || !/^[a-f0-9]{24}$/i.test(routeBountyId)) return;
+    if (selectedBounty?._id === routeBountyId && !detailLoading) return;
+    openDetail(routeBountyId);
+  }, [routeBountyId]);
+
+  const closeDetail = () => {
+    setSelectedBounty(null);
+    if (routeBountyId) {
+      navigate('/bounties', { replace: true });
     }
   };
 
@@ -390,6 +412,20 @@ const Bounties = ({ currentUser, onLogin, onLogout, onCreateAccount, showNotific
         <link rel="canonical" href="https://www.aquads.xyz/bounties" />
         <link href="https://fonts.googleapis.com/css2?family=Rye&family=Special+Elite&display=swap" rel="stylesheet" />
       </Helmet>
+
+      {selectedBounty?.title && !detailLoading && (
+        <Helmet>
+          <title>{selectedBounty.title} — Bounty on Aquads</title>
+          <meta name="description" content={(selectedBounty.description || '').slice(0, 200)} />
+          <link rel="canonical" href={`https://www.aquads.xyz/bounties/${selectedBounty._id}`} />
+          <meta property="og:title" content={`${selectedBounty.title} — Bounty on Aquads`} />
+          <meta property="og:description" content={(selectedBounty.description || '').slice(0, 200)} />
+          <meta property="og:image" content={`https://www.aquads.xyz/og/bounty-card?id=${selectedBounty._id}&ogv=1`} />
+          <meta property="og:url" content={`https://www.aquads.xyz/bounties/${selectedBounty._id}`} />
+          <meta name="twitter:card" content="summary_large_image" />
+          <meta name="twitter:image" content={`https://www.aquads.xyz/og/bounty-card?id=${selectedBounty._id}&ogv=1`} />
+        </Helmet>
+      )}
 
       {/* Navigation - consistent with home/marketplace header */}
       <nav className="sticky top-0 bg-gray-800/80 backdrop-blur-sm shadow-lg shadow-blue-500/20 z-50">
@@ -632,7 +668,7 @@ const Bounties = ({ currentUser, onLogin, onLogout, onCreateAccount, showNotific
             bounty={selectedBounty}
             loading={detailLoading}
             currentUser={currentUser}
-            onClose={() => setSelectedBounty(null)}
+            onClose={closeDetail}
             onRequireLogin={() => { setSelectedBounty(null); setShowLoginModal(true); }}
             onChanged={() => { openDetail(selectedBounty._id); fetchBounties(); }}
             navigate={navigate}
@@ -906,6 +942,7 @@ const BountyDetailModal = ({ bountyId, bounty, loading, currentUser, onClose, on
   const [submissionDesc, setSubmissionDesc] = useState('');
   const [working, setWorking] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
 
   const [comments, setComments] = useState([]);
   const [commentText, setCommentText] = useState('');
@@ -1047,6 +1084,19 @@ const BountyDetailModal = ({ bountyId, bounty, loading, currentUser, onClose, on
     s => currentUser && s.hunterId?.toString() === (currentUser.userId || currentUser._id || currentUser.id)?.toString()
   );
 
+  const handleShare = () => {
+    if (!bountyId) return;
+    const shareUrl = `${window.location.origin}/bounties/${bountyId}`;
+    const finalUrl = currentUser?.username
+      ? `${shareUrl}?ref=${encodeURIComponent(currentUser.username)}`
+      : shareUrl;
+    navigator.clipboard.writeText(finalUrl).then(() => {
+      setShareCopied(true);
+      notify('Bounty link copied to clipboard!', 'success');
+      setTimeout(() => setShareCopied(false), 2500);
+    }).catch(() => notify('Failed to copy link', 'error'));
+  };
+
   return (
     <motion.div className="fixed inset-0 z-[90] flex justify-end"
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
@@ -1077,7 +1127,15 @@ const BountyDetailModal = ({ bountyId, bounty, loading, currentUser, onClose, on
                   <span className="text-sm text-slate-400">{bounty.projectName || bounty.posterUsername}</span>
                 </div>
               </div>
-              <button onClick={onClose} className="text-slate-500 hover:text-white text-xl flex-shrink-0">✕</button>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <button
+                  onClick={handleShare}
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-amber-700/50 text-amber-300 hover:bg-amber-900/30 transition-colors"
+                >
+                  {shareCopied ? 'Copied!' : 'Share'}
+                </button>
+                <button onClick={onClose} className="text-slate-500 hover:text-white text-xl">✕</button>
+              </div>
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-5">
