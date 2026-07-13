@@ -1,6 +1,7 @@
 import io from 'socket.io-client';
 import axios from 'axios';
 import logger from '../utils/logger';
+import { readAdsCache } from '../utils/adsCache';
 
 const BACKEND_URL = process.env.REACT_APP_API_URL ||
   (process.env.NODE_ENV === 'production' ? 'https://aquads-production.up.railway.app' : 'http://localhost:5000');
@@ -405,52 +406,40 @@ const getAuthHeader = () => {
 // Fetch all ads
 export const fetchAds = async () => {
   const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-  const maxRetries = isMobile ? 3 : 1;
-  const timeoutMs = isMobile ? 15000 : 10000; // Longer timeout for mobile
+  const maxRetries = isMobile ? 3 : 2;
+  const timeoutMs = isMobile ? 20000 : 15000;
   
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-
-      
-      const startTime = Date.now();
-      
-      // Create AbortController for timeout
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
       
       const response = await fetch(`${API_URL}/ads`, {
-        signal: controller.signal
+        signal: controller.signal,
+        cache: 'no-store',
       });
       
       clearTimeout(timeoutId);
-      const responseTime = Date.now() - startTime;
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
       const data = await response.json();
+      if (!Array.isArray(data)) {
+        throw new Error('Invalid ads response format');
+      }
       
-      // Caller persists merged ads; avoid overwriting fresher vote counts from a recent vote.
       return data;
       
     } catch (error) {
-      
-      // If this is the last attempt, or not a network error, don't retry
       if (attempt === maxRetries || (error.name !== 'TypeError' && error.name !== 'AbortError')) {
         logger.error('Error fetching ads:', error);
-        
-        // Return cached ads if available
-        const cachedAds = localStorage.getItem('cachedAds');
-        if (cachedAds) {
-          return JSON.parse(cachedAds);
-        } else {
-          return [];
-        }
+        const cached = readAdsCache();
+        return cached.length > 0 ? cached : [];
       }
       
-      // Wait before retrying (exponential backoff)
-      const delay = Math.pow(2, attempt - 1) * 1000; // 1s, 2s, 4s
+      const delay = Math.pow(2, attempt - 1) * 1000;
       await new Promise(resolve => setTimeout(resolve, delay));
     }
   }

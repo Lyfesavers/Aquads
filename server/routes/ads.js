@@ -232,11 +232,14 @@ const invalidateAdsCache = () => {
 };
 
 const fetchAndCacheAds = async () => {
-  const ads = await Ad.find({ status: { $in: ['active', 'approved'] } });
+  // Public bubble list does not need voterData (can be megabytes across all listings).
+  const ads = await Ad.find({ status: { $in: ['active', 'approved'] } })
+    .select('-voterData')
+    .lean();
   const currentTime = Date.now();
   const processedAds = ads.map((ad) => {
     const voteBumped = isVoteBumped(ad.bullishVotes);
-    const adObject = typeof ad.toObject === 'function' ? ad.toObject() : { ...ad };
+    const adObject = { ...ad };
     adObject.isBumped = voteBumped;
     if (!voteBumped) {
       const calculatedSize = computeShrunkSize(ad.createdAt, currentTime, {

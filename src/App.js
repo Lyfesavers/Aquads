@@ -78,6 +78,12 @@ import NotificationBell from './components/NotificationBell';
 import { getDisplayName } from './utils/nameUtils';
 import BumpReminderModal from './components/BumpReminderModal';
 import logger from './utils/logger';
+import {
+  persistAdsCache,
+  readAdsCache,
+  mergeIncomingAdsWithCurrent,
+  mergeAdVotesSnapshot,
+} from './utils/adsCache';
 import './App.css';
 import FilterControls from './components/FilterControls';
 import {
@@ -593,21 +599,17 @@ function pickLinkInBioState(user) {
 
 function App() {
   const [ads, setAds] = useState(() => {
-    const cachedAds = localStorage.getItem('cachedAds');
-    if (cachedAds) {
-      try {
-        // Ensure vote properties exist
-        return JSON.parse(cachedAds).map(ad => ({
-          ...ad,
-          bullishVotes: ad.bullishVotes || 0,
-          bearishVotes: ad.bearishVotes || 0
-        }));
-      } catch (e) {
-        return [];
-      }
+    const cached = readAdsCache();
+    if (cached.length > 0) {
+      return cached.map((ad) => ({
+        ...ad,
+        bullishVotes: ad.bullishVotes || 0,
+        bearishVotes: ad.bearishVotes || 0,
+      }));
     }
     return [];
   });
+  const adsRef = useRef(ads);
   
   // Detect iOS for better touch handling
   useEffect(() => {
@@ -742,10 +744,14 @@ function App() {
     recentVoteUpdatesRef.current[adId] = { ...fields, ts: Date.now() };
     setAds((prevAds) => {
       const newAds = prevAds.map((ad) => (ad.id === adId ? { ...ad, ...fields } : ad));
-      localStorage.setItem('cachedAds', JSON.stringify(newAds));
+      persistAdsCache(newAds);
       return newAds;
     });
   }, []);
+
+  useEffect(() => {
+    adsRef.current = ads;
+  }, [ads]);
 
   // Initialize user presence tracking across all pages
   useUserPresence(currentUser);
@@ -916,7 +922,7 @@ function App() {
   // Add this function to update ads with persistence
   const updateAds = (newAds) => {
     setAds(newAds);
-    localStorage.setItem('cachedAds', JSON.stringify(newAds));
+    persistAdsCache(newAds);
   };
 
   const isFirstAdsLoadRef = useRef(true);
@@ -937,15 +943,17 @@ function App() {
       }
 
       const data = await fetchAds();
-      const processedAds = data.map((ad) =>
-        mergeRecentVoteFields({
-          ...ad,
-          bullishVotes: ad.bullishVotes || 0,
-          bearishVotes: ad.bearishVotes || 0,
-        })
+      if (!Array.isArray(data)) {
+        throw new Error('Invalid ads response');
+      }
+
+      const processedAds = mergeIncomingAdsWithCurrent(
+        data,
+        adsRef.current,
+        mergeRecentVoteFields
       );
 
-      localStorage.setItem('cachedAds', JSON.stringify(processedAds));
+      persistAdsCache(processedAds);
 
       const currentMaxSize = getMaxSize();
 
@@ -1001,21 +1009,28 @@ function App() {
     } catch (error) {
       logger.error('Error loading ads:', error);
 
-      const cachedAds = localStorage.getItem('cachedAds');
-      if (cachedAds) {
+      const cachedAds = readAdsCache();
+      if (cachedAds.length > 0) {
         try {
-          const parsedAds = JSON.parse(cachedAds).map((ad) => ({
-            ...ad,
-            bullishVotes: ad.bullishVotes || 0,
-            bearishVotes: ad.bearishVotes || 0,
-          }));
+          const parsedAds = mergeIncomingAdsWithCurrent(
+            mergeAdVotesSnapshot(cachedAds).map((ad) => ({
+              ...ad,
+              bullishVotes: ad.bullishVotes || 0,
+              bearishVotes: ad.bearishVotes || 0,
+            })),
+            adsRef.current,
+            mergeRecentVoteFields
+          );
           setAds(filterAdsForViewer(parsedAds));
         } catch (parseError) {
           logger.error('Error parsing cached ads:', parseError);
         }
+      } else if (adsRef.current.length > 0) {
+        // Keep live in-memory ads (e.g. socket vote updates) when fetch and cache both fail.
+        setAds(filterAdsForViewer(adsRef.current));
       }
 
-      if (showLoading) {
+      if (showLoading && cachedAds.length === 0 && adsRef.current.length === 0) {
         const noticeId = Date.now();
         setNotifications((prev) => [
           ...prev,
@@ -1077,7 +1092,7 @@ function App() {
             // If updated ad is now pending/rejected and user is not admin, remove it
             if (!currentUser?.isAdmin && (updatedAd.status === 'pending' || updatedAd.status === 'rejected')) {
               const newAds = prevAds.filter(ad => ad.id !== data.ad.id);
-              localStorage.setItem('cachedAds', JSON.stringify(newAds));
+              persistAdsCache(newAds);
               return newAds;
             }
             
@@ -1085,13 +1100,13 @@ function App() {
             const newAds = prevAds.map(ad => 
               ad.id === data.ad.id ? updatedAd : ad
             );
-            localStorage.setItem('cachedAds', JSON.stringify(newAds));
+            persistAdsCache(newAds);
             return newAds;
           } else {
             // Ad doesn't exist in list - check if we should add it (if it's active/approved)
             if (currentUser?.isAdmin || (data.ad.status !== 'pending' && data.ad.status !== 'rejected')) {
               const newAds = [...prevAds, data.ad];
-              localStorage.setItem('cachedAds', JSON.stringify(newAds));
+              persistAdsCache(newAds);
               return newAds;
             }
           }
@@ -1101,7 +1116,7 @@ function App() {
       } else if (data.type === 'delete') {
         setAds(prevAds => {
           const newAds = prevAds.filter(ad => ad.id !== data.ad.id);
-          localStorage.setItem('cachedAds', JSON.stringify(newAds));
+          persistAdsCache(newAds);
           return newAds;
         });
       } else if (data.type === 'create') {
@@ -1113,7 +1128,7 @@ function App() {
             // Admins can see all ads including pending ones
             if (currentUser?.isAdmin || (data.ad.status !== 'pending' && data.ad.status !== 'rejected')) {
               const newAds = [...prevAds, data.ad];
-              localStorage.setItem('cachedAds', JSON.stringify(newAds));
+              persistAdsCache(newAds);
               return newAds;
             }
           }
@@ -1149,7 +1164,7 @@ function App() {
           };
         }
         const newAds = prevAds.map(ad => ad.id === incomingAd.id ? finalAd : ad);
-        localStorage.setItem('cachedAds', JSON.stringify(newAds));
+        persistAdsCache(newAds);
         return newAds;
       });
     });
@@ -1157,7 +1172,7 @@ function App() {
     socket.on('adDeleted', (deletedAdId) => {
       setAds(prevAds => {
         const newAds = prevAds.filter(ad => ad.id !== deletedAdId);
-        localStorage.setItem('cachedAds', JSON.stringify(newAds));
+        persistAdsCache(newAds);
         return newAds;
       });
     });
@@ -1168,7 +1183,7 @@ function App() {
         const exists = prevAds.some(ad => ad.id === newAd.id);
         if (!exists) {
           const newAds = [...prevAds, newAd];
-          localStorage.setItem('cachedAds', JSON.stringify(newAds));
+          persistAdsCache(newAds);
           return newAds;
         }
         return prevAds;
@@ -1740,7 +1755,7 @@ function App() {
       const response = await apiUpdateAd(adId, updatedAd);
       setAds(prevAds => {
         const next = prevAds.map(a => (a.id === adId ? response : a));
-        localStorage.setItem('cachedAds', JSON.stringify(next));
+        persistAdsCache(next);
         return next;
       });
       setShowEditModal(false);
