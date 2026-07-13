@@ -38,7 +38,7 @@ function buildMetaBlock(bounty, canonicalUrl) {
   const description = plainText.length > 200
     ? plainText.slice(0, 197) + '...'
     : (plainText || `Claim this bounty on Aquads — ${bounty.title}`);
-  const imageUrl = `${CANONICAL_HOST}/og/bounty-card?id=${encodeURIComponent(bounty._id)}&ogv=1`;
+  const imageUrl = `${CANONICAL_HOST}/og/bounty-card?id=${encodeURIComponent(bounty._id)}&ogv=2`;
 
   return `
     <title>${escapeHtml(title)}</title>

@@ -1369,7 +1369,7 @@ router.get('/bounty', async (req, res) => {
   }
 
   const ogv = (req.query.ogv || '1').toString();
-  const cacheKey = `bounty:${id}:v${ogv}`;
+  const cacheKey = `bounty:${id}:v2`;
   const cached = imageCache.get(cacheKey);
   if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
     res.set('Content-Type', 'image/png');
@@ -1408,21 +1408,40 @@ router.get('/bounty', async (req, res) => {
     const categoryLabel = BOUNTY_CATEGORY_LABEL[bounty.category] || 'Bounty';
     const rewardText = `REWARD $${bounty.amount} ${bounty.currency || 'USDC'}`;
     const rawTitle = (bounty.title || '').trim();
-    const titleLines = wrapTextToLines(rawTitle, 24, 3);
+    const titleLines = wrapTextToLines(rawTitle, 22, 2);
     const escrowText = bounty.status === 'completed' ? 'PAID FROM ESCROW' : 'SECURED IN ESCROW';
     const statusLabel = bounty.status === 'completed' ? 'AWARDED' : 'OPEN';
     const placeholderLetter = (projectName.charAt(0) || 'A').toUpperCase();
 
-    const titleStartY = 360;
-    const titleLineHeight = 34;
+    // Layout constants — keep all content inside parchment (y 28–602, safe inner y 55–575)
+    const PAPER_X = 190;
+    const PAPER_Y = 28;
+    const PAPER_W = 820;
+    const PAPER_H = 574;
+    const CX = PAPER_X + PAPER_W / 2;
+    const PORTRAIT = 140;
+    const PORTRAIT_X = CX - PORTRAIT / 2;
+    const PORTRAIT_Y = 138;
+    const PORTRAIT_BOTTOM = PORTRAIT_Y + PORTRAIT;
+
+    const titleStartY = PORTRAIT_BOTTOM + 28;
+    const titleLineHeight = 26;
     const titleSvg = titleLines
       .map(
         (line, i) =>
-          `<text x="600" y="${titleStartY + i * titleLineHeight}" ${ogFontAttr()} font-size="26" font-weight="bold" fill="#1a0f08" text-anchor="middle">${escapeXml(line)}</text>`
+          `<text x="${CX}" y="${titleStartY + i * titleLineHeight}" ${ogFontAttr()} font-size="22" font-weight="bold" fill="#1a0f08" text-anchor="middle">${escapeXml(line)}</text>`
       )
       .join('\n  ');
 
-    const projectDisplay = projectName.length > 34 ? `${projectName.slice(0, 33)}…` : projectName;
+    const projectY = titleStartY + titleLines.length * titleLineHeight + 16;
+    const categoryY = projectY + 22;
+    const rewardBoxY = categoryY + 30;
+    const rewardBoxH = 48;
+    const escrowY = rewardBoxY + rewardBoxH + 22;
+    const urlY = escrowY + 22;
+
+    const projectDisplay = projectName.length > 30 ? `${projectName.slice(0, 29)}…` : projectName;
+    const statusW = statusLabel.length * 10 + 32;
     const fontCss = getEmbeddedFontFaceCss();
 
     const svg = `
@@ -1439,8 +1458,11 @@ router.get('/bounty', async (req, res) => {
       <stop offset="55%" style="stop-color:#edd9a8"/>
       <stop offset="100%" style="stop-color:#e2cc94"/>
     </linearGradient>
+    <clipPath id="paperClip">
+      <rect x="${PAPER_X + 4}" y="${PAPER_Y + 4}" width="${PAPER_W - 8}" height="${PAPER_H - 8}"/>
+    </clipPath>
     <clipPath id="portraitClip">
-      <rect x="500" y="168" width="200" height="200"/>
+      <rect x="${PORTRAIT_X}" y="${PORTRAIT_Y}" width="${PORTRAIT}" height="${PORTRAIT}"/>
     </clipPath>
   </defs>
 
@@ -1448,36 +1470,38 @@ router.get('/bounty', async (req, res) => {
   <circle cx="120" cy="120" r="220" fill="rgba(180,130,60,0.04)"/>
   <circle cx="1080" cy="520" r="200" fill="rgba(180,130,60,0.04)"/>
 
-  <rect x="190" y="28" width="820" height="574" fill="url(#paperGrad)" stroke="#3d2914" stroke-width="5"/>
-  <rect x="206" y="44" width="788" height="542" fill="none" stroke="#8b7355" stroke-width="1" stroke-dasharray="6 4" opacity="0.55"/>
+  <rect x="${PAPER_X}" y="${PAPER_Y}" width="${PAPER_W}" height="${PAPER_H}" fill="url(#paperGrad)" stroke="#3d2914" stroke-width="5"/>
+  <rect x="${PAPER_X + 16}" y="${PAPER_Y + 16}" width="${PAPER_W - 32}" height="${PAPER_H - 32}" fill="none" stroke="#8b7355" stroke-width="1" stroke-dasharray="6 4" opacity="0.55"/>
 
-  <text x="1010" y="78" ${ogFontAttr()} font-size="22" font-weight="bold" fill="#8b6914" text-anchor="end">AQUADS</text>
-  <text x="1010" y="102" ${ogFontAttr()} font-size="13" fill="#5c4030" text-anchor="end">Bounty Board</text>
+  <g clip-path="url(#paperClip)">
+    <text x="${PAPER_X + PAPER_W - 36}" y="72" ${ogFontAttr()} font-size="18" font-weight="bold" fill="#8b6914" text-anchor="end">AQUADS</text>
+    <text x="${PAPER_X + PAPER_W - 36}" y="92" ${ogFontAttr()} font-size="12" fill="#5c4030" text-anchor="end">Bounty Board</text>
 
-  <rect x="220" y="58" width="${statusLabel.length * 11 + 36}" height="30" rx="2" fill="rgba(255,252,245,0.75)" stroke="#3d2914" stroke-width="1.5"/>
-  <text x="238" y="80" ${ogFontAttr()} font-size="16" font-weight="bold" fill="#1f3d14">${escapeXml(statusLabel)}</text>
+    <rect x="${PAPER_X + 36}" y="58" width="${statusW}" height="26" rx="2" fill="rgba(255,252,245,0.75)" stroke="#3d2914" stroke-width="1.5"/>
+    <text x="${PAPER_X + 48}" y="77" ${ogFontAttr()} font-size="14" font-weight="bold" fill="#1f3d14">${escapeXml(statusLabel)}</text>
 
-  <text x="600" y="118" ${ogFontAttr()} font-size="54" font-weight="bold" fill="#1a0f08" text-anchor="middle" letter-spacing="8">WANTED</text>
-  <rect x="330" y="132" width="540" height="3" fill="#3d2914"/>
+    <text x="${CX}" y="118" ${ogFontAttr()} font-size="44" font-weight="bold" fill="#1a0f08" text-anchor="middle" letter-spacing="6">WANTED</text>
+    <rect x="${PAPER_X + 80}" y="128" width="${PAPER_W - 160}" height="2" fill="#3d2914"/>
 
-  <rect x="500" y="168" width="200" height="200" fill="#c4b08a" stroke="#3d2914" stroke-width="4"/>
-  ${logoBase64
-    ? `<image x="500" y="168" width="200" height="200" href="${logoBase64}" clip-path="url(#portraitClip)" preserveAspectRatio="xMidYMid slice"/>`
-    : `<text x="600" y="285" ${ogFontAttr()} font-size="88" font-weight="bold" fill="#3d2914" text-anchor="middle">${escapeXml(placeholderLetter)}</text>`}
+    <rect x="${PORTRAIT_X}" y="${PORTRAIT_Y}" width="${PORTRAIT}" height="${PORTRAIT}" fill="#c4b08a" stroke="#3d2914" stroke-width="3"/>
+    ${logoBase64
+      ? `<image x="${PORTRAIT_X}" y="${PORTRAIT_Y}" width="${PORTRAIT}" height="${PORTRAIT}" href="${logoBase64}" clip-path="url(#portraitClip)" preserveAspectRatio="xMidYMid slice"/>`
+      : `<text x="${CX}" y="${PORTRAIT_Y + PORTRAIT / 2 + 18}" ${ogFontAttr()} font-size="64" font-weight="bold" fill="#3d2914" text-anchor="middle">${escapeXml(placeholderLetter)}</text>`}
 
-  ${titleSvg}
+    ${titleSvg}
 
-  <text x="600" y="${titleStartY + titleLines.length * titleLineHeight + 18}" ${ogFontAttr()} font-size="18" font-weight="bold" fill="#5c4030" text-anchor="middle">${escapeXml(projectDisplay)}</text>
-  <text x="600" y="${titleStartY + titleLines.length * titleLineHeight + 42}" ${ogFontAttr()} font-size="15" fill="#5c4030" text-anchor="middle">${escapeXml(categoryLabel)}</text>
+    <text x="${CX}" y="${projectY}" ${ogFontAttr()} font-size="16" font-weight="bold" fill="#5c4030" text-anchor="middle">${escapeXml(projectDisplay)}</text>
+    <text x="${CX}" y="${categoryY}" ${ogFontAttr()} font-size="14" fill="#5c4030" text-anchor="middle">${escapeXml(categoryLabel)}</text>
 
-  <g transform="rotate(-2 600 500)">
-    <rect x="360" y="468" width="480" height="58" rx="4" fill="rgba(255,252,245,0.72)" stroke="#6b1010" stroke-width="3"/>
-    <text x="600" y="506" ${ogFontAttr()} font-size="30" font-weight="bold" fill="#6b1010" text-anchor="middle">${escapeXml(rewardText)}</text>
+    <g transform="rotate(-1.5 ${CX} ${rewardBoxY + rewardBoxH / 2})">
+      <rect x="${CX - 200}" y="${rewardBoxY}" width="400" height="${rewardBoxH}" rx="4" fill="rgba(255,252,245,0.72)" stroke="#6b1010" stroke-width="2"/>
+      <text x="${CX}" y="${rewardBoxY + 32}" ${ogFontAttr()} font-size="24" font-weight="bold" fill="#6b1010" text-anchor="middle">${escapeXml(rewardText)}</text>
+    </g>
+
+    <rect x="${PAPER_X + 80}" y="${rewardBoxY + rewardBoxH + 10}" width="${PAPER_W - 160}" height="1" fill="#8b7355" opacity="0.7"/>
+    <text x="${CX}" y="${escrowY}" ${ogFontAttr()} font-size="13" font-weight="bold" fill="#1f3d14" text-anchor="middle">${escapeXml(escrowText)}</text>
+    <text x="${CX}" y="${urlY}" ${ogFontAttr()} font-size="11" fill="#5c4030" text-anchor="middle">aquads.xyz/bounties</text>
   </g>
-
-  <rect x="330" y="538" width="540" height="1" fill="#8b7355" stroke-dasharray="4 3"/>
-  <text x="600" y="562" ${ogFontAttr()} font-size="15" font-weight="bold" fill="#1f3d14" text-anchor="middle">${escapeXml(escrowText)}</text>
-  <text x="600" y="586" ${ogFontAttr()} font-size="13" fill="#5c4030" text-anchor="middle">aquads.xyz/bounties</text>
 </svg>`;
 
     const pngBuffer = await sharp(Buffer.from(svg)).png().toBuffer();

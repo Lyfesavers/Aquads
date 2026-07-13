@@ -420,10 +420,10 @@ const Bounties = ({ currentUser, onLogin, onLogout, onCreateAccount, showNotific
           <link rel="canonical" href={`https://www.aquads.xyz/bounties/${selectedBounty._id}`} />
           <meta property="og:title" content={`${selectedBounty.title} — Bounty on Aquads`} />
           <meta property="og:description" content={(selectedBounty.description || '').slice(0, 200)} />
-          <meta property="og:image" content={`https://www.aquads.xyz/og/bounty-card?id=${selectedBounty._id}&ogv=1`} />
+          <meta property="og:image" content={`https://www.aquads.xyz/og/bounty-card?id=${selectedBounty._id}&ogv=2`} />
           <meta property="og:url" content={`https://www.aquads.xyz/bounties/${selectedBounty._id}`} />
           <meta name="twitter:card" content="summary_large_image" />
-          <meta name="twitter:image" content={`https://www.aquads.xyz/og/bounty-card?id=${selectedBounty._id}&ogv=1`} />
+          <meta name="twitter:image" content={`https://www.aquads.xyz/og/bounty-card?id=${selectedBounty._id}&ogv=2`} />
         </Helmet>
       )}
 
