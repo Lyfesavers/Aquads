@@ -819,6 +819,14 @@ ${currentUser.username}`;
     // Choose best image URL to display
     const getBestImageUrl = () => {
       if (!msg.attachment) return null;
+
+      // CDN / absolute URLs (DigitalOcean Spaces) — use directly when booking is done
+      if (msg.attachment.startsWith('http')) {
+        if (booking.status === 'completed') return msg.attachment;
+        if (msg.dataUrl) return msg.dataUrl;
+        const filename = getFilename(msg.attachment);
+        return `${API_URL}/bookings/file?filename=${filename}&bookingId=${booking._id}`;
+      }
       
       // For completed bookings, always use the query parameter URL to get original files
       if (booking.status === 'completed') {

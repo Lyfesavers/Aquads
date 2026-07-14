@@ -15,23 +15,11 @@ const contentFilter = require('../utils/contentFilter');
 
 // Require sharp module directly (make it mandatory, not optional)
 const sharp = require('sharp');
+const spaces = require('../utils/spaces');
 
 
-// Set up storage for uploaded files
-const storage = multer.diskStorage({
-  destination: function(req, file, cb) {
-    const dir = path.join(__dirname, '../uploads/bookings');
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-
-    }
-    cb(null, dir);
-  },
-  filename: function(req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, 'booking-' + uniqueSuffix + path.extname(file.originalname));
-  }
-});
+// Booking attachments: memory buffer → DigitalOcean Spaces CDN (or local disk in dev).
+const storage = multer.memoryStorage();
 
 // File filter to only allow certain file types
 const fileFilter = (req, file, cb) => {
@@ -54,6 +42,31 @@ const upload = multer({
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB file size limit
   fileFilter: fileFilter
 });
+
+const saveBookingFileLocally = (buffer, originalName) => {
+  const dir = path.join(__dirname, '../uploads/bookings');
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  const filename = `booking-${Date.now()}-${Math.round(Math.random() * 1e9)}${path.extname(originalName)}`;
+  const filePath = path.join(dir, filename);
+  fs.writeFileSync(filePath, buffer);
+  return { filename, filePath, attachment: `/uploads/bookings/${filename}` };
+};
+
+const loadBookingFileBuffer = async (attachment, filename) => {
+  if (attachment && spaces.isSpacesUrl(attachment)) {
+    const key = spaces.keyFromUrl(attachment);
+    if (key) return spaces.getObjectBuffer(key);
+  }
+  const localName = filename || spaces.filenameFromAttachment(attachment);
+  const filePath = path.join(__dirname, '../uploads/bookings', path.basename(localName));
+  if (fs.existsSync(filePath)) {
+    return fs.readFileSync(filePath);
+  }
+  if (spaces.isConfigured() && localName) {
+    return spaces.getObjectBuffer(`bookings/${localName}`);
+  }
+  return null;
+};
 
 // Create a booking
 router.post('/', auth, requireEmailVerification, async (req, res) => {
@@ -631,9 +644,8 @@ async function addWatermark(inputPath, outputPath, watermarkText) {
 }
 
 // Watermark function that returns a buffer (for dynamic watermarking)
-async function addWatermarkToBuffer(inputPath, watermarkText) {
+async function addWatermarkToBuffer(input, watermarkText) {
   try {
-    // Create a small watermark SVG with text
     const svgBuffer = Buffer.from(`
       <svg width="120" height="60" xmlns="http://www.w3.org/2000/svg">
         <style>
@@ -649,8 +661,8 @@ async function addWatermarkToBuffer(inputPath, watermarkText) {
       </svg>
     `);
 
-    // Apply the watermark and return as buffer
-    const watermarkedBuffer = await sharp(inputPath)
+    const pipeline = Buffer.isBuffer(input) ? sharp(input) : sharp(input);
+    const watermarkedBuffer = await pipeline
       .modulate({ brightness: 0.95 })
       .composite([
         {
@@ -719,9 +731,6 @@ router.post('/:bookingId/messages', auth, requireEmailVerification, upload.singl
     let isWatermarked = false;
 
     if (req.file) {
-      
-      // Save attachment as relative URL path
-      const filename = req.file.filename;
       const ext = path.extname(req.file.originalname).toLowerCase();
       const isImage = /\.(jpg|jpeg|png|gif)$/i.test(ext);
       const isAudio = /\.(webm|mp3|wav|m4a|ogg)$/i.test(ext) || req.file.mimetype.startsWith('audio/');
@@ -735,10 +744,18 @@ router.post('/:bookingId/messages', auth, requireEmailVerification, upload.singl
       }
       
       attachmentName = req.file.originalname;
-      
-      // SIMPLE APPROACH: Always save original file, mark as watermarked if needed
-      attachment = `/uploads/bookings/${filename}`;
-      originalFilePath = path.join(__dirname, '../uploads/bookings', filename);
+
+      if (spaces.isConfigured()) {
+        const key = spaces.buildKey('bookings', req.file.originalname);
+        attachment = await spaces.uploadBuffer(req.file.buffer, {
+          key,
+          contentType: req.file.mimetype || 'application/octet-stream'
+        });
+      } else {
+        const saved = saveBookingFileLocally(req.file.buffer, req.file.originalname);
+        attachment = saved.attachment;
+        originalFilePath = saved.filePath;
+      }
       
       // Mark as watermarked only before buyer approval/completion.
       if (isImage && isSeller && booking.status !== 'completed' && !booking.buyerWorkApproved) {
@@ -746,26 +763,13 @@ router.post('/:bookingId/messages', auth, requireEmailVerification, upload.singl
       } else {
         isWatermarked = false;
       }
-      
 
-      
-      // Check if the file exists
-      const savedFilePath = originalFilePath || path.join(__dirname, '../uploads/bookings', filename);
-
-
-      
-      // If it's an image, create a data URL as fallback
-      if (attachmentType === 'image' && fs.existsSync(savedFilePath)) {
+      // If it's an image, create a data URL as fallback for the sender UI
+      if (attachmentType === 'image' && req.file.buffer) {
         try {
-          // Read the file as a buffer
-          const fileBuffer = fs.readFileSync(savedFilePath);
-          
-          // Convert to base64 and create data URL
-          const base64 = fileBuffer.toString('base64');
+          const base64 = req.file.buffer.toString('base64');
           const mimeType = req.file.mimetype || 'image/png';
           dataUrl = `data:${mimeType};base64,${base64}`;
-          
-
         } catch (error) {
           console.error('Error creating data URL:', error);
         }
@@ -867,24 +871,22 @@ router.post('/:bookingId/messages', auth, requireEmailVerification, upload.singl
 // Add a new route to serve static files from uploads folder with dynamic watermarking
 router.get('/uploads/:filename', async (req, res) => {
   try {
-    const filename = req.params.filename;
+    const filename = path.basename(req.params.filename);
     const filePath = path.resolve(__dirname, '../uploads/bookings', filename);
-    
-    // Check if file exists
-    if (!fs.existsSync(filePath)) {
-      console.error('File not found at path:', filePath);
-      return res.status(404).send('File not found');
-    }
-    
-    // Check if this file should be watermarked
+
     let shouldWatermark = false;
+    let attachmentRef = `/uploads/bookings/${filename}`;
     try {
-      const message = await BookingMessage.findOne({ 
-        attachment: `/uploads/bookings/${filename}`,
-        isWatermarked: true 
+      const message = await BookingMessage.findOne({
+        $or: [
+          { attachment: `/uploads/bookings/${filename}` },
+          { attachment: { $regex: new RegExp(`${filename.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`) } }
+        ],
+        isWatermarked: true
       }).lean();
-      
+
       if (message) {
+        attachmentRef = message.attachment;
         const booking = await Booking.findById(message.bookingId);
         if (booking && booking.status !== 'completed') {
           shouldWatermark = true;
@@ -893,31 +895,38 @@ router.get('/uploads/:filename', async (req, res) => {
     } catch (err) {
       console.error('Error checking watermark status:', err);
     }
-    
-    // If should watermark, apply watermark dynamically
-    if (shouldWatermark) {
-      try {
-        const watermarkedBuffer = await addWatermarkToBuffer(filePath, 'Aquads');
-        
-        // Set correct content type
-        const ext = path.extname(filename).toLowerCase();
-        if (ext === '.jpg' || ext === '.jpeg') {
-          res.set('Content-Type', 'image/jpeg');
-        } else if (ext === '.png') {
-          res.set('Content-Type', 'image/png');
-        } else if (ext === '.gif') {
-          res.set('Content-Type', 'image/gif');
+
+    const fileBuffer = await loadBookingFileBuffer(attachmentRef, filename);
+
+    if (fileBuffer) {
+      if (shouldWatermark) {
+        try {
+          const watermarkedBuffer = await addWatermarkToBuffer(fileBuffer, 'Aquads');
+          const ext = path.extname(filename).toLowerCase();
+          if (ext === '.jpg' || ext === '.jpeg') res.set('Content-Type', 'image/jpeg');
+          else if (ext === '.png') res.set('Content-Type', 'image/png');
+          else if (ext === '.gif') res.set('Content-Type', 'image/gif');
+          else res.set('Content-Type', 'image/png');
+          return res.send(watermarkedBuffer);
+        } catch (watermarkError) {
+          console.error('Error applying watermark:', watermarkError);
         }
-        
-        res.send(watermarkedBuffer);
-        return;
-      } catch (watermarkError) {
-        console.error('Error applying watermark:', watermarkError);
-        // Fall through to serve original file
       }
+
+      const ext = path.extname(filename).toLowerCase();
+      if (ext === '.jpg' || ext === '.jpeg') res.set('Content-Type', 'image/jpeg');
+      else if (ext === '.png') res.set('Content-Type', 'image/png');
+      else if (ext === '.gif') res.set('Content-Type', 'image/gif');
+      else if (ext === '.pdf') res.set('Content-Type', 'application/pdf');
+      else if (ext === '.webm') res.set('Content-Type', 'audio/webm');
+      return res.send(fileBuffer);
+    }
+
+    if (!fs.existsSync(filePath)) {
+      console.error('File not found at path:', filePath);
+      return res.status(404).send('File not found');
     }
     
-    // Serve original file
     const ext = path.extname(filename).toLowerCase();
     if (ext === '.jpg' || ext === '.jpeg') {
       res.set('Content-Type', 'image/jpeg');
@@ -1063,68 +1072,61 @@ router.get('/file', async (req, res) => {
       return res.status(400).json({ error: 'Filename is required' });
     }
     
-    // Sanitize the filename to prevent directory traversal attacks
     const sanitizedFilename = path.basename(filename);
-    
-    // Check if this is a watermarked file
     const isWatermarked = sanitizedFilename.startsWith('watermarked-');
-    
-    // If watermarked and bookingId is provided, check if the booking is completed
     let useOriginalFile = false;
     
     if (isWatermarked && bookingId) {
       try {
-        // Find the booking
         const booking = await Booking.findById(bookingId);
         if (booking && booking.status === 'completed') {
           useOriginalFile = true;
-      
         }
       } catch (err) {
         console.error('Error checking booking status:', err);
-        // If error, continue with watermarked file
       }
     }
-    
-    // Construct path to the file
-    let filePath;
-    
-    if (useOriginalFile) {
-      // If booking is completed, serve the original file
-      const originalFilename = 'original-' + sanitizedFilename.replace('watermarked-', '');
-      filePath = path.join(__dirname, '../uploads/bookings/originals', originalFilename);
-  
-    } else {
-      // Otherwise serve the requested file (watermarked or regular)
-      filePath = path.join(__dirname, '../uploads/bookings', sanitizedFilename);
-    
+
+    let attachmentRef = `/uploads/bookings/${sanitizedFilename}`;
+    if (bookingId) {
+      const msg = await BookingMessage.findOne({
+        bookingId,
+        $or: [
+          { attachment: `/uploads/bookings/${sanitizedFilename}` },
+          { attachment: { $regex: new RegExp(`${sanitizedFilename.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`) } }
+        ]
+      }).lean();
+      if (msg?.attachment) attachmentRef = msg.attachment;
+    }
+
+    const lookupName = useOriginalFile
+      ? sanitizedFilename.replace('watermarked-', 'original-')
+      : sanitizedFilename;
+
+    const fileBuffer = await loadBookingFileBuffer(attachmentRef, lookupName);
+    if (!fileBuffer) {
+      const filePath = path.join(__dirname, '../uploads/bookings', lookupName);
+      if (!fs.existsSync(filePath)) {
+        console.error('File not found:', lookupName);
+        return res.status(404).send('File not found');
+      }
+      res.set('Access-Control-Allow-Origin', '*');
+      res.set('Cross-Origin-Resource-Policy', 'cross-origin');
+      res.set('Cache-Control', 'public, max-age=3600');
+      return res.sendFile(filePath);
     }
     
-    // Check if file exists
-    if (!fs.existsSync(filePath)) {
-      console.error('File not found at path:', filePath);
-      return res.status(404).send('File not found');
-    }
-    
-    // Set content type based on file extension
     const ext = path.extname(sanitizedFilename).toLowerCase();
-    if (ext === '.jpg' || ext === '.jpeg') {
-      res.set('Content-Type', 'image/jpeg');
-    } else if (ext === '.png') {
-      res.set('Content-Type', 'image/png');
-    } else if (ext === '.gif') {
-      res.set('Content-Type', 'image/gif');
-    } else if (ext === '.pdf') {
-      res.set('Content-Type', 'application/pdf');
-    }
+    if (ext === '.jpg' || ext === '.jpeg') res.set('Content-Type', 'image/jpeg');
+    else if (ext === '.png') res.set('Content-Type', 'image/png');
+    else if (ext === '.gif') res.set('Content-Type', 'image/gif');
+    else if (ext === '.pdf') res.set('Content-Type', 'application/pdf');
+    else if (ext === '.webm') res.set('Content-Type', 'audio/webm');
     
-    // Set CORS headers
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Cross-Origin-Resource-Policy', 'cross-origin');
     res.set('Cache-Control', 'public, max-age=3600');
-    
-    // Stream the file
-    res.sendFile(filePath);
+    res.send(fileBuffer);
   } catch (error) {
     console.error('Error serving file through query param:', error);
     res.status(500).send('Error serving file');
