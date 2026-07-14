@@ -8,6 +8,7 @@ const BlogImage = require('../models/BlogImage');
 const auth = require('../middleware/auth');
 const requireEmailVerification = require('../middleware/emailVerification');
 const User = require('../models/User');
+const spaces = require('../utils/spaces');
 
 const getApiBaseUrl = () => {
   if (process.env.PUBLIC_UPLOAD_BASE_URL) {
@@ -120,6 +121,16 @@ router.post(
       const variant = req.body?.variant === 'banner' ? 'banner' : 'inline';
       const optimized = await optimizeBlogImageBuffer(req.file.buffer, variant);
       const contentType = 'image/webp';
+
+      if (spaces.isConfigured()) {
+        const folder = variant === 'banner' ? 'blogs/banners' : 'blogs/inline';
+        const key = spaces.buildKey(folder, 'image.webp');
+        const url = await spaces.uploadBuffer(optimized, {
+          key,
+          contentType
+        });
+        return res.status(201).json({ url });
+      }
 
       const blogImage = await BlogImage.create({
         data: optimized,

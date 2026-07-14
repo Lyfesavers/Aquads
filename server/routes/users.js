@@ -23,9 +23,10 @@ const { validateLogin, validateRegistration } = require('../middleware/inputVali
 const { resolveLinkInBioButtonLook, lookToLegacyStyle, LEGACY_STYLE_MAP } = require('../utils/linkInBioButtonLook');
 const { sanitizeBioLinkIconKey, sanitizeBioLinkIconImageUrl } = require('../utils/linkInBioIcons');
 const { cascadeUsernameRename } = require('../utils/usernameRenameCascade');
+const spaces = require('../utils/spaces');
 
 // ──────────────────────────────────────────────────────────────────────────────
-// Avatar upload (stored in MongoDB so files survive Railway redeploys).
+// Avatar upload → DigitalOcean Spaces CDN when configured (falls back to MongoDB locally).
 // Public endpoint because users upload during signup, before an account exists.
 // Rate-limited by IP and capped at 4MB to deter abuse.
 // ──────────────────────────────────────────────────────────────────────────────
@@ -95,6 +96,15 @@ router.post(
       }
 
       const optimized = await optimizeAvatarBuffer(req.file.buffer);
+
+      if (spaces.isConfigured()) {
+        const key = spaces.buildKey('users', 'avatar.webp');
+        const url = await spaces.uploadBuffer(optimized, {
+          key,
+          contentType: 'image/webp'
+        });
+        return res.status(201).json({ url });
+      }
 
       const userImage = await UserImage.create({
         data: optimized,

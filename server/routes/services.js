@@ -13,9 +13,10 @@ const upload = require('../middleware/upload');
 const { awardListingPoints } = require('./points');
 const { createNotification } = require('./notifications');
 const { emitServiceApproved, emitServiceRejected, emitNewServicePending } = require('../socket');
+const spaces = require('../utils/spaces');
 
 // ──────────────────────────────────────────────────────────────────────────────
-// Service image upload (stored in MongoDB so files survive Railway redeploys).
+// Service image upload → DigitalOcean Spaces CDN when configured (falls back to MongoDB locally).
 // Auth required: only logged-in users with verified email can list services,
 // so we gate the upload behind the same checks.
 // ──────────────────────────────────────────────────────────────────────────────
@@ -78,6 +79,15 @@ router.post(
       }
 
       const optimized = await optimizeServiceImageBuffer(req.file.buffer);
+
+      if (spaces.isConfigured()) {
+        const key = spaces.buildKey('services', 'image.webp');
+        const url = await spaces.uploadBuffer(optimized, {
+          key,
+          contentType: 'image/webp'
+        });
+        return res.status(201).json({ url });
+      }
 
       const serviceImage = await ServiceImage.create({
         data: optimized,
