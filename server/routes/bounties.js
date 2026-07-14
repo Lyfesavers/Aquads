@@ -3,8 +3,10 @@ const router = express.Router();
 const Bounty = require('../models/Bounty');
 const BountyEscrow = require('../models/BountyEscrow');
 const Ad = require('../models/Ad');
+const User = require('../models/User');
 const auth = require('../middleware/auth');
 const bountyEscrowService = require('../services/bountyEscrowService');
+const { getHunterAquaPayReadiness, bountyAquaPayReadinessError } = require('../utils/bountyAquaPay');
 
 const FEE_PERCENTAGE = 0.0125;
 const MAX_BOUNTY_RESOURCES = 10;
@@ -506,6 +508,12 @@ router.post('/:id/submit', auth, async (req, res) => {
       return res.status(400).json({ error: 'You have already submitted to this bounty' });
     }
 
+    const hunter = await User.findById(req.user.userId).select('aquaPay').lean();
+    const aquaPayReadiness = getHunterAquaPayReadiness(hunter?.aquaPay);
+    if (!aquaPayReadiness.ready) {
+      return res.status(400).json({ error: bountyAquaPayReadinessError(aquaPayReadiness.missing) });
+    }
+
     bounty.submissions.push({
       hunterId: req.user.userId,
       hunterUsername: req.user.username,
@@ -550,6 +558,14 @@ router.post('/:id/approve', auth, async (req, res) => {
     const escrow = await BountyEscrow.findById(bounty.escrowId);
     if (!escrow || escrow.status !== 'funded') {
       return res.status(400).json({ error: 'Escrow is not funded or already resolved' });
+    }
+
+    const winner = await User.findById(submission.hunterId).select('aquaPay').lean();
+    const aquaPayReadiness = getHunterAquaPayReadiness(winner?.aquaPay);
+    if (!aquaPayReadiness.ready) {
+      return res.status(400).json({
+        error: `This hunter cannot be paid yet. ${bountyAquaPayReadinessError(aquaPayReadiness.missing)}`
+      });
     }
 
     // Assign the winner then release on-chain.

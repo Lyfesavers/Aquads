@@ -53,6 +53,17 @@ const resourceHost = (url) => {
   }
 };
 
+const getHunterAquaPayReadiness = (user) => {
+  const aquaPay = user?.aquaPay;
+  const missing = [];
+
+  if (!aquaPay?.isEnabled) missing.push('AquaPay activation');
+  if (!aquaPay?.wallets?.solana?.trim()) missing.push('Solana wallet address');
+  if (!aquaPay?.wallets?.ethereum?.trim()) missing.push('EVM wallet address');
+
+  return { ready: missing.length === 0, missing };
+};
+
 const BountyResourcesEditor = ({ resources, onChange }) => {
   const add = () => {
     if (resources.length >= MAX_BOUNTY_RESOURCES) return;
@@ -1083,6 +1094,7 @@ const BountyDetailModal = ({ bountyId, bounty, loading, currentUser, onClose, on
   const alreadySubmitted = bounty?.mySubmission || (bounty?.submissions || []).some(
     s => currentUser && s.hunterId?.toString() === (currentUser.userId || currentUser._id || currentUser.id)?.toString()
   );
+  const aquaPayReadiness = getHunterAquaPayReadiness(currentUser);
 
   const handleShare = () => {
     if (!bountyId) return;
@@ -1198,15 +1210,31 @@ const BountyDetailModal = ({ bountyId, bounty, loading, currentUser, onClose, on
                     <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-3 text-sm text-emerald-300">
                       You've submitted to this bounty. The poster will review submissions and approve a winner.
                     </div>
+                  ) : !aquaPayReadiness.ready ? (
+                    <div className="bg-amber-500/10 border border-amber-500/25 rounded-lg p-4 text-sm text-amber-100">
+                      <p className="font-semibold text-amber-50 mb-2">AquaPay setup required</p>
+                      <p className="mb-3">
+                        Before you can submit to paid bounties, activate AquaPay and add both a Solana and EVM wallet address.
+                        Bounty payouts are sent on-chain to the wallet that matches the poster&apos;s funding network.
+                      </p>
+                      <p className="text-xs text-amber-200/90 mb-3">
+                        Still needed: {aquaPayReadiness.missing.join(', ')}.
+                      </p>
+                      <Link
+                        to="/dashboard/aquapay"
+                        className="inline-flex items-center gap-1.5 px-3 py-2 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/30 rounded-lg text-xs font-semibold text-amber-50"
+                      >
+                        Configure AquaPay
+                      </Link>
+                    </div>
                   ) : (
                     <>
                       <h4 className="text-sm font-semibold text-slate-300 mb-2">Submit your work</h4>
-                      <div className="flex items-start gap-2 bg-amber-500/10 border border-amber-500/25 rounded-lg p-3 mb-3 text-xs text-amber-200">
+                      <div className="flex items-start gap-2 bg-cyan-500/10 border border-cyan-500/25 rounded-lg p-3 mb-3 text-xs text-cyan-100">
                         <span className="text-base leading-none mt-0.5">💸</span>
                         <p>
-                          To participate and receive your reward, you must have{' '}
-                          <Link to="/aquapay" className="font-semibold text-amber-100 underline hover:text-white">AquaPay</Link>{' '}
-                          set up and activated on your account. Winners are paid out through AquaPay escrow — set it up before submitting.
+                          Your AquaPay is ready. If you win, the reward will be sent to your Solana or EVM AquaPay wallet,
+                          depending on the network the poster used to fund the bounty.
                         </p>
                       </div>
                       <input value={submissionUrl} onChange={e => setSubmissionUrl(e.target.value)}
