@@ -9,6 +9,14 @@ import ProfileModal from './ProfileModal';
 import CreateBannerModal from './CreateBannerModal';
 import NotificationBell from './NotificationBell';
 import { getDisplayName } from '../utils/nameUtils';
+import { StandardMobileNavLinks } from './StandardNavLinks';
+import {
+  MobileHamburgerButton,
+  MobileMenuPanel,
+  MobileNavAuthSection,
+  MobileNavButton,
+  MobileNavLink,
+} from './MobileNavMenu';
 
 const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBannerSubmit, openMintFunnelPlatform }) => {
   const [partners, setPartners] = useState([]);
@@ -173,7 +181,7 @@ const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, o
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900">
       {/* Header Navigation - Same style as Marketplace */}
-      <nav className="relative z-50 bg-black/20 backdrop-blur-md border-b border-white/10">
+      <nav className="relative z-50 bg-black/20 backdrop-blur-md border-b border-white/10 overflow-visible">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
@@ -186,21 +194,10 @@ const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, o
               </Link>
             </div>
 
-            {/* Mobile menu button */}
-            <div className="md:hidden">
-              <button
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="text-gray-300 hover:text-white p-3 rounded-md"
-              >
-                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  {isMobileMenuOpen ? (
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  ) : (
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                  )}
-                </svg>
-              </button>
-            </div>
+            <MobileHamburgerButton
+              isOpen={isMobileMenuOpen}
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            />
 
             {/* Desktop menu */}
             <div className="hidden md:flex items-center space-x-3">
@@ -224,6 +221,12 @@ const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, o
                 Games
               </Link>
               <Link
+                to="/bounties"
+                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
+              >
+                Bounties
+              </Link>
+              <Link
                 to="/partner-rewards"
                 className="bg-blue-600/90 hover:bg-blue-500/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-blue-500/30 transition-all duration-300 backdrop-blur-sm text-white"
               >
@@ -240,6 +243,18 @@ const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, o
                 className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
               >
                 Learn
+              </Link>
+              <Link
+                to="/list-token-free"
+                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
+              >
+                List token free
+              </Link>
+              <Link
+                to="/claim-bubble"
+                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
+              >
+                Claim bubble
               </Link>
 
               {currentUser ? (
@@ -309,93 +324,45 @@ const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, o
           </div>
         </div>
 
-        {/* Mobile menu */}
-        {isMobileMenuOpen && (
-          <div className="md:hidden bg-black/90 backdrop-blur-md border-t border-white/10">
-            <div className="px-2 pt-2 pb-3 space-y-1">
-              <Link 
-                to="/home" 
-                className="block px-3 py-2 text-gray-300 hover:text-white"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Home
-              </Link>
-              <Link 
-                to="/marketplace" 
-                className="block px-3 py-2 text-gray-300 hover:text-white"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Marketplace
-              </Link>
-              <Link 
-                to="/games" 
-                className="block px-3 py-2 text-gray-300 hover:text-white"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Games
-              </Link>
-              <Link 
-                to="/partner-rewards" 
-                className="block px-3 py-2 text-blue-400 font-medium"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                🤝 Partners
-              </Link>
-              <button
-                onClick={openMintFunnelPlatform}
-                className="block w-full text-left px-3 py-2 text-gray-300 hover:text-white"
-              >
-                Paid Ads
-              </button>
-              <Link 
-                to="/learn" 
-                className="block px-3 py-2 text-gray-300 hover:text-white"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Learn
-              </Link>
-
-              {currentUser ? (
-                <>
-                  <Link
-                    to="/dashboard"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="block w-full text-left px-3 py-2 text-gray-300 hover:text-white"
-                  >
-                    📊 Dashboard
-                  </Link>
-                  <button
-                    onClick={() => { setShowProfileModal(true); setIsMobileMenuOpen(false); }}
-                    className="block w-full text-left px-3 py-2 text-gray-300 hover:text-white"
-                  >
-                    👤 Profile
-                  </button>
-                  <button
-                    onClick={() => { onLogout(); setIsMobileMenuOpen(false); }}
-                    className="block w-full text-left px-3 py-2 text-gray-300 hover:text-white"
-                  >
-                    🚪 Logout
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button
-                    onClick={() => { setShowLoginModal(true); setIsMobileMenuOpen(false); }}
-                    className="block w-full text-left px-3 py-2 text-gray-300 hover:text-white"
-                  >
-                    Login
-                  </button>
-                  <button
-                    onClick={() => { setShowCreateAccountModal(true); setIsMobileMenuOpen(false); }}
-                    className="block w-full text-left px-3 py-2 text-blue-400"
-                  >
-                    Sign Up
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-        )}
+        <MobileMenuPanel isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)}>
+          <StandardMobileNavLinks
+            onNavigate={() => setIsMobileMenuOpen(false)}
+            openMintFunnelPlatform={openMintFunnelPlatform}
+            marketplaceLabel="Marketplace"
+          />
+          <MobileNavAuthSection
+            currentUser={currentUser}
+            displayName={currentUser ? getDisplayName(currentUser) : null}
+            onClose={() => setIsMobileMenuOpen(false)}
+            onLogin={() => setShowLoginModal(true)}
+            onCreateAccount={() => setShowCreateAccountModal(true)}
+            onLogout={onLogout}
+            notificationBell={currentUser ? (
+              <div className="flex justify-center py-2">
+                <NotificationBell currentUser={currentUser} />
+              </div>
+            ) : null}
+            loggedInExtras={currentUser ? (
+              <>
+                <MobileNavLink
+                  to="/dashboard"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  icon="📊"
+                  label="Dashboard"
+                  className="hover:bg-cyan-500/10"
+                />
+                <MobileNavButton
+                  onClick={() => {
+                    setShowProfileModal(true);
+                    setIsMobileMenuOpen(false);
+                  }}
+                  icon="👤"
+                  label="Profile"
+                />
+              </>
+            ) : null}
+          />
+        </MobileMenuPanel>
       </nav>
 
       {/* Banner Display */}

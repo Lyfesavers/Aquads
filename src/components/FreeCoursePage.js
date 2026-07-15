@@ -14,6 +14,13 @@ import LoginModal from './LoginModal';
 import CreateAccountModal from './CreateAccountModal';
 import { fetchFreeCourse } from '../services/api';
 import { getDisplayName } from '../utils/nameUtils';
+import { StandardDesktopNavLinks, StandardMobileNavLinks } from './StandardNavLinks';
+import {
+  MobileHamburgerButton,
+  MobileMenuPanel,
+  MobileNavAuthSection,
+  MobileNavLink,
+} from './MobileNavMenu';
 
 const FEED_LABEL = {
   technology: 'Technology & Programming',
@@ -167,7 +174,7 @@ const FreeCoursePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openM
   };
 
   const renderHeader = () => (
-    <nav className="fixed top-0 left-0 right-0 bg-gray-800/80 backdrop-blur-sm z-[200000]">
+    <nav className="fixed top-0 left-0 right-0 bg-gray-800/80 backdrop-blur-sm z-[200000] relative overflow-visible">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-14 sm:h-16">
           <div className="flex items-center">
@@ -180,49 +187,16 @@ const FreeCoursePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openM
             </Link>
           </div>
 
-          <div className="md:hidden">
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="text-gray-300 hover:text-yellow-400 p-2 rounded-lg hover:bg-gray-700/50 transition-colors"
-              aria-label="Toggle menu"
-            >
-              <svg className="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                {isMobileMenuOpen ? (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                ) : (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                )}
-              </svg>
-            </button>
-          </div>
+          <MobileHamburgerButton
+            isOpen={isMobileMenuOpen}
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          />
 
           <div className="hidden md:flex items-center space-x-2 lg:space-x-3">
-            <Link
-              to="/marketplace"
-              className="bg-gray-700/90 hover:bg-gray-600/90 px-2 lg:px-3 py-1.5 rounded text-xs lg:text-sm shadow-lg transition-all duration-300 backdrop-blur-sm text-yellow-400"
-            >
-              Freelancer
-            </Link>
-            <Link
-              to="/games"
-              className="bg-gray-700/90 hover:bg-gray-600/90 px-2 lg:px-3 py-1.5 rounded text-xs lg:text-sm shadow-lg transition-all duration-300 backdrop-blur-sm text-yellow-400"
-            >
-              Games
-            </Link>
-            {typeof openMintFunnelPlatform === 'function' && (
-              <button
-                onClick={openMintFunnelPlatform}
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-2 lg:px-3 py-1.5 rounded text-xs lg:text-sm shadow-lg transition-all duration-300 backdrop-blur-sm text-yellow-400"
-              >
-                Paid Ads
-              </button>
-            )}
-            <Link
-              to="/learn"
-              className="bg-gray-700/90 hover:bg-gray-600/90 px-2 lg:px-3 py-1.5 rounded text-xs lg:text-sm shadow-lg transition-all duration-300 backdrop-blur-sm text-yellow-400"
-            >
-              Learn
-            </Link>
+            <StandardDesktopNavLinks
+              openMintFunnelPlatform={openMintFunnelPlatform}
+              linkClassName="bg-gray-700/90 hover:bg-gray-600/90 px-2 lg:px-3 py-1.5 rounded text-xs lg:text-sm shadow-lg transition-all duration-300 backdrop-blur-sm text-yellow-400"
+            />
             {currentUser ? (
               <>
                 <Link
@@ -260,74 +234,36 @@ const FreeCoursePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openM
           </div>
         </div>
 
-        {isMobileMenuOpen && (
-          <div className="md:hidden py-3 z-[200000] relative bg-black">
-            <div className="flex flex-col space-y-2">
-              <Link
-                to="/learn"
+        <MobileMenuPanel isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)}>
+          <MobileNavLink
+            to="/learn"
+            onClick={() => setIsMobileMenuOpen(false)}
+            icon="📚"
+            label="Back to Learn"
+            className="hover:bg-cyan-500/10"
+          />
+          <StandardMobileNavLinks
+            onNavigate={() => setIsMobileMenuOpen(false)}
+            openMintFunnelPlatform={openMintFunnelPlatform}
+          />
+          <MobileNavAuthSection
+            currentUser={currentUser}
+            displayName={currentUser ? getDisplayName(currentUser) : null}
+            onClose={() => setIsMobileMenuOpen(false)}
+            onLogin={() => setShowLoginModal(true)}
+            onCreateAccount={() => setShowCreateAccountModal(true)}
+            onLogout={onLogout}
+            loggedInExtras={currentUser ? (
+              <MobileNavLink
+                to="/dashboard"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-3 rounded-lg text-center text-sm font-medium text-yellow-400"
-              >
-                ← Back to Learn
-              </Link>
-              <Link
-                to="/marketplace"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-3 rounded-lg text-center text-sm font-medium text-yellow-400"
-              >
-                Freelancer
-              </Link>
-              <Link
-                to="/games"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-3 rounded-lg text-center text-sm font-medium text-yellow-400"
-              >
-                Games
-              </Link>
-              {currentUser ? (
-                <>
-                  <Link
-                    to="/dashboard"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-3 rounded-lg text-center text-sm font-medium text-yellow-400"
-                  >
-                    Dashboard
-                  </Link>
-                  <button
-                    onClick={() => {
-                      onLogout();
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-3 rounded-lg text-center text-sm font-medium text-yellow-400"
-                  >
-                    Logout
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button
-                    onClick={() => {
-                      setShowLoginModal(true);
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-3 rounded-lg text-center text-sm font-medium text-yellow-400"
-                  >
-                    Login
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowCreateAccountModal(true);
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-3 rounded-lg text-center text-sm font-medium text-yellow-400"
-                  >
-                    Create Account
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-        )}
+                icon="📊"
+                label="Dashboard"
+                className="hover:bg-cyan-500/10"
+              />
+            ) : null}
+          />
+        </MobileMenuPanel>
       </div>
     </nav>
   );

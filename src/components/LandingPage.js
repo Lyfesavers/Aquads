@@ -4739,6 +4739,14 @@ const LandingPage = () => {
                       <span className="text-lg">👥</span>
                       <span className="font-medium">Freelancers</span>
                     </Link>
+                    <Link 
+                      to="/bounties"
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <span className="text-lg">🏆</span>
+                      <span className="font-medium">Bounties</span>
+                    </Link>
                     <div className="h-px bg-white/10 my-2" />
                     <Link 
                       to="/docs"
@@ -4763,6 +4771,22 @@ const LandingPage = () => {
                     >
                       <span className="text-lg">🎮</span>
                       <span className="font-medium">Games</span>
+                    </Link>
+                    <Link 
+                      to="/list-token-free"
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <span className="text-lg">✨</span>
+                      <span className="font-medium">List token free</span>
+                    </Link>
+                    <Link 
+                      to="/claim-bubble"
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-teal-500/10 transition-all"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <span className="text-lg">🫧</span>
+                      <span className="font-medium">Claim your bubble</span>
                     </Link>
                     <Link 
                       to="/aquaswap"

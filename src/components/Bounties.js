@@ -9,6 +9,13 @@ import CreateAccountModal from './CreateAccountModal';
 import Footer from './Footer';
 import NotificationBell from './NotificationBell';
 import { getDisplayName } from '../utils/nameUtils';
+import { StandardDesktopNavLinks, StandardMobileNavLinks } from './StandardNavLinks';
+import {
+  MobileHamburgerButton,
+  MobileMenuPanel,
+  MobileNavAuthSection,
+  MobileNavLink,
+} from './MobileNavMenu';
 
 const CATEGORIES = [
   { id: 'development', label: 'Development', icon: '💻' },
@@ -439,7 +446,7 @@ const Bounties = ({ currentUser, onLogin, onLogout, onCreateAccount, showNotific
       )}
 
       {/* Navigation - consistent with home/marketplace header */}
-      <nav className="sticky top-0 bg-gray-800/80 backdrop-blur-sm shadow-lg shadow-blue-500/20 z-50">
+      <nav className="sticky top-0 bg-gray-800/80 backdrop-blur-sm shadow-lg shadow-blue-500/20 z-50 relative overflow-visible">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
@@ -448,43 +455,17 @@ const Bounties = ({ currentUser, onLogin, onLogout, onCreateAccount, showNotific
               </Link>
             </div>
 
-            {/* Mobile menu button */}
-            <div className="md:hidden">
-              <button
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="text-gray-300 hover:text-white p-3 rounded-md"
-                aria-label="Toggle menu"
-              >
-                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  {isMobileMenuOpen ? (
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  ) : (
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                  )}
-                </svg>
-              </button>
-            </div>
+            <MobileHamburgerButton
+              isOpen={isMobileMenuOpen}
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            />
 
             {/* Desktop menu */}
             <div className="hidden md:flex items-center space-x-3">
-              <Link to="/marketplace" className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400">
-                Freelancer
-              </Link>
-              <Link to="/games" className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400">
-                Games
-              </Link>
-              <button onClick={openMintFunnelPlatform} className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400">
-                Paid Ads
-              </button>
-              <Link to="/learn" className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400">
-                Learn
-              </Link>
-              <Link to="/list-token-free" className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400">
-                List token free
-              </Link>
-              <Link to="/claim-bubble" className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400">
-                Claim bubble
-              </Link>
+              <StandardDesktopNavLinks
+                openMintFunnelPlatform={openMintFunnelPlatform}
+                marketplaceLabel="Freelancer"
+              />
 
               {currentUser ? (
                 <>
@@ -534,64 +515,35 @@ const Bounties = ({ currentUser, onLogin, onLogout, onCreateAccount, showNotific
             </div>
           </div>
 
-          {/* Mobile menu */}
-          <div className={`${isMobileMenuOpen ? 'block' : 'hidden'} md:hidden py-2 relative z-50`}>
-            <div className="flex flex-col space-y-2">
-              <Link to="/home" onClick={() => setIsMobileMenuOpen(false)} className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg transition-all duration-300 backdrop-blur-sm text-center text-yellow-400">
-                Home
-              </Link>
-              <Link to="/marketplace" onClick={() => setIsMobileMenuOpen(false)} className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg transition-all duration-300 backdrop-blur-sm text-center text-yellow-400">
-                Freelancer
-              </Link>
-              <Link to="/games" onClick={() => setIsMobileMenuOpen(false)} className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg transition-all duration-300 backdrop-blur-sm text-center text-yellow-400">
-                GameHub
-              </Link>
-              <button onClick={() => { openMintFunnelPlatform(); setIsMobileMenuOpen(false); }} className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg transition-all duration-300 backdrop-blur-sm text-center text-yellow-400">
-                Paid Ads
-              </button>
-              <Link to="/learn" onClick={() => setIsMobileMenuOpen(false)} className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg transition-all duration-300 backdrop-blur-sm text-center text-yellow-400">
-                Learn
-              </Link>
-              <Link to="/list-token-free" onClick={() => setIsMobileMenuOpen(false)} className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg transition-all duration-300 backdrop-blur-sm text-center text-yellow-400">
-                List token free
-              </Link>
-              <Link to="/claim-bubble" onClick={() => setIsMobileMenuOpen(false)} className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg transition-all duration-300 backdrop-blur-sm text-center text-yellow-400">
-                Claim bubble
-              </Link>
-              {currentUser ? (
-                <>
-                  <div className="flex justify-center">
-                    <NotificationBell currentUser={currentUser} />
-                  </div>
-                  <span className="text-blue-300 text-center">Welcome, {getDisplayName(currentUser)}!</span>
-                  <Link to="/dashboard" onClick={() => setIsMobileMenuOpen(false)} className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg transition-all duration-300 backdrop-blur-sm text-yellow-400 block text-center">
-                    Dashboard
-                  </Link>
-                  <Link to="/aquafi" onClick={() => setIsMobileMenuOpen(false)} className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg transition-all duration-300 backdrop-blur-sm text-yellow-400 block text-center">
-                    AquaFi
-                  </Link>
-                  <Link to="/aquaswap" onClick={() => setIsMobileMenuOpen(false)} className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg transition-all duration-300 backdrop-blur-sm text-yellow-400 block text-center">
-                    AquaSwap
-                  </Link>
-                  <Link to="/aquapay" onClick={() => setIsMobileMenuOpen(false)} className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg transition-all duration-300 backdrop-blur-sm text-yellow-400 block text-center">
-                    AquaPay
-                  </Link>
-                  <button onClick={() => { onLogout(); setIsMobileMenuOpen(false); }} className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg transition-all duration-300 backdrop-blur-sm text-yellow-400">
-                    Logout
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button onClick={() => { setShowLoginModal(true); setIsMobileMenuOpen(false); }} className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg transition-all duration-300 backdrop-blur-sm text-yellow-400">
-                    Login
-                  </button>
-                  <button onClick={() => { setShowCreateAccountModal(true); setIsMobileMenuOpen(false); }} className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg transition-all duration-300 backdrop-blur-sm text-yellow-400">
-                    Create Account
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
+          <MobileMenuPanel isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)}>
+            <StandardMobileNavLinks
+              onNavigate={() => setIsMobileMenuOpen(false)}
+              openMintFunnelPlatform={openMintFunnelPlatform}
+              marketplaceLabel="Freelancer"
+            />
+            <MobileNavAuthSection
+              currentUser={currentUser}
+              displayName={currentUser ? getDisplayName(currentUser) : null}
+              onClose={() => setIsMobileMenuOpen(false)}
+              onLogin={() => setShowLoginModal(true)}
+              onCreateAccount={() => setShowCreateAccountModal(true)}
+              onLogout={onLogout}
+              notificationBell={currentUser ? (
+                <div className="flex justify-center py-2">
+                  <NotificationBell currentUser={currentUser} />
+                </div>
+              ) : null}
+              loggedInExtras={currentUser ? (
+                <MobileNavLink
+                  to="/dashboard"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  icon="📊"
+                  label="Dashboard"
+                  className="hover:bg-cyan-500/10"
+                />
+              ) : null}
+            />
+          </MobileMenuPanel>
         </div>
       </nav>
 

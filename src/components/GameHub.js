@@ -15,6 +15,14 @@ import BannerDisplay from './BannerDisplay';
 import { Link } from 'react-router-dom';
 import { showToast } from './Toast';
 import { getDisplayName } from '../utils/nameUtils';
+import { StandardDesktopNavLinks, StandardMobileNavLinks } from './StandardNavLinks';
+import {
+  MobileHamburgerButton,
+  MobileMenuPanel,
+  MobileNavAuthSection,
+  MobileNavButton,
+  MobileNavLink,
+} from './MobileNavMenu';
 
 const BLOCKCHAIN_OPTIONS = [
   { label: 'All Blockchains', value: '' },
@@ -250,7 +258,7 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunn
       </Helmet>
 
       {/* Navigation - Same as main page */}
-      <nav className="fixed top-0 left-0 right-0 bg-gray-800/80 backdrop-blur-sm z-[200000]">
+      <nav className="fixed top-0 left-0 right-0 bg-gray-800/80 backdrop-blur-sm z-[200000] relative overflow-visible">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
                          <div className="flex items-center">
@@ -263,55 +271,14 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunn
                </Link>
              </div>
             
-            {/* Mobile menu button */}
-            <div className="md:hidden">
-              <button
-                onClick={() => setFilterOpen(!filterOpen)}
-                className="text-gray-300 hover:text-yellow-400 p-2"
-              >
-                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  {filterOpen ? (
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  ) : (
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                  )}
-                </svg>
-              </button>
-            </div>
+            <MobileHamburgerButton
+              isOpen={filterOpen}
+              onClick={() => setFilterOpen(!filterOpen)}
+            />
 
             {/* Desktop menu */}
             <div className="hidden md:flex items-center space-x-3">
-              {/* Main Navigation - Smaller buttons */}
-              <Link
-                to="/marketplace"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
-              >
-                Freelancer
-              </Link>
-              <Link
-                to="/games"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
-              >
-                Games
-              </Link>
-              <button
-                onClick={openMintFunnelPlatform}
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
-              >
-                Paid Ads
-              </button>
-              <Link
-                to="/learn"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
-              >
-                Learn
-              </Link>
-              <Link
-                to="/list-token-free"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
-              >
-                List token free
-              </Link>
+              <StandardDesktopNavLinks openMintFunnelPlatform={openMintFunnelPlatform} />
 
               {currentUser ? (
                 <>
@@ -401,110 +368,56 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunn
             </div>
           </div>
 
-          {/* Mobile menu */}
-          <div className={`${filterOpen ? 'block' : 'hidden'} md:hidden py-2 z-[200000] relative bg-black`}>
-            <div className="flex flex-col space-y-2">
-              <Link
-                to="/marketplace"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400"
-              >
-                Freelancer Hub
-              </Link>
-              <Link
-                to="/games"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400"
-              >
-                GameHub
-              </Link>
-              <button
-                onClick={openMintFunnelPlatform}
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400"
-              >
-                Paid Ads
-              </button>
-              <Link
-                to="/learn"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400"
-              >
-                Learn
-              </Link>
-              <Link
-                to="/list-token-free"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400"
-              >
-                List token free
-              </Link>
-              
-                             {currentUser ? (
-                 <div className="flex flex-col space-y-2">
-                   <Link
-                     to="/dashboard"
-                     onClick={() => setFilterOpen(false)}
-                     className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400 block"
-                   >
-                     Dashboard
-                   </Link>
-                   <button
-                     onClick={() => {
-                       setShowProjectModal(true);
-                       setFilterOpen(false);
-                     }}
-                     className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400"
-                   >
-                     List Project
-                   </button>
-                   <button
-                     onClick={() => {
-                       setShowBannerModal(true);
-                       setFilterOpen(false);
-                     }}
-                     className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400"
-                   >
-                     Create Banner Ad
-                   </button>
-                   <button
-                     onClick={() => {
-                       setShowCreateModal(true);
-                       setFilterOpen(false);
-                     }}
-                     className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400"
-                   >
-                     Create Game
-                   </button>
-                   <button
-                     onClick={() => {
-                       onLogout();
-                       setFilterOpen(false);
-                     }}
-                     className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400"
-                   >
-                     Logout
-                   </button>
-                 </div>
-               ) : (
-                <div className="flex flex-col space-y-2">
-                  <button
+          <MobileMenuPanel isOpen={filterOpen} onClose={() => setFilterOpen(false)}>
+            <StandardMobileNavLinks
+              onNavigate={() => setFilterOpen(false)}
+              openMintFunnelPlatform={openMintFunnelPlatform}
+              includeHome={false}
+            />
+            <MobileNavAuthSection
+              currentUser={currentUser}
+              displayName={currentUser ? getDisplayName(currentUser) : null}
+              onClose={() => setFilterOpen(false)}
+              onLogin={handleLoginClick}
+              onCreateAccount={handleCreateAccountClick}
+              onLogout={onLogout}
+              loggedInExtras={currentUser ? (
+                <>
+                  <MobileNavLink
+                    to="/dashboard"
+                    onClick={() => setFilterOpen(false)}
+                    icon="📊"
+                    label="Dashboard"
+                    className="hover:bg-cyan-500/10"
+                  />
+                  <MobileNavButton
                     onClick={() => {
-                      handleLoginClick();
+                      setShowProjectModal(true);
                       setFilterOpen(false);
                     }}
-                    className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400"
-                  >
-                    Login
-                  </button>
-                  <button
+                    icon="➕"
+                    label="List Project"
+                  />
+                  <MobileNavButton
                     onClick={() => {
-                      handleCreateAccountClick();
+                      setShowBannerModal(true);
                       setFilterOpen(false);
                     }}
-                    className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400"
-                  >
-                    Create Account
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
+                    icon="🎨"
+                    label="Create Banner Ad"
+                  />
+                  <MobileNavButton
+                    onClick={() => {
+                      setShowCreateModal(true);
+                      setFilterOpen(false);
+                    }}
+                    icon="🎮"
+                    label="Create Game"
+                  />
+                </>
+              ) : null}
+            />
+          </MobileMenuPanel>
         </div>
       </nav>
       

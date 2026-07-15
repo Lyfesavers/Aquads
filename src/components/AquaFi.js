@@ -12,6 +12,14 @@ import CreateServiceModal from './CreateServiceModal';
 import CreateBannerModal from './CreateBannerModal';
 import ProfileModal from './ProfileModal';
 import { getDisplayName } from '../utils/nameUtils';
+import { StandardDesktopNavLinks, StandardMobileNavLinks } from './StandardNavLinks';
+import {
+  MobileHamburgerButton,
+  MobileMenuPanel,
+  MobileNavAuthSection,
+  MobileNavButton,
+  MobileNavLink,
+} from './MobileNavMenu';
 import './AquaFi.css';
 
 const AquaFi = ({ currentUser, showNotification, onLogin, onLogout, onCreateAccount, openMintFunnelPlatform }) => {
@@ -145,7 +153,7 @@ const AquaFi = ({ currentUser, showNotification, onLogin, onLogout, onCreateAcco
       </div>
 
       {/* Enhanced Fixed Navigation */}
-      <nav className="sticky top-0 bg-gray-800/90 backdrop-blur-xl shadow-2xl shadow-blue-500/10 border-b border-gray-700/50 z-50">
+      <nav className="sticky top-0 bg-gray-800/90 backdrop-blur-xl shadow-2xl shadow-blue-500/10 border-b border-gray-700/50 z-50 relative overflow-visible">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
@@ -158,49 +166,17 @@ const AquaFi = ({ currentUser, showNotification, onLogin, onLogout, onCreateAcco
               </Link>
             </div>
 
-            {/* Mobile menu button */}
-            <div className="md:hidden">
-              <button
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="text-gray-300 hover:text-white p-3 rounded-md"
-              >
-                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  {isMobileMenuOpen ? (
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  ) : (
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                  )}
-                </svg>
-              </button>
-            </div>
+            <MobileHamburgerButton
+              isOpen={isMobileMenuOpen}
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            />
 
             {/* Desktop menu */}
             <div className="hidden md:flex items-center space-x-3">
-              {/* Main Navigation - Smaller buttons */}
-              <Link
-                to="/marketplace"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
-              >
-                Freelancer Hub
-              </Link>
-              <Link
-                to="/games"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
-              >
-                Games
-              </Link>
-              <button
-                onClick={openMintFunnelPlatform}
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
-              >
-                Paid Ads
-              </button>
-              <Link
-                to="/learn"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
-              >
-                Learn
-              </Link>
+              <StandardDesktopNavLinks
+                openMintFunnelPlatform={openMintFunnelPlatform}
+                marketplaceLabel="Freelancer Hub"
+              />
 
               {currentUser ? (
                 <>
@@ -290,107 +266,60 @@ const AquaFi = ({ currentUser, showNotification, onLogin, onLogout, onCreateAcco
             </div>
           </div>
 
-          {/* Mobile menu */}
-          <div className={`${isMobileMenuOpen ? 'block' : 'hidden'} md:hidden py-2 z-[200000] relative bg-black`}>
-            <div className="flex flex-col space-y-2">
-              <Link
-                to="/marketplace"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400"
-              >
-                Freelancer Hub
-              </Link>
-              <Link
-                to="/games"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400"
-              >
-                GameHub
-              </Link>
-              <button
-                onClick={openMintFunnelPlatform}
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400"
-              >
-                Paid Ads
-              </button>
-              <Link
-                to="/learn"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400"
-              >
-                Learn
-              </Link>
-              {currentUser ? (
+          <MobileMenuPanel isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)}>
+            <StandardMobileNavLinks
+              onNavigate={() => setIsMobileMenuOpen(false)}
+              openMintFunnelPlatform={openMintFunnelPlatform}
+            />
+            <MobileNavAuthSection
+              currentUser={currentUser}
+              displayName={currentUser ? getDisplayName(currentUser) : null}
+              onClose={() => setIsMobileMenuOpen(false)}
+              onLogin={handleLoginClick}
+              onCreateAccount={handleCreateAccountClick}
+              onLogout={onLogout}
+              notificationBell={currentUser ? (
+                <div className="flex justify-center py-2">
+                  <NotificationBell currentUser={currentUser} />
+                </div>
+              ) : null}
+              loggedInExtras={currentUser ? (
                 <>
-                  <div className="flex justify-center">
-                    <NotificationBell currentUser={currentUser} />
-                  </div>
-                  <span className="text-blue-300 text-center">Welcome, {getDisplayName(currentUser)}!</span>
-                  <Link
+                  <MobileNavLink
                     to="/dashboard"
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400 block text-center"
-                  >
-                    📊 Dashboard
-                  </Link>
-                  <button
+                    icon="📊"
+                    label="Dashboard"
+                    className="hover:bg-cyan-500/10"
+                  />
+                  <MobileNavButton
                     onClick={() => {
                       setShowCreateModal(true);
                       setIsMobileMenuOpen(false);
                     }}
-                    className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
-                  >
-                    ➕ List Service
-                  </button>
-                  <button
+                    icon="➕"
+                    label="List Service"
+                  />
+                  <MobileNavButton
                     onClick={() => {
                       setShowBannerModal(true);
                       setIsMobileMenuOpen(false);
                     }}
-                    className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
-                  >
-                    🎨 Create Banner Ad
-                  </button>
-                  <button
+                    icon="🎨"
+                    label="Create Banner Ad"
+                  />
+                  <MobileNavButton
                     onClick={() => {
                       setShowProfileModal(true);
                       setIsMobileMenuOpen(false);
                     }}
-                    className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
-                  >
-                    ⚙️ Edit Profile
-                  </button>
-                  <button
-                    onClick={() => {
-                      onLogout();
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
-                  >
-                    🚪 Logout
-                  </button>
+                    icon="⚙️"
+                    label="Edit Profile"
+                  />
                 </>
-              ) : (
-                <>
-                  <button
-                    onClick={() => {
-                      handleLoginClick();
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
-                  >
-                    Login
-                  </button>
-                  <button
-                    onClick={() => {
-                      handleCreateAccountClick();
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
-                  >
-                    Create Account
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
+              ) : null}
+            />
+          </MobileMenuPanel>
         </div>
       </nav>
 

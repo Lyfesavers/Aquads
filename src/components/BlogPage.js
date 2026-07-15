@@ -13,6 +13,14 @@ import ProfileModal from './ProfileModal';
 import { API_URL } from '../services/api';
 import { getBlogAuthorId } from '../utils/blogEditor';
 import { createBlogSlug as createSlug, getRelatedBlogs, blogPath, getFeatureLinkForBlog } from '../utils/blogRelatedPosts';
+import { StandardDesktopNavLinks, StandardMobileNavLinks } from './StandardNavLinks';
+import {
+  MobileHamburgerButton,
+  MobileMenuPanel,
+  MobileNavAuthSection,
+  MobileNavButton,
+  MobileNavLink,
+} from './MobileNavMenu';
 
 // Helper function to extract blogId from slug
 const extractBlogIdFromSlug = (slug) => {
@@ -380,7 +388,7 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
       </Helmet>
 
       {/* Header Navigation */}
-      <nav className="fixed top-0 left-0 right-0 bg-gray-800/80 backdrop-blur-sm z-[200000]">
+      <nav className="fixed top-0 left-0 right-0 bg-gray-800/80 backdrop-blur-sm z-[200000] relative overflow-visible">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
@@ -393,55 +401,14 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
               </Link>
             </div>
             
-            {/* Mobile menu button */}
-            <div className="md:hidden">
-              <button
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="text-gray-300 hover:text-yellow-400 p-2"
-              >
-                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  {isMobileMenuOpen ? (
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  ) : (
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                  )}
-                </svg>
-              </button>
-            </div>
+            <MobileHamburgerButton
+              isOpen={isMobileMenuOpen}
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            />
 
             {/* Desktop menu */}
             <div className="hidden md:flex items-center space-x-3">
-              {/* Main Navigation - Smaller buttons */}
-              <Link
-                to="/marketplace"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
-              >
-                Freelancer
-              </Link>
-              <Link
-                to="/games"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
-              >
-                Games
-              </Link>
-              <button
-                onClick={openMintFunnelPlatform}
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
-              >
-                Paid Ads
-              </button>
-              <Link
-                to="/learn"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
-              >
-                Learn
-              </Link>
-              <Link
-                to="/list-token-free"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
-              >
-                List token free
-              </Link>
+              <StandardDesktopNavLinks openMintFunnelPlatform={openMintFunnelPlatform} />
 
               {currentUser ? (
                 <>
@@ -538,119 +505,64 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
             </div>
           </div>
 
-          {/* Mobile menu */}
-          <div className={`${isMobileMenuOpen ? 'block' : 'hidden'} md:hidden py-2 z-[200000] relative bg-black`}>
-            <div className="flex flex-col space-y-2">
-              <Link
-                to="/marketplace"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400"
-              >
-                Freelancer Hub
-              </Link>
-              <Link
-                to="/games"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400"
-              >
-                GameHub
-              </Link>
-              <button
-                onClick={openMintFunnelPlatform}
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400"
-              >
-                Paid Ads
-              </button>
-              <Link
-                to="/learn"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400"
-              >
-                Learn
-              </Link>
-              <Link
-                to="/list-token-free"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400"
-              >
-                List token free
-              </Link>
-                             {currentUser ? (
-                 <>
-                   <span className="text-blue-300 text-center">Welcome, {getDisplayName(currentUser)}!</span>
-                  <button
+          <MobileMenuPanel isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)}>
+            <StandardMobileNavLinks
+              onNavigate={() => setIsMobileMenuOpen(false)}
+              openMintFunnelPlatform={openMintFunnelPlatform}
+            />
+            <MobileNavAuthSection
+              currentUser={currentUser}
+              displayName={currentUser ? getDisplayName(currentUser) : null}
+              onClose={() => setIsMobileMenuOpen(false)}
+              onLogin={() => setShowLoginModal(true)}
+              onCreateAccount={() => setShowCreateAccountModal(true)}
+              onLogout={onLogout}
+              loggedInExtras={currentUser ? (
+                <>
+                  <MobileNavButton
                     onClick={() => {
                       navigate('/home');
                       setIsMobileMenuOpen(false);
                     }}
-                    className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
-                  >
-                    Back to Main
-                   </button>
-                   <Link
-                     to="/dashboard"
-                     onClick={() => setIsMobileMenuOpen(false)}
-                     className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400 block text-center"
-                   >
-                     📊 Dashboard
-                   </Link>
-                   <button
-                     onClick={() => {
-                       setShowCreateModal(true);
-                       setIsMobileMenuOpen(false);
-                     }}
-                     className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
-                   >
-                     ➕ List Project
-                   </button>
-                   <button
-                     onClick={() => {
-                       setShowBannerModal(true);
-                       setIsMobileMenuOpen(false);
-                     }}
-                     className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
-                   >
-                     🎨 Create Banner Ad
-                   </button>
-                   <button
-                     onClick={() => {
-                       setShowProfileModal(true);
-                       setIsMobileMenuOpen(false);
-                     }}
-                     className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
-                   >
-                     ⚙️ Edit Profile
-                   </button>
-                   <button
-                     onClick={() => {
-                       onLogout();
-                       setIsMobileMenuOpen(false);
-                     }}
-                     className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
-                   >
-                     Logout
-                   </button>
-                 </>
-               ) : (
-                <>
-                  <button
+                    icon="🏠"
+                    label="Back to Main"
+                    className="hover:bg-cyan-500/10"
+                  />
+                  <MobileNavLink
+                    to="/dashboard"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    icon="📊"
+                    label="Dashboard"
+                    className="hover:bg-cyan-500/10"
+                  />
+                  <MobileNavButton
                     onClick={() => {
-                      setShowLoginModal(true);
+                      setShowCreateModal(true);
                       setIsMobileMenuOpen(false);
                     }}
-                    className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
-                  >
-                    Login
-                  </button>
-                  <button
+                    icon="➕"
+                    label="List Project"
+                  />
+                  <MobileNavButton
                     onClick={() => {
-                      setShowCreateAccountModal(true);
+                      setShowBannerModal(true);
                       setIsMobileMenuOpen(false);
                     }}
-                    className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
-                  >
-                    Create Account
-                  </button>
+                    icon="🎨"
+                    label="Create Banner Ad"
+                  />
+                  <MobileNavButton
+                    onClick={() => {
+                      setShowProfileModal(true);
+                      setIsMobileMenuOpen(false);
+                    }}
+                    icon="⚙️"
+                    label="Edit Profile"
+                  />
                 </>
-              )}
-            </div>
-          </div>
+              ) : null}
+            />
+          </MobileMenuPanel>
         </div>
       </nav>
 

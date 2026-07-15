@@ -28,6 +28,14 @@ import SkillBadges from './SkillBadges';
 import CVPreview from './CVPreview';
 import RiskGauge from './RiskGauge';
 import { getDisplayName } from '../utils/nameUtils';
+import { StandardDesktopNavLinks, StandardMobileNavLinks } from './StandardNavLinks';
+import {
+  MobileHamburgerButton,
+  MobileMenuPanel,
+  MobileNavAuthSection,
+  MobileNavButton,
+  MobileNavLink,
+} from './MobileNavMenu';
 import MatchedJobsSection from './MatchedJobsSection';
 
 // Helper function for country flags - using images instead of emojis
@@ -1102,7 +1110,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
       </div>
 
       {/* Fixed Navigation */}
-      <nav className="sticky top-0 bg-gray-800/80 backdrop-blur-sm shadow-lg shadow-blue-500/20 z-50">
+      <nav className="sticky top-0 bg-gray-800/80 backdrop-blur-sm shadow-lg shadow-blue-500/20 z-50 relative overflow-visible">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
@@ -1115,55 +1123,19 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
               </Link>
             </div>
 
-            {/* Mobile menu button */}
-            <div className="md:hidden">
-              <button
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="text-gray-300 hover:text-white p-3 rounded-md"
-              >
-                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  {isMobileMenuOpen ? (
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  ) : (
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                  )}
-                </svg>
-              </button>
-            </div>
+            <MobileHamburgerButton
+              isOpen={isMobileMenuOpen}
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            />
 
             {/* Desktop menu */}
             <div className="hidden md:flex items-center space-x-3">
-              {/* Main Navigation - Smaller buttons */}
-              <Link
-                to="/home"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
-              >
-                Home
-              </Link>
-              <Link
-                to="/games"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
-              >
-                Games
-              </Link>
-              <button
-                onClick={openMintFunnelPlatform}
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
-              >
-                Paid Ads
-              </button>
-              <Link
-                to="/learn"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
-              >
-                Learn
-              </Link>
-              <Link
-                to="/freelancer-benefits"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
-              >
-                Benefits
-              </Link>
+              <StandardDesktopNavLinks
+                openMintFunnelPlatform={openMintFunnelPlatform}
+                includeHome
+                includeBenefits
+                showMarketplace={false}
+              />
 
               {currentUser ? (
                 <>
@@ -1263,123 +1235,74 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
             </div>
           </div>
 
-          {/* Mobile menu */}
-          <div className={`${isMobileMenuOpen ? 'block' : 'hidden'} md:hidden py-2 z-[200000] relative bg-black`}>
-            <div className="flex flex-col space-y-2">
-              <Link
-                to="/home"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400"
-              >
-                Home
-              </Link>
-              <Link
-                to="/games"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400"
-              >
-                GameHub
-              </Link>
-              <button
-                onClick={openMintFunnelPlatform}
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400"
-              >
-                Paid Ads
-              </button>
-              <Link
-                to="/learn"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400"
-              >
-                Learn
-              </Link>
-              <Link
-                to="/freelancer-benefits"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-center text-yellow-400"
-              >
-                Benefits
-              </Link>
-              {currentUser ? (
+          <MobileMenuPanel
+            isOpen={isMobileMenuOpen}
+            onClose={() => setIsMobileMenuOpen(false)}
+          >
+            <StandardMobileNavLinks
+              onNavigate={() => setIsMobileMenuOpen(false)}
+              openMintFunnelPlatform={openMintFunnelPlatform}
+              includeHome
+              includeBenefits
+            />
+            <MobileNavAuthSection
+              currentUser={currentUser}
+              displayName={currentUser ? getDisplayName(currentUser) : null}
+              onClose={() => setIsMobileMenuOpen(false)}
+              onLogin={handleLoginClick}
+              onCreateAccount={handleCreateAccountClick}
+              onLogout={onLogout}
+              notificationBell={currentUser ? (
+                <div className="flex justify-center py-2">
+                  <NotificationBell currentUser={currentUser} />
+                </div>
+              ) : null}
+              loggedInExtras={currentUser ? (
                 <>
-                  <div className="flex justify-center">
-                    <NotificationBell currentUser={currentUser} />
-                  </div>
-                  <span className="text-blue-300 text-center">Welcome, {getDisplayName(currentUser)}!</span>
-                  <Link
+                  <MobileNavLink
                     to="/dashboard"
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400 block text-center"
-                  >
-                    Dashboard
-                  </Link>
-                  <button
+                    icon="📊"
+                    label="Dashboard"
+                    className="hover:bg-cyan-500/10"
+                  />
+                  <MobileNavButton
                     onClick={() => {
                       setShowCreateModal(true);
                       setIsMobileMenuOpen(false);
                     }}
-                    className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
-                  >
-                    List Service
-                  </button>
-                  <button
+                    icon="➕"
+                    label="List Service"
+                  />
+                  <MobileNavButton
                     onClick={() => {
                       setShowBannerModal(true);
                       setIsMobileMenuOpen(false);
                     }}
-                    className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
-                  >
-                    Create Banner Ad
-                  </button>
-                  <button
+                    icon="🎨"
+                    label="Create Banner Ad"
+                  />
+                  <MobileNavButton
                     onClick={() => {
                       setServiceToUpgrade(null);
                       setShowPremiumPaymentModal(true);
                       setIsMobileMenuOpen(false);
                     }}
-                    className="bg-yellow-600/90 hover:bg-yellow-500/90 px-4 py-2 rounded shadow-lg hover:shadow-yellow-500/30 transition-all duration-300 backdrop-blur-sm text-white"
-                  >
-                    ⭐ Get Premium
-                  </button>
-                  <button
+                    icon="⭐"
+                    label="Get Premium"
+                  />
+                  <MobileNavButton
                     onClick={() => {
                       setShowProfileModal(true);
                       setIsMobileMenuOpen(false);
                     }}
-                    className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
-                  >
-                    Edit Profile
-                  </button>
-                  <button
-                    onClick={() => {
-                      onLogout();
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
-                  >
-                    Logout
-                  </button>
+                    icon="⚙️"
+                    label="Edit Profile"
+                  />
                 </>
-              ) : (
-                <>
-                  <button
-                    onClick={() => {
-                      handleLoginClick();
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
-                  >
-                    Login
-                  </button>
-                  <button
-                    onClick={() => {
-                      handleCreateAccountClick();
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className="bg-gray-700/90 hover:bg-gray-600/90 px-4 py-2 rounded shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
-                  >
-                    Create Account
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
+              ) : null}
+            />
+          </MobileMenuPanel>
         </div>
       </nav>
 
