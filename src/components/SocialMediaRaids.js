@@ -105,6 +105,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
   });
   const [freeRaidSubmitting, setFreeRaidSubmitting] = useState(false);
   const [freeRaidEligibility, setFreeRaidEligibility] = useState(null);
+  const [showRules, setShowRules] = useState(false);
 
   // Use a state to track if preview is loading, rather than direct DOM manipulation
   const [previewState, setPreviewState] = useState({
@@ -1116,13 +1117,24 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
         </div>
         
         {/* Twitter Raid Rules */}
-        <div className="mt-4 bg-yellow-500/10 border border-yellow-500/30 p-4 rounded-lg">
-          <div className="flex items-start">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-yellow-400 mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        <div className="mt-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setShowRules(!showRules)}
+            className="w-full flex items-center justify-between p-4 text-left hover:bg-yellow-500/5 transition-colors"
+          >
+            <div className="flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-yellow-400 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <h4 className="text-yellow-400 font-semibold">Twitter Raid Rules</h4>
+            </div>
+            <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 text-yellow-400 flex-shrink-0 transition-transform ${showRules ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
             </svg>
-            <div className="flex-1">
-              <h4 className="text-yellow-400 font-semibold mb-2">Twitter Raid Rules</h4>
+          </button>
+          {showRules && (
+            <div className="px-4 pb-4">
               <div className="text-yellow-300 text-sm space-y-2">
                 <div className="bg-red-500/10 border border-red-400/40 rounded p-3">
                   <p className="text-red-200 font-semibold mb-1">You must do ALL 3 things — every time:</p>
@@ -1186,7 +1198,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                 </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
         
         {/* Global success message */}

@@ -103,6 +103,7 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
     description: 'Like, Share & Comment to earn 20 points!'
   });
   const [freeRaidEligibility, setFreeRaidEligibility] = useState(null);
+  const [showRules, setShowRules] = useState(false);
 
   // Fetch user points data from the backend API
   const fetchUserPoints = async () => {
@@ -585,9 +586,19 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
          </div>
          
          {/* Facebook Raid Rules */}
-         <div className="mt-6 p-4 bg-gray-700/50 rounded-lg border border-gray-600/50">
-           <h3 className="text-md font-semibold text-white mb-3">Facebook Raid Rules</h3>
-           
+         <div className="mt-6 bg-gray-700/50 rounded-lg border border-gray-600/50 overflow-hidden">
+           <button
+             type="button"
+             onClick={() => setShowRules(!showRules)}
+             className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-600/30 transition-colors"
+           >
+             <h3 className="text-md font-semibold text-white">Facebook Raid Rules</h3>
+             <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 text-gray-400 flex-shrink-0 transition-transform ${showRules ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+             </svg>
+           </button>
+           {showRules && (
+           <div className="px-4 pb-4">
            {/* Required actions + points */}
            <div className="bg-red-500/10 border border-red-400/40 rounded p-3 mb-4">
              <p className="text-red-200 font-semibold mb-1">You must do ALL 3 things — every time:</p>
@@ -653,6 +664,8 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
                </span>
              </li>
            </ul>
+           </div>
+           )}
          </div>
        </div>
 
