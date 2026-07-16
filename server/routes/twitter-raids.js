@@ -754,7 +754,7 @@ router.post('/:raidId/completions/:completionId/approve', auth, async (req, res)
         const referredUserId = completion.userId;
         const raidTitleForBonus = raid.title;
         setImmediate(() => {
-          pointsModule.creditReferrerBonus(referredUserId, `Twitter raid approved: ${raidTitleForBonus}`)
+          pointsModule.creditReferrerBonus(referredUserId, `Twitter raid approved: ${raidTitleForBonus}`, points)
             .catch(err => console.error('Twitter raid approve: referrer bonus failed', err));
         });
       }

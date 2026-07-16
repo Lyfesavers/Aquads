@@ -1931,7 +1931,7 @@ router.post('/verify-email', async (req, res) => {
         { new: true }
       );
       // Referrer bonus: when earner gets positive points, referrer gets 5 (additive only)
-      await creditReferrerBonus(user._id, 'Signup bonus with affiliate code (email verified)');
+      await creditReferrerBonus(user._id, 'Signup bonus with affiliate code (email verified)', 1000);
     }
 
     // Update last activity and issue session tokens (same pattern as login)

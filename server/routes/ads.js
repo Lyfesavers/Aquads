@@ -970,7 +970,7 @@ router.post('/:id/vote', auth, async (req, res) => {
           }
         );
         // Referrer bonus: when earner gets positive points, referrer gets 5 (additive only)
-        await creditReferrerBonus(userId, `Voted on bubble: ${adId}`);
+        await creditReferrerBonus(userId, `Voted on bubble: ${adId}`, BUBBLE_VOTE_POINTS);
       }
 
       const finalAd = await finalizeAdBumpAfterVote(updatedAd);
@@ -1035,7 +1035,7 @@ router.post('/:id/vote', auth, async (req, res) => {
           }
         );
         // Referrer bonus: when earner gets positive points, referrer gets 5 (additive only)
-        await creditReferrerBonus(userId, `Voted on bubble: ${adId}`);
+        await creditReferrerBonus(userId, `Voted on bubble: ${adId}`, BUBBLE_VOTE_POINTS);
       }
 
       const finalAd = await finalizeAdBumpAfterVote(updatedAd);

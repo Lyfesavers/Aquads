@@ -512,7 +512,7 @@ router.post('/:raidId/approve/:completionId', auth, requireEmailVerification, as
         const referredUserId = completion.userId;
         const raidTitleForBonus = raid.title;
         setImmediate(() => {
-          pointsModule.creditReferrerBonus(referredUserId, `Facebook raid approved: ${raidTitleForBonus}`)
+          pointsModule.creditReferrerBonus(referredUserId, `Facebook raid approved: ${raidTitleForBonus}`, points)
             .catch(err => console.error('Facebook raid approve: referrer bonus failed', err));
         });
       }

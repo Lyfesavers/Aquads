@@ -2503,7 +2503,7 @@ async function awardDailyMessagePoints(discordUserId, channelId) {
       createdAt: new Date()
     });
     await user.save();
-    await creditReferrerBonus(user._id, 'Daily message in Aquads Discord');
+    await creditReferrerBonus(user._id, 'Daily message in Aquads Discord', DAILY_ENGAGEMENT_POINTS);
 
     if (!engagement) {
       engagement = await DiscordDailyEngagement.create({
@@ -2570,7 +2570,7 @@ async function awardDailyReactionPoints(discordUserId, channelId) {
       createdAt: new Date()
     });
     await user.save();
-    await creditReferrerBonus(user._id, 'Daily reaction in Aquads Discord');
+    await creditReferrerBonus(user._id, 'Daily reaction in Aquads Discord', DAILY_ENGAGEMENT_POINTS);
 
     if (!engagement) {
       engagement = await DiscordDailyEngagement.create({

@@ -3267,7 +3267,7 @@ Earn points through platform activities and unlock rewards.
 | Profile Completion | 20 |
 | Skill Test Passed | 30 |
 
-**Referrer bonus (affiliates):** When someone who signed up with your referral code earns points anywhere on Aquads (raids, swaps, votes, games, etc.), you get **1 bonus point** each time — but only after they have earned **at least 5 points** from their own activity. See **Affiliate Program** in the docs for full details.
+**Referrer bonus (affiliates):** When someone who signed up with your referral code earns **5 or more points from a single action** (raids, swaps, daily engagement, etc.), you get **1 bonus point**. Small rewards like **1-point bubble votes** do not trigger the bonus. See **Affiliate Program** in the docs for full details.
 
 ### Points Dashboard
 
@@ -3777,20 +3777,19 @@ You can customize:
 |--------|--------|
 | New affiliate referral (email verified) | 5 points |
 | Referred user lists a service or ad | 20 points |
-| **Referrer bonus** — whenever a referred user earns points (after they have earned ≥5 pts themselves) | **+1 point to you** |
+| **Referrer bonus** — when a referred user earns **5+ points from one action** | **+1 point to you** |
 
 ### Referrer Bonus (Share Points)
 
-Whenever someone who signed up with your referral code **earns points** anywhere on Aquads, you automatically get **1 bonus point** added to your account once they have accumulated **at least 5 points** from their own activity. Their points stay the same—you get 1 on top.
+Whenever someone who signed up with your referral code **earns 5 or more points from a single action**, you automatically get **1 bonus point** added to your account. Their points stay the same—you get 1 on top.
 
 **When you earn the bonus:**
-- After your referral has earned **at least 5 points** from their own activity
-- They complete a raid (Twitter/Facebook)
-- They complete a qualifying AquaSwap swap (min. $5 USD notional) or vote on a bubble
-- They vote on a game, leave a service review, or earn daily Telegram/Discord engagement points
-- They earn other qualifying positive points in the ecosystem (not horse racing wins)
+- They complete a raid (Twitter/Facebook) for 5+ points
+- They complete a qualifying AquaSwap swap (min. $5 USD notional, 5 points)
+- They vote on a game, leave a service review, or earn daily Telegram/Discord engagement points (5+ each)
+- They earn other qualifying positive points of 5+ from a single action (not horse racing wins)
 
-**When you don’t:** If they *lose* points (e.g. betting, spending points), you don’t get the bonus—only when they *earn* points.
+**When you don’t:** Small rewards (e.g. **1-point bubble votes**), actions under 5 points, or when they *lose* points (e.g. betting, spending points)—only when they *earn* 5+ from one action.
 
 You’ll see these as **"Affiliate bonus: referred user earned points (…)"** in your points history. The more active your referrals, the more you earn.
 

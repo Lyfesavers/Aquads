@@ -11,14 +11,6 @@ const BUBBLE_VOTE_POINTS = 1;
 const NEW_AFFILIATE_POINTS = 5;
 const REFERRER_BONUS_MIN_EARNED_POINTS = 5;
 
-function getEarnedPointsTotal(pointsHistory) {
-  if (!pointsHistory?.length) return 0;
-  return pointsHistory.reduce((sum, entry) => {
-    const amount = entry.amount || 0;
-    return amount > 0 ? sum + amount : sum;
-  }, 0);
-}
-
 // Test route to verify points router is working
 router.get('/test', (req, res) => {
   res.json({ message: 'Points router is working' });
@@ -407,16 +399,19 @@ async function awardSocialMediaPoints(userId, platform, raidId) {
 
 /**
  * Rule: when a user (earner) receives positive points, their referrer gets REFERRER_BONUS_POINTS
- * only after the earner has accumulated REFERRER_BONUS_MIN_EARNED_POINTS from their own activity.
+ * only when that specific action awarded at least REFERRER_BONUS_MIN_EARNED_POINTS to the earner.
  * Only call this after awarding positive points to the earner. Do not call when awarding
  * to the referrer (e.g. signup/listing) or on deductions. Exclude admin-award and refunds.
+ * @param {number} earnedAmount - points awarded to the earner for this action
  * @param {Object} [options] - optional { gameId } for one-time-per-game dedupe (game votes)
  */
-async function creditReferrerBonus(referredUserId, sourceReason, options = {}) {
+async function creditReferrerBonus(referredUserId, sourceReason, earnedAmount, options = {}) {
   try {
-    const earner = await User.findById(referredUserId).select('referredBy pointsHistory').lean();
+    const amount = Number(earnedAmount);
+    if (!Number.isFinite(amount) || amount < REFERRER_BONUS_MIN_EARNED_POINTS) return;
+
+    const earner = await User.findById(referredUserId).select('referredBy').lean();
     if (!earner?.referredBy) return;
-    if (getEarnedPointsTotal(earner.pointsHistory) < REFERRER_BONUS_MIN_EARNED_POINTS) return;
     const referrerId = earner.referredBy;
 
     if (options.gameId) {
@@ -583,7 +578,7 @@ router.post('/swap-completed', auth, async (req, res) => {
       reason: 'Completed AquaSwap transaction'
     });
     // Referrer bonus: when earner gets positive points, referrer gets REFERRER_BONUS_POINTS (additive only)
-    await creditReferrerBonus(req.user.userId, 'Completed AquaSwap transaction');
+    await creditReferrerBonus(req.user.userId, 'Completed AquaSwap transaction', 5);
     
     res.json({
       success: true,
@@ -645,7 +640,7 @@ router.post('/shill-completed', auth, async (req, res) => {
       reason: 'Shared token on social media'
     });
     // Referrer bonus: when earner gets positive points, referrer gets REFERRER_BONUS_POINTS (additive only)
-    await creditReferrerBonus(req.user.userId, 'Shared token on social media (daily shill)');
+    await creditReferrerBonus(req.user.userId, 'Shared token on social media (daily shill)', 5);
     
     res.json({
       success: true,
@@ -706,7 +701,7 @@ const awardAffiliateReviewPoints = async (userId) => {
       return null;
     }
     // Referrer bonus: when earner gets positive points, referrer gets REFERRER_BONUS_POINTS (additive only)
-    await creditReferrerBonus(userId, 'Left a service review');
+    await creditReferrerBonus(userId, 'Left a service review', 20);
     return updatedUser;
   } catch (error) {
     return null;
@@ -763,7 +758,7 @@ const awardGameVotePoints = async (userId, gameId) => {
     );
     // Referrer bonus only on first vote per game — not when restoring after unvote
     if (updatedUser && !previouslyRevokedPoints) {
-      await creditReferrerBonus(userId, reason, { gameId });
+      await creditReferrerBonus(userId, reason, 20, { gameId });
     }
     return updatedUser;
   } catch (error) {

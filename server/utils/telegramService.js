@@ -6209,7 +6209,7 @@ Tap to update:`;
             }
           }
         });
-        await creditReferrerBonus(user._id, bubblePointsKey);
+        await creditReferrerBonus(user._id, bubblePointsKey, BUBBLE_VOTE_POINTS);
         pointsLine = `\n\n💰 +${BUBBLE_VOTE_POINTS} points (one time per bubble — your first vote here)`;
       }
 
@@ -7106,7 +7106,7 @@ Let's make today amazing! 🚀`;
       });
       await user.save();
       // Referrer bonus: when earner gets positive points, referrer gets 5 (additive only)
-      await creditReferrerBonus(user._id, 'Daily message in Aquads group');
+      await creditReferrerBonus(user._id, 'Daily message in Aquads group', POINTS);
 
       // Create or update engagement record
       if (!engagement) {
@@ -7189,7 +7189,7 @@ Let's make today amazing! 🚀`;
       });
       await user.save();
       // Referrer bonus: when earner gets positive points, referrer gets 5 (additive only)
-      await creditReferrerBonus(user._id, 'Daily reaction in Aquads group');
+      await creditReferrerBonus(user._id, 'Daily reaction in Aquads group', POINTS);
 
       // Create or update engagement record
       if (!engagement) {

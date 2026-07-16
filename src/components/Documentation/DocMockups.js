@@ -1292,7 +1292,7 @@ export const AffiliateMockup = () => (
           <ul className="text-gray-300 text-xs sm:text-sm space-y-1 leading-relaxed">
             <li>• <strong className="text-gray-100">5 pts</strong> — new affiliate referral (email verified)</li>
             <li>• <strong className="text-gray-100">20 pts</strong> — referred user lists a service or ad</li>
-            <li>• <strong className="text-gray-100">+1 pt</strong> — each time they earn points (referrer bonus; they must earn ≥5 pts first)</li>
+            <li>• <strong className="text-gray-100">+1 pt</strong> — when they earn <strong className="text-gray-100">5+ points</strong> from a single action (referrer bonus; 1-pt bubble votes do not qualify)</li>
           </ul>
         </div>
       </div>
