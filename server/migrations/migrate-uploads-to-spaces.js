@@ -19,6 +19,7 @@ const fs = require('fs');
 const path = require('path');
 const mongoose = require('mongoose');
 const spaces = require('../utils/spaces');
+const { normalizeBlogContentMediaUrls } = require('../utils/blogContentUrls');
 
 const DRY_RUN = process.argv.includes('--dry-run');
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/aquads';
@@ -313,10 +314,7 @@ const migrateMongoMediaBlobs = async (db) => {
   }).toArray();
 
   for (const blog of blogsWithMedia) {
-    const content = blog.content.replace(
-      /\/api\/blogs\/media\/([a-f0-9]{24})/gi,
-      (_, id) => spaces.toPublicUrl(`migrated/blogs/${id}.webp`)
-    );
+    const content = normalizeBlogContentMediaUrls(blog.content);
     if (content === blog.content) continue;
 
     if (DRY_RUN) {

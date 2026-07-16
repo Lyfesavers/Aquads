@@ -9,6 +9,7 @@ const auth = require('../middleware/auth');
 const requireEmailVerification = require('../middleware/emailVerification');
 const User = require('../models/User');
 const spaces = require('../utils/spaces');
+const { normalizeBlogContentMediaUrls } = require('../utils/blogContentUrls');
 
 const getApiBaseUrl = () => {
   if (process.env.PUBLIC_UPLOAD_BASE_URL) {
@@ -65,6 +66,7 @@ const fetchAndCacheBlogs = async () => {
   const blogs = await Blog.find().sort({ createdAt: -1 }).populate('author', 'username image').lean();
   const updatedBlogs = blogs.map(blog => {
     if (blog.author && blog.author.image) blog.authorImage = blog.author.image;
+    if (blog.content) blog.content = normalizeBlogContentMediaUrls(blog.content);
     return blog;
   });
   blogsListCache = updatedBlogs;
@@ -212,6 +214,10 @@ router.get('/:id', async (req, res) => {
     // Update authorImage field with the populated author image
     if (blog.author && blog.author.image) {
       blog.authorImage = blog.author.image;
+    }
+
+    if (blog.content) {
+      blog.content = normalizeBlogContentMediaUrls(blog.content);
     }
     
     res.json(blog);

@@ -6,7 +6,9 @@
     "start": "node index.js",
     "build": "npm install --legacy-peer-deps",
     "migrate:uploads-to-spaces": "node migrations/migrate-uploads-to-spaces.js",
-    "migrate:uploads-to-spaces:dry-run": "node migrations/migrate-uploads-to-spaces.js --dry-run"
+    "migrate:uploads-to-spaces:dry-run": "node migrations/migrate-uploads-to-spaces.js --dry-run",
+    "fix:blog-content-urls": "node migrations/fix-blog-content-media-urls.js",
+    "fix:blog-content-urls:dry-run": "node migrations/fix-blog-content-media-urls.js --dry-run"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1087.0",
