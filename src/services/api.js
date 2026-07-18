@@ -1452,6 +1452,22 @@ export const fetchMarketNews = async (page = 1, limit = 20, source = 'all') => {
   }
 };
 
+export const fetchTutorialVideos = async () => {
+  try {
+    const response = await fetch(`${API_URL}/tutorial-videos`, {
+      cache: 'no-store',
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to fetch tutorial videos');
+    }
+    return response.json();
+  } catch (error) {
+    logger.error('Error fetching tutorial videos:', error);
+    throw error;
+  }
+};
+
 export const fetchFreeCourses = async ({ page = 1, limit = 24, feed = 'all', category = 'all', search = '' } = {}) => {
   try {
     const params = new URLSearchParams({ page: String(page), limit: String(limit) });

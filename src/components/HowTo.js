@@ -24,7 +24,7 @@ import CreateAccountModal from './CreateAccountModal';
 import CreateAdModal from './CreateAdModal';
 import CreateBannerModal from './CreateBannerModal';
 import ProfileModal from './ProfileModal';
-import { API_URL, fetchMarketNews, fetchFreeCourses } from '../services/api';
+import { API_URL, fetchMarketNews, fetchFreeCourses, fetchTutorialVideos } from '../services/api';
 import { getBlogAuthorId } from '../utils/blogEditor';
 import { getDisplayName } from '../utils/nameUtils';
 import { StandardDesktopNavLinks, StandardMobileNavLinks } from './StandardNavLinks';
@@ -36,7 +36,6 @@ import {
   MobileNavLink,
 } from './MobileNavMenu';
 import {
-  TUTORIAL_VIDEOS,
   tutorialPlaylistUrl,
   watchUrl,
   thumbUrl,
@@ -160,9 +159,10 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
   const [loading, setLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deletingBlogId, setDeletingBlogId] = useState(null);
-  const [selectedTutorialId, setSelectedTutorialId] = useState(
-    () => TUTORIAL_VIDEOS[0]?.id ?? null
-  );
+  const [selectedTutorialId, setSelectedTutorialId] = useState(null);
+  const [tutorialVideos, setTutorialVideos] = useState([]);
+  const [tutorialVideosLoading, setTutorialVideosLoading] = useState(false);
+  const [tutorialVideosError, setTutorialVideosError] = useState(null);
   // Initialize activeTab from sessionStorage or default to 'videos'.
   // Validate against the known tab list so a stale storage value can't render an empty page.
   const [activeTab, setActiveTab] = useState(() => {
@@ -211,6 +211,40 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
     () => filterAndSortBlogs(blogs, blogSearch, blogSortOrder),
     [blogs, blogSearch, blogSortOrder]
   );
+
+  const selectedTutorial = useMemo(
+    () => tutorialVideos.find((video) => video.id === selectedTutorialId) || null,
+    [tutorialVideos, selectedTutorialId]
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setTutorialVideosLoading(true);
+      setTutorialVideosError(null);
+      try {
+        const data = await fetchTutorialVideos();
+        if (cancelled) return;
+        const videos = data.videos || [];
+        setTutorialVideos(videos);
+        setSelectedTutorialId((prev) => {
+          if (prev && videos.some((video) => video.id === prev)) return prev;
+          return videos[0]?.id ?? null;
+        });
+      } catch (e) {
+        if (!cancelled) {
+          setTutorialVideosError(e.message || 'Failed to load tutorial videos');
+          setTutorialVideos([]);
+          setSelectedTutorialId(null);
+        }
+      } finally {
+        if (!cancelled) setTutorialVideosLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Handle click outside to close dropdown
   useEffect(() => {
@@ -1107,16 +1141,28 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
               Pick a tutorial below to play it here, or open any video on YouTube for comments, chapters, and the full player.
             </p>
 
+            {tutorialVideosError && (
+              <div className="bg-red-500/10 border border-red-500/50 text-red-500 px-3 sm:px-4 py-2 rounded mb-4 text-sm">
+                {tutorialVideosError}
+              </div>
+            )}
+
+            {tutorialVideosLoading ? (
+              <div className="flex justify-center items-center py-12 mb-8">
+                <div className="flex flex-col items-center space-y-4">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400" />
+                  <p className="text-gray-400 text-sm">Loading tutorials from YouTube…</p>
+                </div>
+              </div>
+            ) : (
+              <>
             {selectedTutorialId && (
               <div className="mb-8 rounded-xl overflow-hidden border border-gray-700 bg-gray-900/50 shadow-lg">
                 <div className="aspect-video w-full bg-black">
                   <iframe
                     key={selectedTutorialId}
                     src={`https://www.youtube.com/embed/${selectedTutorialId}?rel=0&modestbranding=1`}
-                    title={
-                      TUTORIAL_VIDEOS.find((v) => v.id === selectedTutorialId)?.title ||
-                      'Aquads tutorial'
-                    }
+                    title={selectedTutorial?.title || 'Aquads tutorial'}
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                     allowFullScreen
                     className="w-full h-full min-h-[200px]"
@@ -1125,7 +1171,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
                 </div>
                 <div className="px-4 py-3 sm:px-5 sm:py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-t border-gray-700">
                   <p className="text-white font-medium text-sm sm:text-base leading-snug">
-                    {TUTORIAL_VIDEOS.find((v) => v.id === selectedTutorialId)?.title}
+                    {selectedTutorial?.title}
                   </p>
                   <a
                     href={watchUrl(selectedTutorialId)}
@@ -1141,7 +1187,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
 
             <h3 className="text-lg font-semibold text-gray-200 mb-4">All tutorials</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-              {TUTORIAL_VIDEOS.map((video) => {
+              {tutorialVideos.map((video) => {
                 const isActive = video.id === selectedTutorialId;
                 return (
                   <div
@@ -1207,6 +1253,8 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
                 );
               })}
             </div>
+              </>
+            )}
 
             {/*
               SEO: surface the latest blog posts on the default /learn view

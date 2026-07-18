@@ -748,6 +748,7 @@ app.use('/api/jobs', jobsRoutes);
 app.use('/api/blogs', blogsRoutes);
 app.use('/api/market-news', require('./routes/marketNews'));
 app.use('/api/free-courses', require('./routes/freeCourses'));
+app.use('/api/tutorial-videos', require('./routes/tutorialVideos'));
 // app.use('/api/sitemap', sitemapRoutes); // Disabled - using static sitemap
 app.use('/api/games', require('./routes/games'));
 app.use('/api/leaderboard', require('./routes/leaderboard'));
