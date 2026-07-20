@@ -105,6 +105,14 @@ voteBoostSchema.index({ adId: 1 }); // For ad-specific lookups
 voteBoostSchema.index({ owner: 1, createdAt: -1 }); // For owner's boosts
 voteBoostSchema.index({ status: 1, createdAt: -1 }); // For status-based queries
 voteBoostSchema.index({ status: 1, lastVoteAt: 1 }); // For active boost processing
+// One unpaid AquaPay checkout per bubble + owner (prevents duplicate pending orders at scale)
+voteBoostSchema.index(
+  { adId: 1, owner: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { status: 'pending', txSignature: 'aquapay-pending' }
+  }
+);
 
 module.exports = mongoose.model('VoteBoost', voteBoostSchema);
 

@@ -14,7 +14,7 @@
 //   - Never blocks: state loads progressively; failed sub-loads don't hide UI.
 // ============================================================================
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   FaArrowLeft, FaTelegram, FaDiscord, FaCheckCircle, FaTimesCircle,
@@ -23,7 +23,13 @@ import {
   FaVideo, FaCrown, FaCoins, FaBolt, FaRocket, FaUsers, FaUserCog,
   FaChevronRight, FaGem, FaLink, FaTh, FaMagic,
 } from 'react-icons/fa';
-import { API_URL } from '../services/api';
+import {
+  API_URL,
+  fetchVoteBoostPackages,
+  createVoteBoostRequest,
+  fetchMyVoteBoosts,
+  cancelVoteBoostCheckout,
+} from '../services/api';
 
 const TELEGRAM_BOT_URL = 'https://t.me/aquadsbumpbot';
 const DISCORD_BOT_INVITE = 'https://discord.com/oauth2/authorize?client_id=1481005410465874112&permissions=2251801961425920&integration_type=0&scope=bot+applications.commands';
@@ -1193,6 +1199,315 @@ function BrandingEditor({ project, token, onClose, onSaved, toast }) {
 }
 
 // ---------------------------------------------------------------------------
+// Vote boost checkout — same AquaPay flow as Telegram /boostvote
+// ---------------------------------------------------------------------------
+function buildVoteBoostAquaPayUrl(boost) {
+  const payBase = `${window.location.origin}/pay/aquads`;
+  const returnUrl = encodeURIComponent(`${window.location.origin}/telegram-bot/panel`);
+  return `${payBase}?amount=${boost.price}&voteBoostId=${boost._id}&returnUrl=${returnUrl}`;
+}
+
+function VoteBoostSection({ status, toast }) {
+  const projects = status.projects || [];
+  const projectByAdId = useMemo(
+    () => Object.fromEntries(projects.map((p) => [p.adId, p])),
+    [projects]
+  );
+  const [packages, setPackages] = useState([]);
+  const [pendingCheckouts, setPendingCheckouts] = useState([]);
+  const [loadingPackages, setLoadingPackages] = useState(true);
+  const [loadingPending, setLoadingPending] = useState(true);
+  const [selectedPackageId, setSelectedPackageId] = useState(null);
+  const [selectedAdId, setSelectedAdId] = useState(projects.length === 1 ? projects[0].adId : '');
+  const [checkingOut, setCheckingOut] = useState(false);
+  const [cancellingId, setCancellingId] = useState(null);
+  const checkoutLockRef = useRef(false);
+
+  const loadPendingCheckouts = useCallback(async () => {
+    try {
+      const boosts = await fetchMyVoteBoosts();
+      setPendingCheckouts(
+        (Array.isArray(boosts) ? boosts : []).filter(
+          (b) => b.status === 'pending' && b.txSignature === 'aquapay-pending'
+        )
+      );
+    } catch (e) {
+      toast(e.message || 'Failed to load pending checkouts', 'error');
+    } finally {
+      setLoadingPending(false);
+    }
+  }, [toast]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const data = await fetchVoteBoostPackages();
+        if (!cancelled) setPackages(Array.isArray(data) ? data : []);
+      } catch (e) {
+        if (!cancelled) toast(e.message || 'Failed to load vote boost packages', 'error');
+      } finally {
+        if (!cancelled) setLoadingPackages(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [toast]);
+
+  useEffect(() => {
+    loadPendingCheckouts();
+  }, [loadPendingCheckouts]);
+
+  useEffect(() => {
+    if (projects.length === 1) {
+      setSelectedAdId(projects[0].adId);
+    } else if (selectedAdId && !projects.some((p) => p.adId === selectedAdId)) {
+      setSelectedAdId('');
+    }
+  }, [projects, selectedAdId]);
+
+  const selectedPackage = packages.find((p) => p.id === selectedPackageId);
+  const selectedProject = projects.find((p) => p.adId === selectedAdId);
+  const pendingForSelected = pendingCheckouts.find((b) => b.adId === selectedAdId);
+
+  const redirectToAquaPay = (boost) => {
+    window.location.href = buildVoteBoostAquaPayUrl(boost);
+  };
+
+  const startCheckout = async () => {
+    if (checkoutLockRef.current || checkingOut) return;
+    if (!selectedPackageId || !selectedAdId) {
+      toast('Select a package and bubble first', 'error');
+      return;
+    }
+    if (pendingForSelected) {
+      toast('You already have an unpaid checkout for this bubble. Continue payment or cancel it first.', 'error');
+      return;
+    }
+
+    checkoutLockRef.current = true;
+    setCheckingOut(true);
+    try {
+      const boost = await createVoteBoostRequest({
+        adId: selectedAdId,
+        packageId: selectedPackageId,
+        txSignature: 'aquapay-pending',
+        paymentChain: 'AquaPay',
+        chainSymbol: 'USDC',
+      });
+      redirectToAquaPay(boost);
+    } catch (e) {
+      if (e.status === 409 && e.pendingBoost) {
+        setPendingCheckouts((prev) => {
+          const exists = prev.some((b) => b._id === e.pendingBoost._id);
+          return exists ? prev : [e.pendingBoost, ...prev];
+        });
+        toast(e.message || 'Unpaid checkout already exists for this bubble', 'error');
+      } else {
+        toast(e.message || 'Could not start checkout', 'error');
+      }
+      checkoutLockRef.current = false;
+      setCheckingOut(false);
+    }
+  };
+
+  const cancelCheckout = async (boostId) => {
+    if (cancellingId) return;
+    setCancellingId(boostId);
+    try {
+      await cancelVoteBoostCheckout(boostId);
+      setPendingCheckouts((prev) => prev.filter((b) => b._id !== boostId));
+      toast('Checkout cancelled — you can start a new order', 'success');
+    } catch (e) {
+      toast(e.message || 'Could not cancel checkout', 'error');
+      await loadPendingCheckouts();
+    } finally {
+      setCancellingId(null);
+    }
+  };
+
+  return (
+    <GradientCard from="from-purple-500/40" to="to-pink-500/40">
+      <div className="p-5">
+        <SectionHeader
+          icon={FaCrown}
+          title="Vote boost packages"
+          subtitle="Guaranteed bullish votes — same tiers as /boostvote on Telegram"
+          gradientFrom="from-purple-500"
+          gradientTo="to-pink-500"
+        />
+        <p className="text-sm text-gray-400 mb-4">
+          Pick a package, choose your bubble, and pay with <strong className="text-white">AquaPay (USDC)</strong>. Payment auto-confirms — votes are added gradually (~1 every 30 seconds).
+        </p>
+
+        {!loadingPending && pendingCheckouts.length > 0 && (
+          <div className="mb-5 space-y-3">
+            <div className="text-xs font-semibold text-amber-300 uppercase tracking-wide">
+              Unpaid checkouts
+            </div>
+            {pendingCheckouts.map((boost) => {
+              const project = projectByAdId[boost.adId];
+              const isCancelling = cancellingId === boost._id;
+              return (
+                <div
+                  key={boost._id}
+                  className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4"
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
+                    <div className="min-w-0">
+                      <div className="text-sm font-semibold text-white truncate">
+                        {project?.title || 'Your bubble'} · {boost.packageName}
+                      </div>
+                      <div className="text-xs text-amber-200/90 mt-1">
+                        {boost.votesToAdd?.toLocaleString()} votes · ${boost.price} USDC · awaiting payment
+                      </div>
+                    </div>
+                    <div className="flex flex-col sm:flex-row gap-2 flex-shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => redirectToAquaPay(boost)}
+                        disabled={isCancelling}
+                        className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-400 hover:to-pink-400 text-white text-sm font-semibold disabled:opacity-40"
+                      >
+                        <FaCoins /> Continue to AquaPay
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => cancelCheckout(boost._id)}
+                        disabled={isCancelling}
+                        className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-white/15 bg-black/30 hover:bg-black/50 text-gray-200 text-sm font-semibold disabled:opacity-40"
+                      >
+                        {isCancelling ? <FaSyncAlt className="animate-spin" /> : <FaTimesCircle />}
+                        Cancel order
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {projects.length === 0 ? (
+          <div className="text-center py-6 px-4 bg-black/30 border border-white/5 rounded-xl">
+            <p className="text-gray-400 text-sm mb-4">List a project first — you need an active bubble to boost.</p>
+            <Link
+              to="/dashboard/ads"
+              className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-400 hover:to-pink-400 text-white font-semibold shadow-lg shadow-purple-500/30 transition-transform hover:scale-105"
+            >
+              <FaRocket /> List a project
+            </Link>
+          </div>
+        ) : (
+          <>
+            {loadingPackages ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <SkeletonRow key={i} className="h-36" />
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+                {packages.map((pkg) => {
+                  const selected = selectedPackageId === pkg.id;
+                  return (
+                    <button
+                      key={pkg.id}
+                      type="button"
+                      onClick={() => setSelectedPackageId(pkg.id)}
+                      disabled={!!pendingForSelected}
+                      className={`relative text-left rounded-xl border p-4 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:hover:scale-100 disabled:cursor-not-allowed ${
+                        selected
+                          ? 'border-purple-400/60 bg-purple-500/15 ring-2 ring-purple-400/40 shadow-lg shadow-purple-500/20'
+                          : 'border-white/10 bg-black/30 hover:border-purple-500/30'
+                      }`}
+                    >
+                      {pkg.discountPercent > 0 && (
+                        <span className="absolute -top-2 right-2 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500 text-white">
+                          {pkg.discountPercent}% OFF
+                        </span>
+                      )}
+                      <div className="text-sm font-bold text-white mb-1">{pkg.name}</div>
+                      <div className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-300 to-pink-300">
+                        {pkg.votes.toLocaleString()}
+                      </div>
+                      <div className="text-xs text-gray-400 mb-2">bullish votes</div>
+                      <div className="text-lg font-bold text-white">
+                        ${pkg.price}
+                        <span className="text-xs text-gray-500 font-normal ml-1">USDC</span>
+                      </div>
+                      {pkg.originalPrice > pkg.price && (
+                        <div className="text-xs text-gray-500 line-through">${pkg.originalPrice}</div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {pendingForSelected && (
+              <p className="text-sm text-amber-200/90 mb-4">
+                This bubble already has an unpaid checkout above. Continue payment or cancel it before starting a new order.
+              </p>
+            )}
+
+            {projects.length > 1 && (
+              <div className="mb-5">
+                <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
+                  Which bubble?
+                </label>
+                <select
+                  value={selectedAdId}
+                  onChange={(e) => setSelectedAdId(e.target.value)}
+                  className="w-full bg-black/60 border border-white/10 focus:border-purple-400 focus:ring-2 focus:ring-purple-400/30 rounded-xl px-4 py-3 text-white text-sm focus:outline-none"
+                >
+                  <option value="">Select a bubble…</option>
+                  {projects.map((p) => (
+                    <option key={p.adId} value={p.adId}>{p.title}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {projects.length === 1 && selectedProject && (
+              <div className="mb-5 flex items-center gap-3 bg-black/30 border border-white/5 rounded-xl p-3">
+                {selectedProject.logo ? (
+                  <img src={selectedProject.logo} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+                ) : (
+                  <div className="w-10 h-10 rounded-lg bg-gray-800 flex items-center justify-center flex-shrink-0">
+                    <FaGem className="text-gray-500" />
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <div className="text-xs text-gray-500">Boosting</div>
+                  <div className="text-sm font-semibold text-white truncate">{selectedProject.title}</div>
+                </div>
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={startCheckout}
+              disabled={
+                checkingOut ||
+                !!pendingForSelected ||
+                !selectedPackageId ||
+                !selectedAdId ||
+                loadingPackages ||
+                loadingPending
+              }
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-400 hover:to-pink-400 text-white font-semibold shadow-lg shadow-purple-500/30 disabled:opacity-40 disabled:cursor-not-allowed transition-transform hover:scale-105 active:scale-95 disabled:hover:scale-100"
+            >
+              {checkingOut ? <FaSyncAlt className="animate-spin" /> : <FaCoins />}
+              {checkingOut ? 'Opening AquaPay…' : selectedPackage ? `Pay $${selectedPackage.price} USDC with AquaPay` : 'Pay with AquaPay'}
+            </button>
+          </>
+        )}
+      </div>
+    </GradientCard>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Socials tab
 // ---------------------------------------------------------------------------
 function SocialsTab({ status, token, refresh, toast }) {
@@ -1301,26 +1616,7 @@ function SocialsTab({ status, token, refresh, toast }) {
         </div>
       </Card>
 
-      <GradientCard from="from-purple-500/40" to="to-pink-500/40">
-        <div className="p-5">
-          <SectionHeader
-            icon={FaCrown}
-            title="Vote boost packages"
-            subtitle="Guaranteed bullish votes for your bubbles — same as /boostvote"
-            gradientFrom="from-purple-500"
-            gradientTo="to-pink-500"
-          />
-          <p className="text-sm text-gray-400 mb-4">
-            Vote boost packages (100 / 250 / 500 / 1000 votes) live in the dashboard with up to 25% off. Whether you buy them via Telegram <code className="text-cyan-300 bg-black/40 px-1.5 py-0.5 rounded text-xs">/boostvote</code> or here, the same tiers apply.
-          </p>
-          <Link
-            to="/dashboard/ads"
-            className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-400 hover:to-pink-400 text-white font-semibold shadow-lg shadow-purple-500/30 transition-transform hover:scale-105"
-          >
-            <FaCrown /> Open dashboard <FaChevronRight className="text-xs" />
-          </Link>
-        </div>
-      </GradientCard>
+      <VoteBoostSection status={status} toast={toast} />
     </div>
   );
 }

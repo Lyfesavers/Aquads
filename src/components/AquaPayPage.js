@@ -1106,7 +1106,7 @@ const AquaPayPage = ({ currentUser }) => {
 
         {recordStatus === 'recorded' && voteBoostId && (
           <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3 mb-4 text-sm text-emerald-200">
-            Vote boost payment confirmed. Your boost should activate shortly in Telegram or Discord.
+            Vote boost payment confirmed. Votes will be added to your bubble gradually (about 1 every 30 seconds).
           </div>
         )}
         
@@ -1141,6 +1141,18 @@ const AquaPayPage = ({ currentUser }) => {
             className="w-full py-3 mb-3 bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 text-white font-medium rounded-xl transition-all"
           >
             Back to Skipper Agent
+          </button>
+        ) : null}
+
+        {voteBoostId && returnUrl ? (
+          <button
+            type="button"
+            onClick={() => {
+              window.location.href = returnUrl;
+            }}
+            className="w-full py-3 mb-3 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-400 hover:to-pink-400 text-white font-medium rounded-xl transition-all"
+          >
+            Back to Bot Control Panel
           </button>
         ) : null}
 

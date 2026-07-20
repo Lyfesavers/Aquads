@@ -87,7 +87,7 @@ async function loadUserProjects(username) {
     status: { $in: ['active', 'approved'] },
   })
     .select(
-      '_id title logo isBumped listingTier telegramGroupId ' +
+      'id _id title logo isBumped listingTier telegramGroupId ' +
       'customBrandingImage customBrandingImageSize customBrandingVideoUrl customBrandingUploadedAt'
     )
     .sort({ isBumped: -1, updatedAt: -1 })
@@ -98,6 +98,7 @@ async function loadUserProjects(username) {
     const isPremium = tier === LISTING_TIER_PREMIUM;
     return {
       id: a._id.toString(),
+      adId: a.id,
       title: a.title || 'Untitled',
       logo: a.logo || null,
       isBumped: !!a.isBumped,

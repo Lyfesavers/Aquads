@@ -787,7 +787,10 @@ export const createVoteBoostRequest = async (boostData) => {
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       logger.error("Vote boost request API error:", errorData);
-      throw new Error(errorData.error || 'Failed to create vote boost request');
+      const err = new Error(errorData.error || 'Failed to create vote boost request');
+      err.status = response.status;
+      err.pendingBoost = errorData.pendingBoost || null;
+      throw err;
     }
     
     const data = await response.json();
@@ -865,6 +868,24 @@ export const fetchMyVoteBoosts = async () => {
     throw new Error(errorData.error || 'Failed to fetch your vote boosts');
   }
   
+  return response.json();
+};
+
+// Cancel unpaid AquaPay vote boost checkout (before payment)
+export const cancelVoteBoostCheckout = async (boostId) => {
+  const response = await fetch(`${API_URL}/vote-boosts/${boostId}/cancel`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeader()
+    }
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Failed to cancel vote boost checkout');
+  }
+
   return response.json();
 };
 

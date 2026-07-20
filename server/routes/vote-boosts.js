@@ -115,9 +115,38 @@ router.post('/', auth, async (req, res) => {
       return res.status(403).json({ error: 'You can only boost your own bubbles' });
     }
 
-    // Check if there's already a pending boost for this ad
-    const existingPending = await VoteBoost.findOne({ 
-      adId, 
+    const isAquaPayPending = txSignature === 'aquapay-pending';
+    const owner = req.user.username;
+
+    if (isAquaPayPending) {
+      const existingAquaPay = await VoteBoost.findOne({
+        adId,
+        owner,
+        status: 'pending',
+        txSignature: 'aquapay-pending'
+      });
+
+      if (existingAquaPay) {
+        const samePackage =
+          existingAquaPay.packageName === selectedPackage.name &&
+          existingAquaPay.votesToAdd === selectedPackage.votes &&
+          existingAquaPay.price === selectedPackage.price;
+
+        if (samePackage) {
+          return res.status(200).json({ ...existingAquaPay.toObject(), reusedCheckout: true });
+        }
+
+        return res.status(409).json({
+          error: 'You already have an unpaid checkout for this bubble. Continue payment or cancel it first.',
+          pendingBoost: existingAquaPay
+        });
+      }
+    }
+
+    // Block non-AquaPay checkout if any other pending request exists for this bubble
+    const existingPending = await VoteBoost.findOne({
+      adId,
+      owner,
       status: 'pending'
     });
 
@@ -127,24 +156,40 @@ router.post('/', auth, async (req, res) => {
 
     const voteBoost = new VoteBoost({
       adId,
-      owner: req.user.username,
+      owner,
       txSignature,
       packageName: selectedPackage.name,
       votesToAdd: selectedPackage.votes,
       price: selectedPackage.price,
       originalPrice: selectedPackage.originalPrice,
       discountPercent: selectedPackage.discountPercent,
-      paymentChain: paymentChain || 'Solana',
+      paymentChain: isAquaPayPending ? 'AquaPay' : (paymentChain || 'Solana'),
       chainSymbol: chainSymbol || 'USDC',
       chainAddress: chainAddress || null,
       status: 'pending'
     });
 
-    const savedBoost = await voteBoost.save();
-    
+    let savedBoost;
+    try {
+      savedBoost = await voteBoost.save();
+    } catch (saveError) {
+      if (saveError.code === 11000 && isAquaPayPending) {
+        const raced = await VoteBoost.findOne({
+          adId,
+          owner,
+          status: 'pending',
+          txSignature: 'aquapay-pending'
+        });
+        if (raced) {
+          return res.status(200).json({ ...raced.toObject(), reusedCheckout: true });
+        }
+      }
+      throw saveError;
+    }
+
     // Emit socket event for new boost request
     emitVoteBoostUpdate('create', savedBoost, ad);
-    
+
     res.status(201).json(savedBoost);
   } catch (error) {
     console.error('Error creating vote boost request:', error);
@@ -232,11 +277,11 @@ router.post('/:id/reject', auth, async (req, res) => {
   }
 });
 
-// Cancel a vote boost (owner only, if pending or active)
+// Cancel an unpaid AquaPay checkout (owner only, before payment — same as Telegram boost_cancel)
 router.post('/:id/cancel', auth, async (req, res) => {
   try {
     const boost = await VoteBoost.findById(req.params.id);
-    
+
     if (!boost) {
       return res.status(404).json({ error: 'Vote boost request not found' });
     }
@@ -245,14 +290,28 @@ router.post('/:id/cancel', auth, async (req, res) => {
       return res.status(403).json({ error: 'You can only cancel your own boost requests' });
     }
 
-    if (boost.status !== 'pending' && boost.status !== 'active') {
-      return res.status(400).json({ error: 'Cannot cancel a boost that is already completed or rejected' });
+    if (boost.status !== 'pending') {
+      return res.status(400).json({ error: 'Only unpaid pending orders can be cancelled' });
     }
 
-    boost.status = 'cancelled';
-    await boost.save();
+    if (boost.txSignature !== 'aquapay-pending') {
+      return res.status(400).json({
+        error: 'This order is awaiting manual payment review and cannot be cancelled here. Contact support if you need help.'
+      });
+    }
 
-    res.json({ boost });
+    const deleted = await VoteBoost.deleteOne({
+      _id: boost._id,
+      owner: boost.owner,
+      status: 'pending',
+      txSignature: 'aquapay-pending'
+    });
+
+    if (deleted.deletedCount === 0) {
+      return res.status(400).json({ error: 'This checkout is no longer pending' });
+    }
+
+    res.json({ success: true, cancelled: true, id: boost._id.toString() });
   } catch (error) {
     console.error('Error cancelling vote boost request:', error);
     res.status(500).json({ error: error.message || 'Failed to cancel vote boost request' });
