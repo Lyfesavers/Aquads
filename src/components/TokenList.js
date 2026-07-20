@@ -4,6 +4,7 @@ import TokenRating from './TokenRating';
 import { FaGlobe, FaTwitter, FaTelegram, FaDiscord, FaGithub, FaReddit } from 'react-icons/fa';
 import { Helmet } from 'react-helmet';
 import TokenDetails from './TokenDetails';
+import TokenReviews from './TokenReviews';
 import SocialMediaRaids from './SocialMediaRaids';
 import FacebookRaids from './FacebookRaids';
 import logger from '../utils/logger';
