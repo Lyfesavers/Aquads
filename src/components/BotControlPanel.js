@@ -1223,7 +1223,22 @@ function VoteBoostSection({ status, toast }) {
   const [cancellingId, setCancellingId] = useState(null);
   const checkoutLockRef = useRef(false);
 
-  const loadPendingCheckouts = useCallback(async () => {
+  const resetCheckoutUi = useCallback(() => {
+    checkoutLockRef.current = false;
+    setCheckingOut(false);
+  }, []);
+
+  const upsertPendingCheckout = useCallback((boost) => {
+    if (!boost?._id) return;
+    setPendingCheckouts((prev) => {
+      const exists = prev.some((b) => b._id === boost._id);
+      return exists ? prev : [boost, ...prev];
+    });
+    setLoadingPending(false);
+  }, []);
+
+  const loadPendingCheckouts = useCallback(async ({ showLoader = false } = {}) => {
+    if (showLoader) setLoadingPending(true);
     try {
       const boosts = await fetchMyVoteBoosts();
       setPendingCheckouts(
@@ -1234,9 +1249,32 @@ function VoteBoostSection({ status, toast }) {
     } catch (e) {
       toast(e.message || 'Failed to load pending checkouts', 'error');
     } finally {
-      setLoadingPending(false);
+      if (showLoader) setLoadingPending(false);
     }
   }, [toast]);
+
+  // Reset stale checkout UI when user returns via browser Back (bfcache) or refocuses the tab.
+  useEffect(() => {
+    resetCheckoutUi();
+    loadPendingCheckouts({ showLoader: true });
+
+    const refreshAfterReturn = () => {
+      resetCheckoutUi();
+      loadPendingCheckouts({ showLoader: false });
+    };
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') refreshAfterReturn();
+    };
+
+    window.addEventListener('pageshow', refreshAfterReturn);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
+    return () => {
+      window.removeEventListener('pageshow', refreshAfterReturn);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
+  }, [loadPendingCheckouts, resetCheckoutUi]);
 
   useEffect(() => {
     let cancelled = false;
@@ -1254,10 +1292,6 @@ function VoteBoostSection({ status, toast }) {
   }, [toast]);
 
   useEffect(() => {
-    loadPendingCheckouts();
-  }, [loadPendingCheckouts]);
-
-  useEffect(() => {
     if (projects.length === 1) {
       setSelectedAdId(projects[0].adId);
     } else if (selectedAdId && !projects.some((p) => p.adId === selectedAdId)) {
@@ -1269,8 +1303,15 @@ function VoteBoostSection({ status, toast }) {
   const selectedProject = projects.find((p) => p.adId === selectedAdId);
   const pendingForSelected = pendingCheckouts.find((b) => b.adId === selectedAdId);
 
-  const redirectToAquaPay = (boost) => {
-    window.location.href = buildVoteBoostAquaPayUrl(boost);
+  const openAquaPay = (boost) => {
+    const url = buildVoteBoostAquaPayUrl(boost);
+    upsertPendingCheckout(boost);
+    resetCheckoutUi();
+    const payWindow = window.open(url, '_blank', 'noopener,noreferrer');
+    if (!payWindow) {
+      // Popup blocked — fall back to same-tab navigation.
+      window.location.href = url;
+    }
   };
 
   const startCheckout = async () => {
@@ -1294,19 +1335,15 @@ function VoteBoostSection({ status, toast }) {
         paymentChain: 'AquaPay',
         chainSymbol: 'USDC',
       });
-      redirectToAquaPay(boost);
+      openAquaPay(boost);
     } catch (e) {
       if (e.status === 409 && e.pendingBoost) {
-        setPendingCheckouts((prev) => {
-          const exists = prev.some((b) => b._id === e.pendingBoost._id);
-          return exists ? prev : [e.pendingBoost, ...prev];
-        });
+        upsertPendingCheckout(e.pendingBoost);
         toast(e.message || 'Unpaid checkout already exists for this bubble', 'error');
       } else {
         toast(e.message || 'Could not start checkout', 'error');
       }
-      checkoutLockRef.current = false;
-      setCheckingOut(false);
+      resetCheckoutUi();
     }
   };
 
@@ -1337,9 +1374,14 @@ function VoteBoostSection({ status, toast }) {
         />
         <p className="text-sm text-gray-400 mb-4">
           Pick a package, choose your bubble, and pay with <strong className="text-white">AquaPay (USDC)</strong>. Payment auto-confirms — votes are added gradually (~1 every 30 seconds).
+          Leaving AquaPay without paying does <strong className="text-white">not</strong> cancel your order — use <strong className="text-white">Cancel order</strong> below when you want to start over.
         </p>
 
-        {!loadingPending && pendingCheckouts.length > 0 && (
+        {loadingPending && pendingCheckouts.length === 0 ? (
+          <SkeletonRow className="h-20 mb-5" />
+        ) : null}
+
+        {pendingCheckouts.length > 0 && (
           <div className="mb-5 space-y-3">
             <div className="text-xs font-semibold text-amber-300 uppercase tracking-wide">
               Unpaid checkouts
@@ -1364,7 +1406,7 @@ function VoteBoostSection({ status, toast }) {
                     <div className="flex flex-col sm:flex-row gap-2 flex-shrink-0">
                       <button
                         type="button"
-                        onClick={() => redirectToAquaPay(boost)}
+                        onClick={() => openAquaPay(boost)}
                         disabled={isCancelling}
                         className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-400 hover:to-pink-400 text-white text-sm font-semibold disabled:opacity-40"
                       >
@@ -1492,8 +1534,7 @@ function VoteBoostSection({ status, toast }) {
                 !!pendingForSelected ||
                 !selectedPackageId ||
                 !selectedAdId ||
-                loadingPackages ||
-                loadingPending
+                loadingPackages
               }
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-400 hover:to-pink-400 text-white font-semibold shadow-lg shadow-purple-500/30 disabled:opacity-40 disabled:cursor-not-allowed transition-transform hover:scale-105 active:scale-95 disabled:hover:scale-100"
             >
