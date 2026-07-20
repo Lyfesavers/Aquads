@@ -1201,10 +1201,19 @@ function BrandingEditor({ project, token, onClose, onSaved, toast }) {
 // ---------------------------------------------------------------------------
 // Vote boost checkout — same AquaPay flow as Telegram /boostvote
 // ---------------------------------------------------------------------------
+function getVoteBoostId(boost) {
+  if (!boost) return null;
+  const raw = boost._id ?? boost.id;
+  if (raw == null) return null;
+  return typeof raw === 'string' ? raw : String(raw);
+}
+
 function buildVoteBoostAquaPayUrl(boost) {
+  const boostId = getVoteBoostId(boost);
+  if (!boostId) return null;
   const payBase = `${window.location.origin}/pay/aquads`;
   const returnUrl = encodeURIComponent(`${window.location.origin}/telegram-bot/panel`);
-  return `${payBase}?amount=${boost.price}&voteBoostId=${boost._id}&returnUrl=${returnUrl}`;
+  return `${payBase}?amount=${boost.price}&voteBoostId=${boostId}&returnUrl=${returnUrl}`;
 }
 
 function VoteBoostSection({ status, toast }) {
@@ -1229,10 +1238,12 @@ function VoteBoostSection({ status, toast }) {
   }, []);
 
   const upsertPendingCheckout = useCallback((boost) => {
-    if (!boost?._id) return;
+    const boostId = getVoteBoostId(boost);
+    if (!boostId) return;
+    const normalized = { ...boost, _id: boostId };
     setPendingCheckouts((prev) => {
-      const exists = prev.some((b) => b._id === boost._id);
-      return exists ? prev : [boost, ...prev];
+      const exists = prev.some((b) => getVoteBoostId(b) === boostId);
+      return exists ? prev : [normalized, ...prev];
     });
     setLoadingPending(false);
   }, []);
@@ -1305,11 +1316,15 @@ function VoteBoostSection({ status, toast }) {
 
   const openAquaPay = (boost) => {
     const url = buildVoteBoostAquaPayUrl(boost);
+    if (!url) {
+      toast('Could not open checkout — missing order id. Refresh and try again.', 'error');
+      resetCheckoutUi();
+      return;
+    }
     upsertPendingCheckout(boost);
     resetCheckoutUi();
     const payWindow = window.open(url, '_blank', 'noopener,noreferrer');
     if (!payWindow) {
-      // Popup blocked — fall back to same-tab navigation.
       window.location.href = url;
     }
   };
@@ -1347,16 +1362,22 @@ function VoteBoostSection({ status, toast }) {
     }
   };
 
-  const cancelCheckout = async (boostId) => {
-    if (cancellingId) return;
+  const cancelCheckout = async (boost) => {
+    const boostId = getVoteBoostId(boost);
+    if (!boostId || cancellingId) return;
     setCancellingId(boostId);
     try {
-      await cancelVoteBoostCheckout(boostId);
-      setPendingCheckouts((prev) => prev.filter((b) => b._id !== boostId));
-      toast('Checkout cancelled — you can start a new order', 'success');
+      const result = await cancelVoteBoostCheckout(boostId);
+      setPendingCheckouts((prev) => prev.filter((b) => getVoteBoostId(b) !== boostId));
+      toast(
+        result?.alreadyGone
+          ? 'Checkout was already cleared — you can start a new order'
+          : 'Checkout cancelled — you can start a new order',
+        'success'
+      );
     } catch (e) {
       toast(e.message || 'Could not cancel checkout', 'error');
-      await loadPendingCheckouts();
+      await loadPendingCheckouts({ showLoader: false });
     } finally {
       setCancellingId(null);
     }
@@ -1388,10 +1409,11 @@ function VoteBoostSection({ status, toast }) {
             </div>
             {pendingCheckouts.map((boost) => {
               const project = projectByAdId[boost.adId];
-              const isCancelling = cancellingId === boost._id;
+              const boostId = getVoteBoostId(boost);
+              const isCancelling = cancellingId === boostId;
               return (
                 <div
-                  key={boost._id}
+                  key={boostId || boost.adId}
                   className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4"
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
@@ -1414,7 +1436,7 @@ function VoteBoostSection({ status, toast }) {
                       </button>
                       <button
                         type="button"
-                        onClick={() => cancelCheckout(boost._id)}
+                        onClick={() => cancelCheckout(boost)}
                         disabled={isCancelling}
                         className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-white/15 bg-black/30 hover:bg-black/50 text-gray-200 text-sm font-semibold disabled:opacity-40"
                       >

@@ -883,6 +883,10 @@ export const cancelVoteBoostCheckout = async (boostId) => {
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
+    // Stale UI: order already deleted (e.g. Telegram cancel or replaced checkout).
+    if (response.status === 404) {
+      return { success: true, cancelled: true, alreadyGone: true, id: boostId };
+    }
     throw new Error(errorData.error || 'Failed to cancel vote boost checkout');
   }
 

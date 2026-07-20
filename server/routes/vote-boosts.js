@@ -1,9 +1,14 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const auth = require('../middleware/auth');
 const VoteBoost = require('../models/VoteBoost');
 const Ad = require('../models/Ad');
 const { emitVoteBoostUpdate } = require('../socket');
+
+// Checkout/cancel must read the primary — avoid replica lag returning "not found" right after create.
+const voteBoostFindOnePrimary = (filter) => VoteBoost.findOne(filter).read('primary');
+const voteBoostFindManyPrimary = (filter) => VoteBoost.find(filter).read('primary');
 
 // Vote boost packages with pricing
 const VOTE_BOOST_PACKAGES = [
@@ -82,7 +87,9 @@ router.get('/active', async (req, res) => {
 // Get user's vote boosts
 router.get('/my-boosts', auth, async (req, res) => {
   try {
-    const boosts = await VoteBoost.find({ owner: req.user.username }).sort({ createdAt: -1 }).lean();
+    const boosts = await voteBoostFindManyPrimary({ owner: req.user.username })
+      .sort({ createdAt: -1 })
+      .lean();
     res.json(boosts);
   } catch (error) {
     console.error('Error fetching user vote boosts:', error);
@@ -119,7 +126,7 @@ router.post('/', auth, async (req, res) => {
     const owner = req.user.username;
 
     if (isAquaPayPending) {
-      const existingAquaPay = await VoteBoost.findOne({
+      const existingAquaPay = await voteBoostFindOnePrimary({
         adId,
         owner,
         status: 'pending',
@@ -144,7 +151,7 @@ router.post('/', auth, async (req, res) => {
     }
 
     // Block non-AquaPay checkout if any other pending request exists for this bubble
-    const existingPending = await VoteBoost.findOne({
+    const existingPending = await voteBoostFindOnePrimary({
       adId,
       owner,
       status: 'pending'
@@ -174,7 +181,7 @@ router.post('/', auth, async (req, res) => {
       savedBoost = await voteBoost.save();
     } catch (saveError) {
       if (saveError.code === 11000 && isAquaPayPending) {
-        const raced = await VoteBoost.findOne({
+        const raced = await voteBoostFindOnePrimary({
           adId,
           owner,
           status: 'pending',
@@ -280,38 +287,43 @@ router.post('/:id/reject', auth, async (req, res) => {
 // Cancel an unpaid AquaPay checkout (owner only, before payment — same as Telegram boost_cancel)
 router.post('/:id/cancel', auth, async (req, res) => {
   try {
-    const boost = await VoteBoost.findById(req.params.id);
-
-    if (!boost) {
-      return res.status(404).json({ error: 'Vote boost request not found' });
+    const { id } = req.params;
+    if (!mongoose.isValidObjectId(id)) {
+      return res.status(400).json({ error: 'Invalid vote boost id' });
     }
 
-    if (boost.owner !== req.user.username && !req.user.isAdmin) {
+    const owner = req.user.username;
+    const deleteQuery = req.user.isAdmin
+      ? { _id: id, status: 'pending', txSignature: 'aquapay-pending' }
+      : { _id: id, owner, status: 'pending', txSignature: 'aquapay-pending' };
+
+    const deleted = await VoteBoost.findOneAndDelete(deleteQuery).read('primary');
+
+    if (deleted) {
+      return res.json({ success: true, cancelled: true, id: deleted._id.toString() });
+    }
+
+    const existing = await voteBoostFindOnePrimary({ _id: id }).select('owner status txSignature').lean();
+    if (!existing) {
+      // Already removed (e.g. Telegram cancel, stale UI, or race) — idempotent success.
+      return res.json({ success: true, cancelled: true, alreadyGone: true, id });
+    }
+
+    if (!req.user.isAdmin && existing.owner !== owner) {
       return res.status(403).json({ error: 'You can only cancel your own boost requests' });
     }
 
-    if (boost.status !== 'pending') {
-      return res.status(400).json({ error: 'Only unpaid pending orders can be cancelled' });
+    if (existing.status !== 'pending') {
+      return res.status(400).json({ error: 'This order is no longer pending and cannot be cancelled' });
     }
 
-    if (boost.txSignature !== 'aquapay-pending') {
+    if (existing.txSignature !== 'aquapay-pending') {
       return res.status(400).json({
         error: 'This order is awaiting manual payment review and cannot be cancelled here. Contact support if you need help.'
       });
     }
 
-    const deleted = await VoteBoost.deleteOne({
-      _id: boost._id,
-      owner: boost.owner,
-      status: 'pending',
-      txSignature: 'aquapay-pending'
-    });
-
-    if (deleted.deletedCount === 0) {
-      return res.status(400).json({ error: 'This checkout is no longer pending' });
-    }
-
-    res.json({ success: true, cancelled: true, id: boost._id.toString() });
+    return res.status(409).json({ error: 'Could not cancel this checkout. Please refresh and try again.' });
   } catch (error) {
     console.error('Error cancelling vote boost request:', error);
     res.status(500).json({ error: error.message || 'Failed to cancel vote boost request' });
