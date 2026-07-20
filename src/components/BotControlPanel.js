@@ -1264,26 +1264,23 @@ function VoteBoostSection({ status, toast }) {
     }
   }, [toast]);
 
-  // Reset stale checkout UI when user returns via browser Back (bfcache) or refocuses the tab.
+  // Reset stale checkout UI when user returns via browser Back (bfcache restores old React state).
   useEffect(() => {
     resetCheckoutUi();
     loadPendingCheckouts({ showLoader: true });
 
-    const refreshAfterReturn = () => {
+    const refreshAfterReturn = (event) => {
       resetCheckoutUi();
-      loadPendingCheckouts({ showLoader: false });
-    };
-
-    const onVisibilityChange = () => {
-      if (document.visibilityState === 'visible') refreshAfterReturn();
+      // bfcache restore — user navigated away in this tab and clicked Back
+      if (event?.persisted) {
+        loadPendingCheckouts({ showLoader: false });
+      }
     };
 
     window.addEventListener('pageshow', refreshAfterReturn);
-    document.addEventListener('visibilitychange', onVisibilityChange);
 
     return () => {
       window.removeEventListener('pageshow', refreshAfterReturn);
-      document.removeEventListener('visibilitychange', onVisibilityChange);
     };
   }, [loadPendingCheckouts, resetCheckoutUi]);
 
@@ -1321,12 +1318,12 @@ function VoteBoostSection({ status, toast }) {
       resetCheckoutUi();
       return;
     }
+    // Show pending immediately before opening payment (panel stays on this tab).
     upsertPendingCheckout(boost);
     resetCheckoutUi();
-    const payWindow = window.open(url, '_blank', 'noopener,noreferrer');
-    if (!payWindow) {
-      window.location.href = url;
-    }
+    // Note: with noopener/noreferrer, window.open returns null even when the tab opens.
+    // Never fall back to window.location.href — that caused duplicate AquaPay tabs.
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   const startCheckout = async () => {
