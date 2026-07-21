@@ -699,7 +699,7 @@ Switch workspaces from the header in the Skipper panel when you have more than o
 | **Thinking** | Deeper reasoning for plans and longer drafts |
 | **Agent** | Research-style help: web search, code snippets, URL fetch, and **free Starter listing** submission (see below) |
 | **Create image** | Generate a visual from your prompt (deducted from wallet) |
-| **Create video** | Short clips — **15** or **30** seconds (wallet hold, then settle when complete) |
+| **Create video** | Short clips — **20** or **30** seconds (wallet hold, then settle when complete) |
 
 Choose the mode before you send. **Agent** is best for multi-step Aquads tasks; **Instant** / **Thinking** are best for copy and strategy.
 
@@ -710,7 +710,7 @@ Choose the mode before you send. **Agent** is best for multi-step Aquads tasks; 
 - Shill and raid copy ideas
 - Explaining Aquads features (bubble map, bumps, raids, link-in-bio, banners, AquaPay)
 - **Create image** — logos, banners, social creatives (describe style and dimensions in your prompt)
-- **Create video** — short promo clips (pick 15s or 30s in the UI)
+- **Create video** — short promo clips (pick 20s or 30s in the UI)
 
 ### List a free Starter project (Agent mode)
 

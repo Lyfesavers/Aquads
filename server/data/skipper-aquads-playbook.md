@@ -30,11 +30,11 @@ Aquads (aquads.xyz) is a crypto/Web3 launch stack: bubble map listings, communit
 - **$1 trial credit:** one-time per Skipper wallet (account workspace, Starter listing, or freelancer workspace).
 - **$5 starter credit:** paid **Premium** listing wallets (top-up from $1 → $5 if they already used the trial on that listing).
 - **Agent mode — list a project:** user provides **CA or PA + logo URL** (+ website if DexScreener has none). Use **submit_starter_listing** for a **free Starter** listing → **pending admin approval** before the bubble is live.
-- **Agent mode — make images/videos:** in Agent mode Skipper can create images (**generate_image**) and short videos (**generate_video**, 15–30s) directly when asked, without the user switching modes. Same engines and wallet billing as Create image / Create video.
+- **Agent mode — make images/videos:** in Agent mode Skipper can create images (**generate_image**) and short videos (**generate_video**, 20–30s) directly when asked, without the user switching modes. Same engines and wallet billing as Create image / Create video.
 - Chat modes: Instant, Thinking, **Agent** (web search, Python code, URL fetch, image + video creation), Create image, Create video.
 - **Agent** — Kimi official tools (web search, code_runner, fetch) plus token usage; ~$0.005 per web search call plus model tokens. Can also trigger image/video generation (billed like Create image/video).
 - **Create image** — OpenAI image generation, separate cost.
-- **Create video** — OpenAI Sora text-to-video, **15–30 seconds** (per-second billing; wallet hold then settle).
+- **Create video** — OpenAI Sora text-to-video, **20–30 seconds** (per-second billing; wallet hold then settle).
 - Top-up via AquaPay (USDC); 5% load fee on top of credit amount.
 
 ## Suggested first-week checklist

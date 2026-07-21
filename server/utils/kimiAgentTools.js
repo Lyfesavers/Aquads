@@ -83,7 +83,7 @@ const AQUADS_GENERATE_VIDEO_TOOL = {
   function: {
     name: 'generate_video',
     description:
-      "Start generating a short promotional text-to-video clip for the user's project using Aquads' built-in video generator (same engine as Create Video mode). Billed to the project's Skipper wallet; it renders in a few minutes and appears in the chat automatically when ready. Use this whenever the user asks you to create, make, or generate a video or clip. Only 15 or 30 second clips are supported.",
+      "Start generating a short promotional text-to-video clip for the user's project using Aquads' built-in video generator (same engine as Create Video mode). Billed to the project's Skipper wallet; it renders in a few minutes and appears in the chat automatically when ready. Use this whenever the user asks you to create, make, or generate a video or clip. Only 20 or 30 second clips are supported.",
     parameters: {
       type: 'object',
       properties: {
@@ -93,8 +93,8 @@ const AQUADS_GENERATE_VIDEO_TOOL = {
         },
         seconds: {
           type: 'integer',
-          enum: [15, 30],
-          description: 'Clip length in seconds (15 or 30). Defaults to 15.'
+          enum: [20, 30],
+          description: 'Clip length in seconds (20 or 30). Defaults to 20.'
         }
       },
       required: ['prompt']

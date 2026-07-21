@@ -76,7 +76,7 @@ const projectAgentMessageSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
-  /** Requested target length (15–30); may differ from billed seconds after extensions */
+  /** Requested target length (20–30); may differ from billed seconds after extensions */
   videoTargetSeconds: {
     type: Number,
     default: 0

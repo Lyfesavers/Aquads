@@ -588,7 +588,7 @@ router.get('/health', (req, res) => {
     videoGenerationConfigured: !!getOpenAiKey(),
     videoModel: process.env.PROJECT_AGENT_VIDEO_MODEL || 'sora-2',
     videoSecondsOptions: USER_VIDEO_SECONDS,
-    videoSecondsDefault: normalizeSeconds(process.env.PROJECT_AGENT_VIDEO_SECONDS || 15),
+    videoSecondsDefault: normalizeSeconds(process.env.PROJECT_AGENT_VIDEO_SECONDS || 20),
     videoPricingPerSecondUsd: {
       'sora-2': 0.1,
       'sora-2-pro_720p': 0.3,
@@ -1513,7 +1513,7 @@ router.post('/generate-video/:adId/:threadId', videoLimiter, async (req, res) =>
     videoModel
   );
   const videoSeconds = normalizeSeconds(
-    req.body?.seconds || process.env.PROJECT_AGENT_VIDEO_SECONDS || 15
+    req.body?.seconds || process.env.PROJECT_AGENT_VIDEO_SECONDS || 20
   );
   const segmentPlan = planVideoSegments(videoSeconds);
   const holdUsd = estimateVideoHoldUsd(videoModel, videoSize, videoSeconds);

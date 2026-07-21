@@ -17,9 +17,9 @@ const SORA_2_PRO_RATE_BY_SIZE = {
 };
 
 /** User-selectable clip lengths (seconds). */
-const VIDEO_SECONDS_MIN = 15;
+const VIDEO_SECONDS_MIN = 20;
 const VIDEO_SECONDS_MAX = 30;
-const USER_VIDEO_SECONDS = [15, 30];
+const USER_VIDEO_SECONDS = [20, 30];
 
 /** OpenAI single-segment create / extend increments. */
 const API_SEGMENT_SECONDS = [4, 8, 12, 16, 20];
@@ -39,9 +39,9 @@ function normalizeSize(size, modelId) {
   return allowed.includes(s) ? s : allowed[0];
 }
 
-/** Snap user request to 15–30s options shown in Skipper. */
+/** Snap user request to 20–30s options shown in Skipper. */
 function normalizeSeconds(seconds) {
-  const n = parseInt(String(seconds || '15'), 10);
+  const n = parseInt(String(seconds || '20'), 10);
   if (USER_VIDEO_SECONDS.includes(n)) return n;
   const clamped = Math.min(VIDEO_SECONDS_MAX, Math.max(VIDEO_SECONDS_MIN, n));
   return USER_VIDEO_SECONDS.reduce((best, s) =>
@@ -56,14 +56,14 @@ function normalizeSeconds(seconds) {
 function planVideoSegments(targetSeconds) {
   const target = normalizeSeconds(targetSeconds);
 
-  if (target === 15) {
-    return { initial: 15, extensions: [], billedSecondsMax: 16, fallback: { initial: 12, extensions: [4] } };
+  if (target === 20) {
+    return { initial: 20, extensions: [], billedSecondsMax: 20 };
   }
   if (target === 30) {
     return { initial: 20, extensions: [12], billedSecondsMax: 32 };
   }
 
-  return { initial: 15, extensions: [], billedSecondsMax: 16, fallback: { initial: 12, extensions: [4] } };
+  return { initial: 20, extensions: [], billedSecondsMax: 20 };
 }
 
 function parseJobSeconds(job = {}, opts = {}) {

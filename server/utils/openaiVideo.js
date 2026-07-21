@@ -63,7 +63,7 @@ async function openaiCreateVideo(prompt, options = {}) {
   };
 }
 
-/** Try create; on invalid seconds for 15s, use documented fallback plan. */
+/** Try create; on invalid seconds, use documented fallback plan when provided. */
 async function openaiCreateVideoWithPlan(prompt, options = {}) {
   const plan = options.plan || planVideoSegments(options.targetSeconds ?? options.seconds);
 

@@ -1,10 +1,10 @@
 /** User-facing render time ranges for Skipper Create video (async provider). */
 export const VIDEO_RENDER_ESTIMATES = {
-  15: {
-    label: '10–20 min',
-    composerHint: 'Typical render: ~10–20 min.',
+  20: {
+    label: '15–25 min',
+    composerHint: 'Typical render: ~15–25 min.',
     generatingHint: 'You can keep this chat open or come back later.',
-    longPhaseText: 'Long render in progress — 15s clips commonly take 10–20 minutes'
+    longPhaseText: 'Long render in progress — 20s clips commonly take 15–25 minutes'
   },
   30: {
     label: '25–40 min',
@@ -17,16 +17,16 @@ export const VIDEO_RENDER_ESTIMATES = {
 
 /** Frontend poll attempts × VIDEO_POLL_MS (12s) before a soft timeout message. */
 export const VIDEO_POLL_MAX_BY_SECONDS = {
-  15: 120,
+  20: 130,
   30: 210
 };
 
 export function getVideoRenderEstimate(seconds) {
   const n = Number(seconds);
-  return n >= 30 ? VIDEO_RENDER_ESTIMATES[30] : VIDEO_RENDER_ESTIMATES[15];
+  return n >= 30 ? VIDEO_RENDER_ESTIMATES[30] : VIDEO_RENDER_ESTIMATES[20];
 }
 
 export function getVideoPollMaxAttempts(seconds) {
   const n = Number(seconds);
-  return n >= 30 ? VIDEO_POLL_MAX_BY_SECONDS[30] : VIDEO_POLL_MAX_BY_SECONDS[15];
+  return n >= 30 ? VIDEO_POLL_MAX_BY_SECONDS[30] : VIDEO_POLL_MAX_BY_SECONDS[20];
 }

@@ -258,7 +258,7 @@ async function startVideoViaAgent({ userId, username, emailVerified, adId, threa
 
   const videoModel = normalizeModel(process.env.PROJECT_AGENT_VIDEO_MODEL || 'sora-2');
   const videoSize = normalizeSize(process.env.PROJECT_AGENT_VIDEO_SIZE || '1280x720', videoModel);
-  const videoSeconds = normalizeSeconds(seconds || process.env.PROJECT_AGENT_VIDEO_SECONDS || 15);
+  const videoSeconds = normalizeSeconds(seconds || process.env.PROJECT_AGENT_VIDEO_SECONDS || 20);
   const segmentPlan = planVideoSegments(videoSeconds);
   const holdUsd = estimateVideoHoldUsd(videoModel, videoSize, videoSeconds);
   const holdCents = usdToCents(holdUsd);

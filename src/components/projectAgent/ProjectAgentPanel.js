@@ -56,7 +56,7 @@ const MODES = [
   {
     id: 'video',
     label: 'Create video',
-    hint: '15s (~10–20 min) or 30s (~25–40 min) · ~$0.10/s at 720p; wallet hold then settle'
+    hint: '20s (~15–25 min) or 30s (~25–40 min) · ~$0.10/s at 720p; wallet hold then settle'
   }
 ];
 
@@ -74,7 +74,7 @@ function resolveThreadSkipperMode(messages = []) {
   return null;
 }
 
-const VIDEO_SECONDS_OPTIONS = [15, 30];
+const VIDEO_SECONDS_OPTIONS = [20, 30];
 
 const VIDEO_POLL_MS = 12_000;
 
@@ -218,7 +218,7 @@ function upsertAgentMediaMessage(prev, evt) {
         mode: 'video',
         hasVideo: false,
         videoStatus: evt.status || 'queued',
-        videoTargetSeconds: evt.seconds || 15,
+        videoTargetSeconds: evt.seconds || 20,
         content: 'Generating video…'
       }
     ];
@@ -290,7 +290,7 @@ export default function ProjectAgentPanel({
       ? 'agent'
       : restoredSession?.mode || DEFAULT_SKIPPER_CHAT_MODE
   );
-  const [videoSeconds, setVideoSeconds] = useState(15);
+  const [videoSeconds, setVideoSeconds] = useState(20);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(() => !restoredSession);
   const [hydratedEpoch, setHydratedEpoch] = useState(() =>
@@ -695,7 +695,7 @@ export default function ProjectAgentPanel({
   }, [projectListingOnboarding, loading, hydratedEpoch, authEpoch]);
 
   const pollVideoJob = useCallback(
-    async (messageId, seconds = 15) => {
+    async (messageId, seconds = 20) => {
       if (!token) return;
       const loadGen = loadGenerationRef.current;
       const id = String(messageId);
@@ -948,7 +948,7 @@ export default function ProjectAgentPanel({
     if (!pending?._id) return null;
     return {
       id: String(pending._id),
-      seconds: pending.videoTargetSeconds || pending.videoSeconds || 15
+      seconds: pending.videoTargetSeconds || pending.videoSeconds || 20
     };
   }, [messages]);
 
@@ -1352,7 +1352,7 @@ export default function ProjectAgentPanel({
 
         mediaCreated
           .filter((evt) => evt.kind === 'video')
-          .forEach((evt) => pollVideoJob(String(evt.messageId), evt.seconds || 15));
+          .forEach((evt) => pollVideoJob(String(evt.messageId), evt.seconds || 20));
       } else if (streamIncomplete) {
         let reloaded = false;
         const imageEvt = mediaCreated.find((e) => e.kind === 'image');
@@ -1405,7 +1405,7 @@ export default function ProjectAgentPanel({
 
         mediaCreated
           .filter((evt) => evt.kind === 'video')
-          .forEach((evt) => pollVideoJob(String(evt.messageId), evt.seconds || 15));
+          .forEach((evt) => pollVideoJob(String(evt.messageId), evt.seconds || 20));
       } else {
         setMessages((prev) => [
           ...prev,
@@ -1875,7 +1875,7 @@ export default function ProjectAgentPanel({
                 mode === 'image'
                   ? 'Describe the image you want (e.g. Twitter banner, logo concept)…'
                   : mode === 'video'
-                    ? 'Describe the clip (15s or 30s)…'
+                    ? 'Describe the clip (20s or 30s)…'
                     : mode === 'agent'
                       ? 'List a project: paste CA/PA + logo URL (and website if needed). Or research, code, fetch URLs…'
                       : 'Ask about your project…'
