@@ -97,6 +97,14 @@ const PRESS_LOGOS = [
     heightClass: 'h-6 md:h-8',
   },
   {
+    id: 'cryip',
+    name: 'Cryip',
+    logo: '/Cryip-Logo-Black.webp',
+    url: 'https://cryip.co/aquads-builds-full-stack-project-hub-to-close-cryptos-post-launch-gap/',
+    alt: 'Aquads featured on Cryip',
+    heightClass: 'h-6 md:h-8',
+  },
+  {
     id: 'timestabloid',
     name: 'Times Tabloid',
     logo: '/Times-Tabloid-Header-Mobile.png',
@@ -136,7 +144,7 @@ const LogoItem = ({ item }) => {
         // images don't load until they near the viewport during the
         // first scroll cycle — and that mid-cycle load causes a tiny
         // layout reflow that shows up as a visible glitch when the
-        // animation restarts. With 8 small logo files, eager load has
+        // animation restarts. With 9 small logo files, eager load has
         // negligible perf impact and guarantees both groups render
         // pixel-identical from frame 1, which is what the seamless
         // -50% translate math depends on.
