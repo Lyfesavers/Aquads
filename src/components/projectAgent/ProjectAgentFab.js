@@ -52,7 +52,13 @@ export default function ProjectAgentFab({ currentUser, openProjectOnboarding = f
   }, [authEpoch, canShowFab, currentUser?.username]);
 
   useEffect(() => {
+    if (!canShowFab) return undefined;
+    import('./ProjectAgentPage').catch(() => {});
+  }, [canShowFab]);
+
+  useEffect(() => {
     if (!open) return undefined;
+    import('./ProjectAgentPage').catch(() => {});
     skipperDebugLog('FAB drawer opened — panel will bootstrap', {
       authEpoch,
       username: currentUser?.username

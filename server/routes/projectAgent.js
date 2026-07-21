@@ -490,19 +490,25 @@ router.delete('/threads/:adId/:threadId', async (req, res) => {
     const msgs = await ProjectAgentMessage.find({ threadId: thread._id })
       .select('videoStorageKey')
       .lean();
-
-    for (const m of msgs) {
-      if (!m.videoStorageKey) continue;
-      const filePath = videoFilePath(m.videoStorageKey);
-      try {
-        if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-      } catch (unlinkErr) {
-        console.warn('[project-agent] video file unlink failed:', unlinkErr.message);
-      }
-    }
+    const videoStorageKeys = msgs
+      .map((m) => m.videoStorageKey)
+      .filter((key) => key && String(key).trim());
 
     await ProjectAgentMessage.deleteMany({ threadId: thread._id });
     await ProjectAgentThread.deleteOne({ _id: thread._id, userId: req.user.userId });
+
+    if (videoStorageKeys.length > 0) {
+      setImmediate(() => {
+        for (const storageKey of videoStorageKeys) {
+          const filePath = videoFilePath(storageKey);
+          try {
+            if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+          } catch (unlinkErr) {
+            console.warn('[project-agent] video file unlink failed:', unlinkErr.message);
+          }
+        }
+      });
+    }
 
     let threads = await listProjectAgentThreads(req.user.userId, req.params.adId);
 

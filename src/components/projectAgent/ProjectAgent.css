@@ -192,6 +192,11 @@
   background: var(--pa-accent-dim);
 }
 
+.project-agent-thread-row.deleting {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
 .project-agent-thread-select-btn {
   flex: 1;
   min-width: 0;
@@ -355,6 +360,33 @@
   flex-direction: column;
   gap: 12px;
   position: relative;
+}
+
+.project-agent-messages--loading::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--pa-accent, #3b82f6),
+    transparent
+  );
+  animation: project-agent-messages-loading 1.1s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 2;
+}
+
+@keyframes project-agent-messages-loading {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
 }
 
 .project-agent-empty-watermark {

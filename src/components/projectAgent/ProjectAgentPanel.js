@@ -32,6 +32,7 @@ import {
   createSkipperBootstrapAbort,
   createSkipperBootstrapTrace,
   resetSkipperClientSession,
+  setWarmSkipperPayload,
   skipperDebugLog,
   unmarkSkipperThreadDeleted
 } from './projectAgentSession';
@@ -311,7 +312,8 @@ export default function ProjectAgentPanel({
   const [topupLoading, setTopupLoading] = useState(false);
   const [topupNotice, setTopupNotice] = useState('');
   const [topupOpen, setTopupOpen] = useState(false);
-  const [deletingThreadId, setDeletingThreadId] = useState(null);
+  const [deletingThreadIds, setDeletingThreadIds] = useState(() => new Set());
+  const [threadMessagesLoading, setThreadMessagesLoading] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const messagesEndRef = useRef(null);
   const videoPollAbortRef = useRef(null);
@@ -327,9 +329,30 @@ export default function ProjectAgentPanel({
   /** Bumped on every account change so in-flight fetches cannot apply stale data. */
   const loadGenerationRef = useRef(0);
   const skipAdIdReloadRef = useRef(restoredSession?.adId || null);
+  const accountBootstrappedRef = useRef(null);
   const prevAuthEpochRef = useRef(null);
   const authEpochRef = useRef(authEpoch);
   authEpochRef.current = authEpoch;
+  const sessionSnapshotRef = useRef({});
+
+  sessionSnapshotRef.current = {
+    eligible,
+    adId,
+    wallet,
+    threads,
+    threadId,
+    messages,
+    mode
+  };
+
+  useEffect(() => {
+    return () => {
+      const snap = sessionSnapshotRef.current;
+      if (sessionKey && snap.adId) {
+        setWarmSkipperPayload(sessionKey, snap);
+      }
+    };
+  }, [sessionKey]);
 
   const skipperBearer = () => getActiveAuthToken() || token || null;
   const loadStillValid = (epochAtStart) => epochAtStart === authEpochRef.current;
@@ -360,7 +383,9 @@ export default function ProjectAgentPanel({
     setSearchStatus('');
     setTopupNotice('');
     setTopupOpen(false);
-    setDeletingThreadId(null);
+    setDeletingThreadIds(new Set());
+    setThreadMessagesLoading(false);
+    accountBootstrappedRef.current = null;
     skipMessagesFetchRef.current = null;
     setHydratedEpoch(null);
     setLoading(Boolean(nextEpoch && nextEpoch !== 'guest'));
@@ -422,6 +447,10 @@ export default function ProjectAgentPanel({
       return undefined;
     }
 
+    if (accountBootstrappedRef.current === authEpoch) {
+      return undefined;
+    }
+
     const epochAtStart = authEpoch;
     const signal = createSkipperBootstrapAbort();
     let cancelled = false;
@@ -446,8 +475,27 @@ export default function ProjectAgentPanel({
       return { bearer: null, waitMs: Math.round(performance.now() - tWait) };
     };
 
+    if (restoredSession) {
+      consumeWarmSkipperPayload(sessionKey);
+      if (restoredSession.adId) skipAdIdReloadRef.current = restoredSession.adId;
+      if (restoredSession.threadId) {
+        skipMessagesFetchRef.current = String(restoredSession.threadId);
+      }
+      setHydratedEpoch(authEpoch);
+      setLoading(false);
+      accountBootstrappedRef.current = authEpoch;
+      skipperDebugLog('panel applied expand handoff', {
+        username: currentUser?.username,
+        adId: restoredSession.adId,
+        threadId: restoredSession.threadId,
+        messageCount: restoredSession.messages?.length ?? 0,
+        balanceUsd: restoredSession.wallet?.balanceUsd
+      });
+      return undefined;
+    }
+
     const warmed = consumeWarmSkipperPayload(sessionKey);
-    if (warmed && !restoredSession) {
+    if (warmed) {
       setEligible(warmed.eligible || []);
       setAdId(warmed.adId || null);
       setWallet(warmed.wallet || null);
@@ -463,28 +511,12 @@ export default function ProjectAgentPanel({
       if (warmed.threadId) skipMessagesFetchRef.current = String(warmed.threadId);
       setHydratedEpoch(authEpoch);
       setLoading(false);
+      accountBootstrappedRef.current = authEpoch;
       skipperDebugLog('panel applied warm cache (instant)', {
         username: currentUser?.username,
         sessionKey,
         adId: warmed.adId,
         scopes: (warmed.eligible || []).map((a) => a.scope || a.id).join(', ')
-      });
-      return undefined;
-    }
-
-    if (restoredSession) {
-      if (restoredSession.adId) skipAdIdReloadRef.current = restoredSession.adId;
-      if (restoredSession.threadId) {
-        skipMessagesFetchRef.current = String(restoredSession.threadId);
-      }
-      setHydratedEpoch(authEpoch);
-      setLoading(false);
-      skipperDebugLog('panel applied expand handoff', {
-        username: currentUser?.username,
-        adId: restoredSession.adId,
-        threadId: restoredSession.threadId,
-        messageCount: restoredSession.messages?.length ?? 0,
-        balanceUsd: restoredSession.wallet?.balanceUsd
       });
       return undefined;
     }
@@ -646,6 +678,7 @@ export default function ProjectAgentPanel({
         if (!cancelled && loadStillValid(epochAtStart)) {
           setHydratedEpoch(authEpochRef.current);
           setLoading(false);
+          accountBootstrappedRef.current = authEpochRef.current;
           trace.finish('UI ready', {
             adId: nextAdId,
             threadId: nextThreadId,
@@ -842,14 +875,6 @@ export default function ProjectAgentPanel({
     };
   }, [searchParams, token, adId, setSearchParams, refreshWallet]);
 
-  const loadThreads = useCallback(async () => {
-    if (!token || !adId) return;
-    const { threads: list } = await fetchProjectAgentThreads(adId, token);
-    const filtered = filterSkipperThreads(list || []);
-    setThreads(filtered);
-    return filtered;
-  }, [token, adId]);
-
   /** User picked a different project in the toolbar (after initial account bootstrap). */
   useEffect(() => {
     if (!token || !adId || !sessionKey || hydratedEpoch !== authEpoch) return;
@@ -861,6 +886,7 @@ export default function ProjectAgentPanel({
     const epochAtStart = authEpoch;
     const bearer = currentUser?.token || getActiveAuthToken();
     let cancelled = false;
+    setThreadMessagesLoading(true);
     setMessages([]);
     setThreadId(null);
 
@@ -890,6 +916,10 @@ export default function ProjectAgentPanel({
         if (!cancelled && loadStillValid(epochAtStart)) {
           setError(e.message || 'Failed to load project');
         }
+      } finally {
+        if (!cancelled && loadStillValid(epochAtStart)) {
+          setThreadMessagesLoading(false);
+        }
       }
     })();
 
@@ -910,8 +940,8 @@ export default function ProjectAgentPanel({
 
     const epochAtStart = authEpoch;
     const bearerAtStart = skipperBearer();
-    setMessages([]);
     let cancelled = false;
+    setThreadMessagesLoading(true);
     (async () => {
       try {
         const { messages: msgs } = await fetchProjectAgentMessages(
@@ -927,6 +957,10 @@ export default function ProjectAgentPanel({
         }
       } catch (e) {
         if (!cancelled && loadStillValid(epochAtStart)) setError(e.message);
+      } finally {
+        if (!cancelled && loadStillValid(epochAtStart)) {
+          setThreadMessagesLoading(false);
+        }
       }
     })();
     return () => {
@@ -1108,7 +1142,7 @@ export default function ProjectAgentPanel({
     e?.preventDefault?.();
     e?.stopPropagation?.();
     const id = String(targetThreadId || threadId || '');
-    if (!token || !adId || !id || deletingThreadId) return;
+    if (!token || !adId || !id || deletingThreadIds.has(id)) return;
     if (!window.confirm('Delete this chat? This cannot be undone.')) return;
 
     const wasActive = String(threadId) === id;
@@ -1120,14 +1154,15 @@ export default function ProjectAgentPanel({
       streamingReasoning
     };
 
-    // Tombstone immediately so a concurrent thread refetch (e.g. from switching
-    // between the drawer and full-page panel) can't resurrect this chat before
-    // the server delete commits.
     markSkipperThreadDeleted(id);
 
     const nextThreads = filterSkipperThreads(threads);
     setThreads(nextThreads);
-    setDeletingThreadId(id);
+    setDeletingThreadIds((prev) => {
+      const next = new Set(prev);
+      next.add(id);
+      return next;
+    });
     setError('');
 
     if (wasActive) {
@@ -1156,19 +1191,9 @@ export default function ProjectAgentPanel({
         }
       }
     } catch (err) {
-      // The thread was already gone on the server — treat as a successful delete
-      // and keep the tombstone so it stays removed everywhere.
       const alreadyGone = /not found/i.test(err?.message || '') || err?.status === 404;
-      if (alreadyGone) {
-        try {
-          await loadThreads();
-        } catch {
-          /* keep optimistic state */
-        }
-        return;
-      }
+      if (alreadyGone) return;
 
-      // Genuine failure — undo the tombstone and restore prior state.
       unmarkSkipperThreadDeleted(id);
       setThreads(snapshot.threads);
       setThreadId(snapshot.threadId);
@@ -1177,7 +1202,11 @@ export default function ProjectAgentPanel({
       setStreamingReasoning(snapshot.streamingReasoning);
       setError(err.message || 'Could not delete chat');
     } finally {
-      setDeletingThreadId(null);
+      setDeletingThreadIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
     }
   };
 
@@ -1510,6 +1539,12 @@ export default function ProjectAgentPanel({
     }
   };
 
+  useEffect(() => {
+    if (compact) {
+      import('./ProjectAgentPage').catch(() => {});
+    }
+  }, [compact]);
+
   const balanceNum = parseFloat(wallet?.balanceUsd || '0');
   const balanceLow = balanceNum < 1;
 
@@ -1628,7 +1663,7 @@ export default function ProjectAgentPanel({
                 type="button"
                 className="project-agent-thread-delete"
                 onClick={(e) => handleDeleteThread(threadId, e)}
-                disabled={deletingThreadId === threadId}
+                disabled={deletingThreadIds.has(String(threadId))}
                 aria-label="Delete this chat"
                 title="Delete chat"
               >
@@ -1664,6 +1699,8 @@ export default function ProjectAgentPanel({
         {onExpand && (
           <button
             type="button"
+            onMouseEnter={() => import('./ProjectAgentPage').catch(() => {})}
+            onFocus={() => import('./ProjectAgentPage').catch(() => {})}
             onClick={() =>
               onExpand({
                 ownerSessionKey: authEpoch,
@@ -1758,7 +1795,9 @@ export default function ProjectAgentPanel({
             {threads.map((t) => (
               <div
                 key={t._id}
-                className={`project-agent-thread-row${t._id === threadId ? ' active' : ''}`}
+                className={`project-agent-thread-row${t._id === threadId ? ' active' : ''}${
+                  deletingThreadIds.has(String(t._id)) ? ' deleting' : ''
+                }`}
               >
                 <button
                   type="button"
@@ -1771,7 +1810,7 @@ export default function ProjectAgentPanel({
                   type="button"
                   className="project-agent-thread-delete"
                   onClick={(e) => handleDeleteThread(t._id, e)}
-                  disabled={deletingThreadId === t._id}
+                  disabled={deletingThreadIds.has(String(t._id))}
                   aria-label={`Delete ${t.title || 'chat'}`}
                   title="Delete chat"
                 >
@@ -1783,7 +1822,9 @@ export default function ProjectAgentPanel({
         )}
 
         <div className="project-agent-main">
-          <div className="project-agent-messages">
+          <div
+            className={`project-agent-messages${threadMessagesLoading ? ' project-agent-messages--loading' : ''}`}
+          >
             {showEmptyWatermark && (
               <div className="project-agent-empty-watermark" aria-hidden="true">
                 <img src={SKIPPER_AGENT_LOGO_SRC} alt="" />
