@@ -19,7 +19,7 @@ import ProjectAgentMessageImage, { ImageGeneratingStatus } from './ProjectAgentM
 import { getProjectAgentImageBlobUrl } from '../../services/projectAgentMediaCache';
 import ProjectAgentMessageVideo from './ProjectAgentMessageVideo';
 import ProjectAgentMessageBody, { CopyMessageButton } from './ProjectAgentMessageBody';
-import { FaPlus, FaUpRightFromSquare } from 'react-icons/fa';
+import { FaExternalLinkAlt, FaPlus } from 'react-icons/fa';
 import {
   SKIPPER_AGENT_LOGO_SRC,
   SKIPPER_AGENT_NAME,
@@ -1714,7 +1714,7 @@ export default function ProjectAgentPanel({
               aria-label="Expand to full page"
               title="Expand to full page"
             >
-              <FaUpRightFromSquare aria-hidden />
+              <FaExternalLinkAlt aria-hidden />
             </button>
           )}
           {onClose && (
