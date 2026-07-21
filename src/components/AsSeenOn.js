@@ -103,6 +103,8 @@ const PRESS_LOGOS = [
     url: 'https://cryip.co/aquads-builds-full-stack-project-hub-to-close-cryptos-post-launch-gap/',
     alt: 'Aquads featured on Cryip',
     heightClass: 'h-6 md:h-8',
+    // Black-only wordmark on transparent — invert so it reads grey/white like the others.
+    invertOnDark: true,
   },
   {
     id: 'timestabloid',
