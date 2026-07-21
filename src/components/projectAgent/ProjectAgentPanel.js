@@ -19,7 +19,13 @@ import ProjectAgentMessageImage, { ImageGeneratingStatus } from './ProjectAgentM
 import { getProjectAgentImageBlobUrl } from '../../services/projectAgentMediaCache';
 import ProjectAgentMessageVideo from './ProjectAgentMessageVideo';
 import ProjectAgentMessageBody, { CopyMessageButton } from './ProjectAgentMessageBody';
-import { SKIPPER_AGENT_LOGO_SRC, SKIPPER_AGENT_NAME, SKIPPER_AGENT_TAGLINE } from './projectAgentBrand';
+import { FaPlus, FaUpRightFromSquare } from 'react-icons/fa';
+import {
+  SKIPPER_AGENT_LOGO_SRC,
+  SKIPPER_AGENT_NAME,
+  SKIPPER_AGENT_SHORT,
+  SKIPPER_AGENT_TAGLINE
+} from './projectAgentBrand';
 import {
   filterSkipperThreads,
   getSkipperAuthEpoch,
@@ -78,6 +84,63 @@ function resolveThreadSkipperMode(messages = []) {
 const VIDEO_SECONDS_OPTIONS = [20, 30];
 
 const VIDEO_POLL_MS = 8_000;
+
+function formatMessageTime(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  const now = new Date();
+  if (d.toDateString() === now.toDateString()) {
+    return d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+  }
+  return d.toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit'
+  });
+}
+
+function getUserInitial(user) {
+  const name = user?.username || user?.email || 'You';
+  const ch = String(name).trim()[0];
+  return ch ? ch.toUpperCase() : 'Y';
+}
+
+function SkipperMessageRow({ role, createdAt, costCents, currentUser, children }) {
+  const isAssistant = role === 'assistant';
+  return (
+    <div className={`project-agent-msg-row ${role}`}>
+      <div className="project-agent-msg-avatar" aria-hidden="true">
+        {isAssistant ? (
+          <img src={SKIPPER_AGENT_LOGO_SRC} alt="" />
+        ) : (
+          <span>{getUserInitial(currentUser)}</span>
+        )}
+      </div>
+      <div className="project-agent-msg-stack">
+        <div className="project-agent-msg-header">
+          <span className="project-agent-msg-author">
+            {isAssistant ? SKIPPER_AGENT_SHORT : currentUser?.username || 'You'}
+          </span>
+          {createdAt ? (
+            <time className="project-agent-msg-time" dateTime={String(createdAt)}>
+              {formatMessageTime(createdAt)}
+            </time>
+          ) : null}
+        </div>
+        <div className={`project-agent-msg ${role}`}>
+          {children}
+          {costCents > 0 ? (
+            <div className="project-agent-meta project-agent-msg-cost">
+              −${(costCents / 100).toFixed(4)}
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // Listing a project (submit_starter_listing) only works in Agent mode, where
 // Skipper has tools. Detect CA/PA (with or without logo URL) so we can
@@ -1132,8 +1195,7 @@ export default function ProjectAgentPanel({
 
   const handleNewChat = () => startNewChat();
 
-  const handleModeChange = async (e) => {
-    const nextMode = e.target.value;
+  const handleModeSelect = async (nextMode) => {
     if (nextMode === mode || sending) return;
     await startNewChat(nextMode);
   };
@@ -1614,36 +1676,61 @@ export default function ProjectAgentPanel({
           <span className="project-agent-header-title">
             {adMeta?.title || SKIPPER_AGENT_NAME}
           </span>
-          {adMeta?.title ? (
-            <span className="project-agent-header-badge">{SKIPPER_AGENT_NAME}</span>
-          ) : null}
-          {currentUser?.username ? (
-            <span className="project-agent-header-account" title="Aquads account for this Skipper session">
-              {currentUser.username}
-            </span>
-          ) : null}
+          <span className="project-agent-header-subtitle">
+            {adMeta?.title ? SKIPPER_AGENT_NAME : SKIPPER_AGENT_TAGLINE}
+            {currentUser?.username ? ` · ${currentUser.username}` : ''}
+          </span>
         </h2>
-        <button
-          type="button"
-          className={`project-agent-balance project-agent-balance-btn ${balanceLow ? 'low' : ''}`}
-          onClick={() => setTopupOpen((o) => !o)}
-          title="Add funds"
-        >
-          ${wallet?.balanceUsd ?? '—'}
-        </button>
-        {onClose && (
+        <div className="project-agent-header-actions">
           <button
             type="button"
-            className="project-agent-close-btn"
-            onClick={onClose}
-            aria-label="Close"
+            className={`project-agent-balance project-agent-balance-btn ${balanceLow ? 'low' : ''}${
+              topupOpen ? ' active' : ''
+            }`}
+            onClick={() => setTopupOpen((o) => !o)}
+            title="Add funds"
+            aria-expanded={topupOpen}
           >
-            ✕
+            ${wallet?.balanceUsd ?? '—'}
           </button>
-        )}
+          {onExpand && (
+            <button
+              type="button"
+              className="project-agent-icon-btn"
+              onMouseEnter={() => import('./ProjectAgentPage').catch(() => {})}
+              onFocus={() => import('./ProjectAgentPage').catch(() => {})}
+              onClick={() =>
+                onExpand({
+                  ownerSessionKey: authEpoch,
+                  adId,
+                  threadId,
+                  threads,
+                  messages,
+                  wallet,
+                  mode,
+                  eligible
+                })
+              }
+              aria-label="Expand to full page"
+              title="Expand to full page"
+            >
+              <FaUpRightFromSquare aria-hidden />
+            </button>
+          )}
+          {onClose && (
+            <button
+              type="button"
+              className="project-agent-icon-btn project-agent-close-btn"
+              onClick={onClose}
+              aria-label="Close"
+            >
+              ✕
+            </button>
+          )}
+        </div>
       </header>
 
-      <div className="project-agent-toolbar">
+      <div className="project-agent-toolbar project-agent-toolbar--slim">
         {compact && threads.length > 0 && (
           <div className="project-agent-thread-select-wrap">
             <select
@@ -1686,51 +1773,17 @@ export default function ProjectAgentPanel({
             ))}
           </select>
         )}
-        <button type="button" className="primary" onClick={handleNewChat}>
-          New chat
-        </button>
-        <button
-          type="button"
-          className={`project-agent-topup-trigger ${topupOpen ? 'active' : ''}`}
-          onClick={() => setTopupOpen((o) => !o)}
-        >
-          Add funds
-        </button>
-        {onExpand && (
+        {compact && (
           <button
             type="button"
-            onMouseEnter={() => import('./ProjectAgentPage').catch(() => {})}
-            onFocus={() => import('./ProjectAgentPage').catch(() => {})}
-            onClick={() =>
-              onExpand({
-                ownerSessionKey: authEpoch,
-                adId,
-                threadId,
-                threads,
-                messages,
-                wallet,
-                mode,
-                eligible
-              })
-            }
+            className="project-agent-icon-btn project-agent-new-chat-icon"
+            onClick={handleNewChat}
+            aria-label="New chat"
+            title="New chat"
           >
-            Expand
+            <FaPlus aria-hidden />
           </button>
         )}
-        <select
-          className="project-agent-mode-select"
-          value={mode}
-          onChange={handleModeChange}
-          disabled={sending}
-          title={`${MODES.find((m) => m.id === mode)?.hint || ''} Changing mode starts a new chat.`}
-          aria-label="Skipper mode (changing mode starts a new chat)"
-        >
-          {MODES.map((m) => (
-            <option key={m.id} value={m.id}>
-              {m.label}
-            </option>
-          ))}
-        </select>
       </div>
 
       {topupOpen && (
@@ -1792,6 +1845,14 @@ export default function ProjectAgentPanel({
       <div className="project-agent-body">
         {!compact && (
           <nav className="project-agent-threads" aria-label="Conversations">
+            <button
+              type="button"
+              className="project-agent-new-chat-btn"
+              onClick={handleNewChat}
+            >
+              <FaPlus aria-hidden />
+              New chat
+            </button>
             {threads.map((t) => (
               <div
                 key={t._id}
@@ -1845,7 +1906,13 @@ export default function ProjectAgentPanel({
               </div>
             )}
             {messages.map((m, i) => (
-              <div key={m._id || `msg-${i}`} className={`project-agent-msg ${m.role}`}>
+              <SkipperMessageRow
+                key={m._id || `msg-${i}`}
+                role={m.role}
+                createdAt={m.createdAt}
+                costCents={m.costCents}
+                currentUser={currentUser}
+              >
                 {messageShowsImage(m) && token ? (
                   <ProjectAgentMessageImage
                     messageId={String(m._id)}
@@ -1872,38 +1939,70 @@ export default function ProjectAgentPanel({
                     <div className="project-agent-user-text">{m.content}</div>
                   </div>
                 )}
-                {m.costCents > 0 && (
-                  <div className="project-agent-meta">−${(m.costCents / 100).toFixed(4)}</div>
-                )}
-              </div>
+              </SkipperMessageRow>
             ))}
             {sending &&
               !streamingContent &&
               (searchStatus || (mode === 'agent' && !imageGenerating && !agentMediaGenerating)) && (
-                <p className="project-agent-search-status" role="status" aria-live="polite">
-                  {searchStatus || 'Working on your reply…'}
-                </p>
+                <div className="project-agent-msg-row assistant project-agent-msg-row--status">
+                  <div className="project-agent-msg-avatar" aria-hidden="true">
+                    <img src={SKIPPER_AGENT_LOGO_SRC} alt="" />
+                  </div>
+                  <div className="project-agent-msg-stack">
+                    <p className="project-agent-search-status" role="status" aria-live="polite">
+                      {searchStatus || 'Working on your reply…'}
+                    </p>
+                  </div>
+                </div>
               )}
             {sending && (streamingReasoning || streamingContent) && (
-              <div className="project-agent-msg assistant">
+              <SkipperMessageRow role="assistant" currentUser={currentUser}>
                 <ProjectAgentMessageBody
                   content={streamingContent}
                   reasoningContent={mode === 'agent' ? '' : streamingReasoning}
                   isStreaming
                 />
-              </div>
+              </SkipperMessageRow>
             )}
             {(imageGenerating || agentMediaGenerating === 'image') && (
-              <div className="project-agent-msg assistant">
+              <SkipperMessageRow role="assistant" currentUser={currentUser}>
                 <ImageGeneratingStatus />
-              </div>
+              </SkipperMessageRow>
             )}
             <div ref={messagesEndRef} />
           </div>
 
           <div className="project-agent-composer">
+            <div className="project-agent-mode-bar">
+              <div
+                className="project-agent-mode-pills"
+                role="tablist"
+                aria-label="Skipper mode (changing mode starts a new chat)"
+              >
+                {MODES.map((m) => (
+                  <button
+                    key={m.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={mode === m.id}
+                    className={`project-agent-mode-pill${mode === m.id ? ' active' : ''}`}
+                    onClick={() => handleModeSelect(m.id)}
+                    disabled={sending}
+                    title={m.hint}
+                  >
+                    {m.label}
+                  </button>
+                ))}
+              </div>
+              <p className="project-agent-mode-hint">
+                {MODES.find((m) => m.id === mode)?.hint}
+                {' · '}
+                Changing mode starts a new chat.
+              </p>
+            </div>
+
             {lastCost && (
-              <p className="project-agent-last-cost">
+              <p className="project-agent-last-cost project-agent-composer-footer">
                 Last message: −${parseFloat(lastCost.costUsd).toFixed(4)}
                 {lastCost.webSearchCalls > 0 && (
                   <>

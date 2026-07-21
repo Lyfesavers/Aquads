@@ -66,6 +66,17 @@
   opacity: 0.9;
 }
 
+.project-agent-header-subtitle {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--pa-muted);
+  letter-spacing: 0.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .project-agent-header-account {
   display: block;
   margin-top: 0.2rem;
@@ -128,6 +139,48 @@
   color: #fbbf24;
 }
 
+.project-agent-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.project-agent-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid var(--pa-border);
+  border-radius: 10px;
+  background: var(--pa-surface);
+  color: var(--pa-text);
+  font-size: 0.9rem;
+  line-height: 1;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.project-agent-icon-btn svg {
+  width: 0.9rem;
+  height: 0.9rem;
+}
+
+.project-agent-icon-btn:hover,
+.project-agent-icon-btn:focus-visible {
+  background: var(--pa-accent-dim);
+  border-color: rgba(34, 211, 238, 0.35);
+  color: var(--pa-accent);
+}
+
+.project-agent-balance-btn.active {
+  background: var(--pa-accent-dim);
+  border-color: rgba(34, 211, 238, 0.35);
+}
+
 .project-agent-toolbar {
   display: flex;
   gap: 8px;
@@ -139,7 +192,7 @@
 }
 
 .project-agent-toolbar select,
-.project-agent-toolbar button {
+.project-agent-toolbar button:not(.project-agent-icon-btn) {
   font-size: 0.8rem;
   border-radius: 8px;
   border: 1px solid var(--pa-border);
@@ -148,6 +201,13 @@
   padding: 6px 10px;
   cursor: pointer;
   touch-action: manipulation;
+}
+
+.project-agent-toolbar .project-agent-icon-btn {
+  width: 36px;
+  height: 36px;
+  min-height: 36px;
+  padding: 0;
 }
 
 .project-agent-toolbar button.primary {
@@ -159,6 +219,44 @@
 .project-agent-toolbar button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.project-agent-toolbar--slim {
+  gap: 6px;
+  padding: 6px 12px;
+}
+
+.project-agent-toolbar--slim .project-agent-new-chat-icon {
+  margin-left: auto;
+}
+
+.project-agent-new-chat-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin: 0;
+  padding: 10px 12px;
+  border: none;
+  border-bottom: 1px solid var(--pa-border);
+  background: transparent;
+  color: var(--pa-accent);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background 0.15s ease;
+}
+
+.project-agent-new-chat-btn svg {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
+.project-agent-new-chat-btn:hover,
+.project-agent-new-chat-btn:focus-visible {
+  background: var(--pa-accent-dim);
 }
 
 .project-agent-body {
@@ -421,14 +519,106 @@
 }
 
 .project-agent-listing-onboarding,
+.project-agent-msg-row,
 .project-agent-msg,
 .project-agent-search-status {
   position: relative;
   z-index: 1;
 }
 
+.project-agent-msg-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.project-agent-msg-row.user {
+  flex-direction: row-reverse;
+}
+
+.project-agent-msg-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--pa-surface);
+  border: 1px solid var(--pa-border);
+}
+
+.project-agent-msg-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 2px;
+}
+
+.project-agent-msg-avatar span {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--pa-accent);
+}
+
+.project-agent-msg-row.user .project-agent-msg-avatar {
+  background: rgba(34, 211, 238, 0.12);
+  border-color: rgba(34, 211, 238, 0.25);
+}
+
+.project-agent-msg-stack {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.project-agent-msg-row.assistant .project-agent-msg-stack {
+  max-width: min(720px, calc(100% - 42px));
+}
+
+.project-agent-msg-row.user .project-agent-msg-stack {
+  max-width: min(480px, calc(100% - 42px));
+  align-items: flex-end;
+}
+
+.project-agent-msg-header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 0 2px;
+}
+
+.project-agent-msg-row.user .project-agent-msg-header {
+  flex-direction: row-reverse;
+}
+
+.project-agent-msg-author {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--pa-muted);
+}
+
+.project-agent-msg-time {
+  font-size: 0.68rem;
+  color: var(--pa-muted);
+  opacity: 0.8;
+}
+
+.project-agent-msg-row--status .project-agent-msg-stack {
+  max-width: min(720px, calc(100% - 42px));
+}
+
+.project-agent-msg-row--status .project-agent-search-status {
+  margin: 0;
+}
+
 .project-agent-msg {
-  max-width: 92%;
+  max-width: 100%;
+  width: 100%;
   padding: 10px 14px;
   border-radius: 12px;
   font-size: 0.9rem;
@@ -623,13 +813,11 @@
 }
 
 .project-agent-msg.user {
-  align-self: flex-end;
   background: rgba(34, 211, 238, 0.12);
   border: 1px solid rgba(34, 211, 238, 0.25);
 }
 
 .project-agent-msg.assistant {
-  align-self: flex-start;
   background: var(--pa-surface);
   border: 1px solid var(--pa-border);
 }
@@ -638,6 +826,85 @@
   font-size: 0.7rem;
   color: var(--pa-muted);
   margin-top: 6px;
+}
+
+.project-agent-msg-cost {
+  opacity: 0.5;
+  transition: opacity 0.15s ease;
+}
+
+@media (hover: hover) {
+  .project-agent-msg-cost {
+    opacity: 0;
+  }
+
+  .project-agent-msg-row:hover .project-agent-msg-cost,
+  .project-agent-msg-row:focus-within .project-agent-msg-cost {
+    opacity: 1;
+  }
+}
+
+.project-agent-mode-bar {
+  padding: 10px 12px 0;
+  border-bottom: 1px solid var(--pa-border);
+  background: color-mix(in srgb, var(--pa-surface) 40%, var(--pa-bg));
+}
+
+.project-agent-mode-pills {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+
+.project-agent-mode-pills::-webkit-scrollbar {
+  display: none;
+}
+
+.project-agent-mode-pill {
+  flex-shrink: 0;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--pa-border);
+  background: var(--pa-surface);
+  color: var(--pa-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+
+.project-agent-mode-pill:hover:not(:disabled),
+.project-agent-mode-pill:focus-visible {
+  color: var(--pa-text);
+  border-color: rgba(34, 211, 238, 0.35);
+}
+
+.project-agent-mode-pill.active {
+  background: var(--pa-accent-dim);
+  border-color: rgba(34, 211, 238, 0.45);
+  color: var(--pa-accent);
+}
+
+.project-agent-mode-pill:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.project-agent-mode-hint {
+  margin: 6px 0 0;
+  padding: 0 2px 8px;
+  font-size: 0.68rem;
+  line-height: 1.4;
+  color: var(--pa-muted);
+}
+
+.project-agent-composer-footer {
+  padding-top: 8px;
 }
 
 .project-agent-input-row {
@@ -759,20 +1026,6 @@
 
 .project-agent-close-btn {
   flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  padding: 0;
-  border: 1px solid var(--pa-border);
-  border-radius: 10px;
-  background: var(--pa-surface);
-  color: var(--pa-text);
-  font-size: 1rem;
-  line-height: 1;
-  cursor: pointer;
-  touch-action: manipulation;
 }
 
 .project-agent-close-btn:hover {
@@ -974,6 +1227,11 @@
 }
 
 .project-agent-root--fullpage .project-agent-toolbar {
+  padding-left: max(12px, env(safe-area-inset-left, 0px));
+  padding-right: max(12px, env(safe-area-inset-right, 0px));
+}
+
+.project-agent-root--fullpage .project-agent-mode-bar {
   padding-left: max(12px, env(safe-area-inset-left, 0px));
   padding-right: max(12px, env(safe-area-inset-right, 0px));
 }
@@ -1732,16 +1990,23 @@
   }
 
   .project-agent-toolbar select,
-  .project-agent-toolbar button {
+  .project-agent-toolbar button:not(.project-agent-icon-btn) {
     font-size: 0.75rem;
     padding: 8px 10px;
     min-height: 40px;
   }
 
-  .project-agent-mode-select {
-    margin-left: 0;
-    flex: 1 1 100%;
-    width: 100%;
+  .project-agent-toolbar .project-agent-icon-btn {
+    min-height: 36px;
+  }
+
+  .project-agent-mode-bar {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .project-agent-mode-hint {
+    display: none;
   }
 
   .project-agent-thread-select,
@@ -1763,8 +2028,12 @@
     font-size: 0.875rem;
   }
 
-  .project-agent-msg.user {
-    max-width: 96%;
+  .project-agent-msg-row.user .project-agent-msg-stack {
+    max-width: calc(100% - 42px);
+  }
+
+  .project-agent-msg-row.assistant .project-agent-msg-stack {
+    max-width: calc(100% - 42px);
   }
 
   .project-agent-msg-body {
