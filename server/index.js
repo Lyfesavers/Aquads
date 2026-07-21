@@ -1131,6 +1131,13 @@ const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
   // Start Telegram bot (fire-and-forget)
   telegramService.startBot();
+  // Skipper Sora jobs: poll OpenAI + finalize MP4 without requiring an open browser tab
+  try {
+    const { startProjectAgentVideoWorker } = require('./services/projectAgentVideoSync');
+    startProjectAgentVideoWorker();
+  } catch (workerErr) {
+    console.error('[ProjectAgent Video Worker] Failed to start:', workerErr.message);
+  }
   // Start Discord bot (separate, fire-and-forget; only if token set)
   if (process.env.DISCORD_BOT_TOKEN && process.env.DISCORD_BOT_DISABLED !== 'true') {
     discordService.startBot().catch(err => console.error('Discord bot startup error:', err.message));

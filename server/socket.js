@@ -1657,6 +1657,22 @@ function emitEscrowUpdated(data) {
   }
 }
 
+/** Skipper Create video — notify the owner when a Sora job is saved and ready in chat. */
+function emitProjectAgentVideoCompleted(data) {
+  if (!io || !data?.userId || !data?.messageId) return;
+  io.to(`user_${data.userId}`).emit('projectAgentVideoCompleted', {
+    messageId: String(data.messageId),
+    threadId: data.threadId != null ? String(data.threadId) : '',
+    adId: data.adId != null ? String(data.adId) : '',
+    status: 'completed',
+    costUsd: data.costUsd,
+    costCents: data.costCents,
+    balanceUsd: data.balanceUsd,
+    videoSeconds: data.videoSeconds,
+    videoTargetSeconds: data.videoTargetSeconds
+  });
+}
+
 module.exports = {
   init,
   getIO: () => getIO(),
@@ -1702,5 +1718,6 @@ module.exports = {
   emitNewHyperSpaceOrder,
   emitHyperSpaceOrderStatusChange,
   emitEscrowUpdated,
-  emitLinkInBioAnalyticsUpdate
+  emitLinkInBioAnalyticsUpdate,
+  emitProjectAgentVideoCompleted
 }; 

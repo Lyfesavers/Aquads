@@ -14,7 +14,7 @@ import {
   createProjectAgentTopup,
   fetchProjectAgentTopupStatus
 } from '../../services/projectAgentApi';
-import { getActiveAuthToken } from '../../services/api';
+import { getActiveAuthToken, socket } from '../../services/api';
 import ProjectAgentMessageImage, { ImageGeneratingStatus } from './ProjectAgentMessageImage';
 import { getProjectAgentImageBlobUrl } from '../../services/projectAgentMediaCache';
 import ProjectAgentMessageVideo from './ProjectAgentMessageVideo';
@@ -36,7 +36,7 @@ import {
   unmarkSkipperThreadDeleted
 } from './projectAgentSession';
 import {
-  getVideoPollMaxAttempts,
+  getVideoSoftNoticePolls,
   getVideoRenderEstimate
 } from './projectAgentVideoEstimates';
 import './ProjectAgent.css';
@@ -56,7 +56,7 @@ const MODES = [
   {
     id: 'video',
     label: 'Create video',
-    hint: '20s (~15–25 min) or 30s (~25–40 min) · ~$0.10/s at 720p; wallet hold then settle'
+    hint: '20s (~10–25 min) or 30s (~25–40 min) · ~$0.10/s at 720p; renders on server even if you leave'
   }
 ];
 
@@ -76,7 +76,7 @@ function resolveThreadSkipperMode(messages = []) {
 
 const VIDEO_SECONDS_OPTIONS = [20, 30];
 
-const VIDEO_POLL_MS = 12_000;
+const VIDEO_POLL_MS = 8_000;
 
 // Listing a project (submit_starter_listing) only works in Agent mode, where
 // Skipper has tools. Detect CA/PA (with or without logo URL) so we can
@@ -699,7 +699,7 @@ export default function ProjectAgentPanel({
       if (!token) return;
       const loadGen = loadGenerationRef.current;
       const id = String(messageId);
-      const pollMax = getVideoPollMaxAttempts(seconds);
+      const softNoticeAfter = getVideoSoftNoticePolls(seconds);
       const estimate = getVideoRenderEstimate(seconds);
       if (videoPollRunningRef.current === id) return;
 
@@ -707,7 +707,8 @@ export default function ProjectAgentPanel({
       videoPollAbortRef.current = id;
 
       try {
-        for (let attempt = 0; attempt < pollMax; attempt += 1) {
+        let attempt = 0;
+        while (true) {
           if (loadGen !== loadGenerationRef.current) return;
           if (videoPollAbortRef.current !== id) return;
 
@@ -730,6 +731,7 @@ export default function ProjectAgentPanel({
 
             if (data.status === 'completed') {
               setStreamingContent('');
+              setError('');
               setLastCost({
                 costUsd: data.costUsd,
                 balanceUsd: data.balanceUsd,
@@ -753,6 +755,10 @@ export default function ProjectAgentPanel({
 
             if (data.status === 'finalizing') {
               setStreamingContent('Saving your video…');
+            } else if (attempt >= softNoticeAfter) {
+              setStreamingContent(
+                `Still rendering on the server (typical: ~${estimate.label}). You can leave this chat — the clip will appear when ready.`
+              );
             } else if (attempt > 0) {
               setStreamingContent('');
             }
@@ -760,6 +766,7 @@ export default function ProjectAgentPanel({
             if (e?.code === 'TOKEN_EXPIRED' || e?.status === 401) {
               setStreamingContent('Refreshing session…');
               await new Promise((r) => setTimeout(r, 2000));
+              attempt += 1;
               continue;
             }
             const transient =
@@ -768,18 +775,16 @@ export default function ProjectAgentPanel({
               e?.message?.includes('NetworkError');
             if (transient) {
               setStreamingContent('Still working — reconnecting…');
+              attempt += 1;
               continue;
             }
             setStreamingContent('');
             setError(e.message || 'Failed to check video status');
             return;
           }
-        }
 
-        setStreamingContent('');
-        setError(
-          `Video is taking longer than expected for a ${seconds}s clip (typical: ~${estimate.label}). Leave this chat open or return in a few minutes — progress continues on the server.`
-        );
+          attempt += 1;
+        }
       } finally {
         if (videoPollRunningRef.current === id) {
           videoPollRunningRef.current = null;
@@ -964,6 +969,77 @@ export default function ProjectAgentPanel({
       }
     };
   }, [threadId, token, pollVideoJob, pendingVideoJob]);
+
+  /** Real-time push when server finishes a Sora job (works even if HTTP poll is throttled). */
+  useEffect(() => {
+    if (!socket || !currentUser) return undefined;
+
+    const userId = currentUser.userId || getJwtUserId(token);
+    if (!userId) return undefined;
+
+    socket.emit('userOnline', {
+      userId,
+      username: currentUser.username
+    });
+
+    const onVideoCompleted = (payload) => {
+      if (!payload?.messageId || payload.status !== 'completed') return;
+      if (payload.adId && adId && String(payload.adId) !== String(adId)) return;
+      if (payload.threadId && threadId && String(payload.threadId) !== String(threadId)) return;
+
+      const messageId = String(payload.messageId);
+      updateVideoMessage(messageId, {
+        videoStatus: 'completed',
+        videoProgress: 100,
+        hasVideo: true,
+        content: 'Generated video for your project.'
+      });
+      setStreamingContent('');
+      setError('');
+      if (payload.costUsd != null || payload.balanceUsd != null) {
+        setLastCost({
+          costUsd: payload.costUsd,
+          balanceUsd: payload.balanceUsd
+        });
+      }
+      if (payload.balanceUsd != null) {
+        setWallet((w) => (w ? { ...w, balanceUsd: payload.balanceUsd } : w));
+      }
+      refreshWallet();
+      if (videoPollAbortRef.current === messageId) {
+        videoPollAbortRef.current = null;
+      }
+    };
+
+    socket.on('projectAgentVideoCompleted', onVideoCompleted);
+    return () => {
+      socket.off('projectAgentVideoCompleted', onVideoCompleted);
+    };
+  }, [
+    token,
+    adId,
+    threadId,
+    currentUser,
+    updateVideoMessage,
+    refreshWallet
+  ]);
+
+  /** Sync chat when user returns to tab — server worker may have finished while tab was backgrounded. */
+  useEffect(() => {
+    if (!token || !adId || !threadId || !pendingVideoJob?.id) return undefined;
+
+    const syncMessages = () => {
+      if (document.visibilityState !== 'visible') return;
+      fetchProjectAgentMessages(adId, threadId, token)
+        .then(({ messages: msgs }) => {
+          setMessages(normalizeAgentMessages(msgs));
+        })
+        .catch(() => {});
+    };
+
+    document.addEventListener('visibilitychange', syncMessages);
+    return () => document.removeEventListener('visibilitychange', syncMessages);
+  }, [token, adId, threadId, pendingVideoJob?.id]);
 
   const handleTopup = async () => {
     if (!token || !adId || topupLoading) return;

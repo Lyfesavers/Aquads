@@ -1,24 +1,28 @@
 /** User-facing render time ranges for Skipper Create video (async provider). */
 export const VIDEO_RENDER_ESTIMATES = {
   20: {
-    label: '15–25 min',
-    composerHint: 'Typical render: ~15–25 min.',
-    generatingHint: 'You can keep this chat open or come back later.',
-    longPhaseText: 'Long render in progress — 20s clips commonly take 15–25 minutes'
+    label: '10–25 min',
+    composerHint: 'Typical render: ~10–25 min. Server keeps working if you close this tab.',
+    generatingHint: 'Rendering continues on the server — you can leave and come back.',
+    longPhaseText: 'Long render in progress — 20s clips commonly take 10–25 minutes'
   },
   30: {
     label: '25–40 min',
-    composerHint: 'Typical render: ~25–40 min (two stitched segments, ~32s billed max).',
+    composerHint:
+      'Typical render: ~25–40 min (two stitched segments). Server keeps working if you close this tab.',
     generatingHint:
-      '30s uses two back-to-back renders — you can keep this chat open or come back later.',
+      '30s uses two back-to-back renders — you can leave this chat and return later.',
     longPhaseText: 'Long render in progress — 30s clips commonly take 25–40 minutes'
   }
 };
 
-/** Frontend poll attempts × VIDEO_POLL_MS (12s) before a soft timeout message. */
-export const VIDEO_POLL_MAX_BY_SECONDS = {
-  20: 130,
-  30: 210
+/**
+ * After this many UI polls (~8s each), show a “still working” notice but keep polling.
+ * Sora + server worker continue regardless.
+ */
+export const VIDEO_SOFT_NOTICE_POLLS = {
+  20: 150,
+  30: 280
 };
 
 export function getVideoRenderEstimate(seconds) {
@@ -26,7 +30,7 @@ export function getVideoRenderEstimate(seconds) {
   return n >= 30 ? VIDEO_RENDER_ESTIMATES[30] : VIDEO_RENDER_ESTIMATES[20];
 }
 
-export function getVideoPollMaxAttempts(seconds) {
+export function getVideoSoftNoticePolls(seconds) {
   const n = Number(seconds);
-  return n >= 30 ? VIDEO_POLL_MAX_BY_SECONDS[30] : VIDEO_POLL_MAX_BY_SECONDS[20];
+  return n >= 30 ? VIDEO_SOFT_NOTICE_POLLS[30] : VIDEO_SOFT_NOTICE_POLLS[20];
 }
