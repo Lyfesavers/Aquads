@@ -1852,6 +1852,22 @@ const AquaSwap = ({
   };
   const projectProfile = projectForInsights?.projectProfile || null;
   const qaStatus = projectProfile?.verification?.status || 'unverified';
+  const lpLockVerified = projectProfile?.liquidityLock?.status === 'verified';
+  const lpLockUnlockAt = projectProfile?.liquidityLock?.unlockAt;
+  const lpLockPermanent = projectProfile?.liquidityLock?.lockPermanent;
+  const lpLockBadgeLabel = (() => {
+    if (!lpLockVerified) return '';
+    if (lpLockPermanent) return '🔒 LP locked (permanent)';
+    if (!lpLockUnlockAt) return '🔒 LP locked';
+    const unlockDate = new Date(lpLockUnlockAt);
+    if (Number.isNaN(unlockDate.getTime())) return '🔒 LP locked';
+    const formatted = unlockDate.toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+    return `🔒 LP locked until ${formatted}`;
+  })();
   const hasProjectDeepDive = Boolean(
     projectProfile &&
     projectProfile.about &&
@@ -2662,7 +2678,15 @@ const AquaSwap = ({
               {hasProjectDeepDive && (
                 <div className="project-meta-badges">
                   <span className={`project-qa-badge qa-${qaStatus}`}>QA: {qaStatus.replace(/_/g, ' ')}</span>
+                  {lpLockVerified && (
+                    <span className="project-lp-lock-badge">{lpLockBadgeLabel}</span>
+                  )}
                   <span className="project-freshness-badge">{freshnessText}</span>
+                </div>
+              )}
+              {!hasProjectDeepDive && lpLockVerified && (
+                <div className="project-meta-badges">
+                  <span className="project-lp-lock-badge">{lpLockBadgeLabel}</span>
                 </div>
               )}
             </div>

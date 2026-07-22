@@ -1115,6 +1115,21 @@ body {
 }
 
 /* Curved text container for bubbles */
+.bubble-lp-lock-icon {
+  position: absolute;
+  top: 2%;
+  right: 8%;
+  z-index: 25;
+  font-size: 0.72rem;
+  line-height: 1;
+  padding: 3px 5px;
+  border-radius: 999px;
+  background: rgba(16, 185, 129, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.45);
+  pointer-events: none;
+}
+
 .bubble-text-curved {
   position: absolute;
   top: 8%;

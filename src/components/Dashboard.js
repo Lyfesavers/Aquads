@@ -20,6 +20,7 @@ import LinkInBioSettings from './LinkInBioSettings';
 import ProjectDeepDiveModal from './ProjectDeepDiveModal';
 import EditAdModal from './EditAdModal';
 import ProjectLaunchChecklist from './ProjectLaunchChecklist';
+import LiquidityLockPanel from './LiquidityLockPanel';
 import FreelancerLaunchChecklist from './FreelancerLaunchChecklist';
 
 const LinkBioPageAds = ({ userId }) => {
@@ -147,7 +148,7 @@ const AFFILIATE_TRUST_COPY = {
 const getAffiliateTrustCopy = (riskLevel) =>
   AFFILIATE_TRUST_COPY[riskLevel] || AFFILIATE_TRUST_COPY.unknown;
 
-const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBookingId, initialActiveTab, isFullPage = false, onProfileUpdate }) => {
+const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onAdPatched, initialBookingId, initialActiveTab, isFullPage = false, onProfileUpdate }) => {
   const [bannerAds, setBannerAds] = useState([]);
   const [selectedAd, setSelectedAd] = useState(null);
   const [rejectionReason, setRejectionReason] = useState('');
@@ -4115,6 +4116,11 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, initialBoo
 
                           {ad.status !== 'rejected' && (
                             <div className="px-4 sm:px-5 pb-4">
+                              <LiquidityLockPanel
+                                ad={ad}
+                                onAdPatched={onAdPatched}
+                                showNotification={showNotification}
+                              />
                               <ProjectLaunchChecklist
                                 ad={ad}
                                 embedded

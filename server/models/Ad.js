@@ -235,7 +235,19 @@ const adSchema = new mongoose.Schema({
     },
     // Direct HTTPS video file URL for AquaSwap deep dive (e.g. files.catbox.moe/….mp4)
     introVideoUrl: { type: String, default: '', maxlength: 2048 },
-    updatedAt: { type: Date, default: null }
+    updatedAt: { type: Date, default: null },
+    /** On-chain LP lock proof (verified server-side via liquidityLockService) */
+    liquidityLock: {
+      status: { type: String, default: 'unverified' },
+      txHash: { type: String, default: '' },
+      proofInput: { type: String, default: '' },
+      provider: { type: String, default: '' },
+      unlockAt: { type: Date, default: null },
+      lockedAmount: { type: String, default: '' },
+      lockPermanent: { type: Boolean, default: false },
+      verifiedAt: { type: Date, default: null },
+      verifyError: { type: String, default: '' }
+    }
   },
   launchChecklist: {
     completedSteps: { type: [String], default: [] },

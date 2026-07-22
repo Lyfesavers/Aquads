@@ -560,6 +560,25 @@ export const updateFreelancerLaunchChecklist = async ({ completedSteps, dismiss 
   return response.json();
 };
 
+// Verify on-chain LP lock for a listing (tx hash or provider URL)
+export const verifyAdLiquidityLock = async (id, proofInput) => {
+  const response = await fetch(`${API_URL}/ads/${id}/verify-liquidity-lock`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeader()
+    },
+    body: JSON.stringify({ proofInput }),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const err = new Error(data.message || 'Failed to verify liquidity lock');
+    if (data.ad) err.ad = data.ad;
+    throw err;
+  }
+  return data;
+};
+
 // Update ad position only (no auth required)
 export const updateAdPosition = async (id, x, y) => {
   const response = await fetch(`${API_URL}/ads/${id}/position`, {

@@ -2830,12 +2830,19 @@
 }
 
 .project-qa-badge,
-.project-freshness-badge {
+.project-freshness-badge,
+.project-lp-lock-badge {
   font-size: 0.72rem;
   font-weight: 600;
   padding: 4px 9px;
   border-radius: 999px;
   border: 1px solid transparent;
+}
+
+.project-lp-lock-badge {
+  color: #6ee7b7;
+  background: rgba(16, 185, 129, 0.18);
+  border-color: rgba(16, 185, 129, 0.45);
 }
 
 .project-freshness-badge {

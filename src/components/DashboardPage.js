@@ -9,6 +9,7 @@ const DashboardPage = ({
   currentUser, 
   onDeleteAd, 
   onEditAd, 
+  onAdPatched,
   activeBookingId,
   setActiveBookingId,
   onLogin,
@@ -101,6 +102,7 @@ const DashboardPage = ({
         onClose={handleClose}
         onDeleteAd={onDeleteAd}
         onEditAd={onEditAd}
+        onAdPatched={onAdPatched}
         initialBookingId={activeBookingId}
         initialActiveTab={tab || 'ads'}
         isFullPage={true}

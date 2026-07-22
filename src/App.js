@@ -1769,6 +1769,15 @@ function App() {
     }
   };
 
+  const handleAdPatched = (patchedAd) => {
+    if (!patchedAd?.id) return;
+    setAds((prevAds) => {
+      const next = prevAds.map((a) => (a.id === patchedAd.id ? { ...a, ...patchedAd } : a));
+      persistAdsCache(next);
+      return next;
+    });
+  };
+
   // Add sentiment voting function
   const handleSentimentVote = async (adId, voteType) => {
     if (!currentUser) {
@@ -2890,6 +2899,7 @@ function App() {
               currentUser={currentUser}
               onDeleteAd={handleDeleteAd}
               onEditAd={handleEditAd}
+              onAdPatched={handleAdPatched}
               activeBookingId={activeBookingId}
               setActiveBookingId={setActiveBookingId}
               onLogin={() => setShowLoginModal(true)}
@@ -3493,6 +3503,16 @@ function App() {
                               <div className="bubble-content">
                                 {/* Background of bubble */}
                                 <div className="bubble-bg"></div>
+
+                                {ad.projectProfile?.liquidityLock?.status === 'verified' && (
+                                  <div
+                                    className="bubble-lp-lock-icon"
+                                    title="Liquidity lock verified on-chain"
+                                    aria-label="Liquidity lock verified"
+                                  >
+                                    🔒
+                                  </div>
+                                )}
                                 
                               {/* Curved text at top */}
                               <div 

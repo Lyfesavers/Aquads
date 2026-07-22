@@ -1,4 +1,5 @@
 const express = require('express');
+const rateLimit = require('express-rate-limit');
 const router = express.Router();
 const mongoose = require('mongoose');
 const Ad = require('../models/Ad');
@@ -33,11 +34,21 @@ const {
 } = require('../utils/listingTier');
 const { grantStarterIfNeeded } = require('../services/projectAgentWallet');
 const { transferDexFeedListing } = require('../utils/transferDexFeedListing');
+const { verifyLiquidityLock } = require('../services/liquidityLockService');
 const {
   LISTING_SOURCE_DEX_FEED,
   CLAIM_STATUS_UNCLAIMED,
   DEX_FEED_OWNER_USERNAME
 } = require('../constants/dexFeed');
+
+const liquidityLockVerifyLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many lock verification attempts. Please try again in a few minutes.' },
+  keyGenerator: (req) => req.user?.username || req.ip,
+});
 
 const LAUNCH_CHECKLIST_STEPS = [
   'telegram_bot',
@@ -700,6 +711,86 @@ router.patch('/:id/launch-checklist', auth, requireEmailVerification, emitAdEven
   }
 });
 
+// POST verify on-chain LP lock proof (tx hash or provider URL)
+router.post('/:id/verify-liquidity-lock', auth, requireEmailVerification, liquidityLockVerifyLimiter, emitAdEvent('update'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const proofInput = String(req.body?.proofInput || req.body?.txHash || '').trim();
+
+    if (!proofInput) {
+      return res.status(400).json({ message: 'Enter a lock transaction hash or provider URL.' });
+    }
+    if (proofInput.length > 512) {
+      return res.status(400).json({ message: 'Proof input is too long.' });
+    }
+
+    const ad = await Ad.findOne({ id });
+    if (!ad) {
+      return res.status(404).json({ message: 'Ad not found' });
+    }
+    if (ad.owner !== req.user?.username && !req.user?.isAdmin) {
+      return res.status(403).json({ message: 'You do not have permission to update this ad' });
+    }
+
+    let lockResult;
+    try {
+      lockResult = await verifyLiquidityLock({
+        blockchain: ad.blockchain,
+        pairAddress: ad.pairAddress,
+        proofInput
+      });
+    } catch (verifyError) {
+      const failedLock = {
+        status: 'failed',
+        txHash: '',
+        proofInput,
+        provider: '',
+        unlockAt: null,
+        lockedAmount: '',
+        lockPermanent: false,
+        verifiedAt: null,
+        verifyError: verifyError.message || 'Verification failed'
+      };
+
+      const updatedAd = await Ad.findByIdAndUpdate(
+        ad._id,
+        {
+          $set: {
+            'projectProfile.liquidityLock': failedLock,
+            'projectProfile.updatedAt': new Date()
+          }
+        },
+        { new: true, runValidators: false }
+      );
+
+      invalidateAdsCache();
+      return res.status(400).json({
+        message: verifyError.message || 'Verification failed',
+        ad: updatedAd
+      });
+    }
+
+    const updatedAd = await Ad.findByIdAndUpdate(
+      ad._id,
+      {
+        $set: {
+          'projectProfile.liquidityLock': lockResult,
+          'projectProfile.updatedAt': new Date()
+        }
+      },
+      { new: true, runValidators: false }
+    );
+
+    invalidateAdsCache();
+    res.json(updatedAd);
+  } catch (error) {
+    res.status(500).json({
+      message: 'Error verifying liquidity lock',
+      error: error.message
+    });
+  }
+});
+
 // PUT route for updating an ad
 router.put('/:id', auth, requireEmailVerification, emitAdEvent('update'), async (req, res) => {
   try {
@@ -765,6 +856,17 @@ router.put('/:id', auth, requireEmailVerification, emitAdEvent('update'), async 
         updateData.projectProfile = {
           ...updateData.projectProfile,
           introVideoUrl: trimmed
+        };
+      }
+
+      // LP lock status is set only via POST /verify-liquidity-lock (not manual profile edits)
+      if (!req.user?.isAdmin) {
+        const { liquidityLock: _ignored, ...profileWithoutLock } = updateData.projectProfile;
+        updateData.projectProfile = {
+          ...profileWithoutLock,
+          ...(ad.projectProfile?.liquidityLock
+            ? { liquidityLock: ad.projectProfile.liquidityLock }
+            : {})
         };
       }
     }
