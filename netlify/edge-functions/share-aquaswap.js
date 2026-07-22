@@ -179,6 +179,8 @@ export default async (request, context) => {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>$${escapeHtml(symbol)} - ${escapeHtml(name)} │ Aquads DEX</title>
   <meta name="description" content="${escapeHtml(description)}">
+  <meta name="robots" content="noindex, follow">
+  <link rel="canonical" href="https://www.aquads.xyz/aquaswap">
   
   <!-- Twitter Card meta tags -->
   <meta name="twitter:card" content="summary_large_image">
@@ -543,6 +545,7 @@ export default async (request, context) => {
       headers: {
         'Content-Type': 'text/html; charset=utf-8',
         'Cache-Control': 'public, max-age=300',
+        'X-Robots-Tag': 'noindex, follow',
       },
     });
 

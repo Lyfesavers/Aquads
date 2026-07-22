@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Helmet } from 'react-helmet';
 import PropTypes from 'prop-types';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { LiFiWidget, useWidgetEvents, WidgetEvent, ChainId } from '@lifi/widget';
 import { FaShareAlt, FaTwitter, FaTelegram } from 'react-icons/fa';
 import { useEditor, EditorContent } from '@tiptap/react';
@@ -201,6 +201,13 @@ const AquaSwap = ({
   onRequireLogin
 }) => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const hasTokenDeepLink = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    return Boolean(
+      (params.get('token') && params.get('blockchain')) || params.get('symbol')
+    );
+  }, [location.search]);
   const [chartProvider, setChartProvider] = useState('tradingview');
   const [tokenSearch, setTokenSearch] = useState('');
   const [selectedChain, setSelectedChain] = useState('ether');
@@ -1873,6 +1880,7 @@ const AquaSwap = ({
       <Helmet>
         <title>AquaSwap - Swap Crypto Tokens Instantly | Aquads DEX</title>
         <meta name="description" content="Swap tokens across multiple blockchains with live charts, real-time prices, and low fees. Trade on Ethereum, Solana, BSC, Base, Arbitrum, and more on AquaSwap." />
+        {hasTokenDeepLink && <meta name="robots" content="noindex, follow" />}
         <link rel="canonical" href="https://www.aquads.xyz/aquaswap" />
 
         <meta property="og:title" content="AquaSwap - Swap Crypto Tokens Instantly | Aquads DEX" />

@@ -59,8 +59,8 @@ exports.handler = async (event, context) => {
       console.log('No pair found');
       return {
         statusCode: 200,
-        body: getDefaultHtml(),
-        headers: { 'Content-Type': 'text/html' },
+        body: getDefaultHtml({ noindex: true }),
+        headers: TOKEN_DEEP_LINK_HEADERS,
       };
     }
     
@@ -97,14 +97,14 @@ exports.handler = async (event, context) => {
     return {
       statusCode: 200,
       body: getTokenHtml(symbol, name, title, description, ogCardUrl, pageUrl, tokenAddress, blockchain),
-      headers: { 'Content-Type': 'text/html' },
+      headers: TOKEN_DEEP_LINK_HEADERS,
     };
   } catch (error) {
     console.error('Error:', error);
     return {
       statusCode: 200,
-      body: getDefaultHtml(),
-      headers: { 'Content-Type': 'text/html' },
+      body: getDefaultHtml({ noindex: Boolean(tokenAddress && blockchain) }),
+      headers: tokenAddress && blockchain ? TOKEN_DEEP_LINK_HEADERS : { 'Content-Type': 'text/html' },
     };
   }
 };
@@ -112,6 +112,17 @@ exports.handler = async (event, context) => {
 function htmlAttr(s) {
   return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
 }
+
+const AQUASWAP_CANONICAL = 'https://www.aquads.xyz/aquaswap';
+
+// Token deep-links from bubbles are shareable but must not be indexed (high churn).
+const TOKEN_DEEP_LINK_NOINDEX_HEAD = `<meta name="robots" content="noindex, follow">
+  <link rel="canonical" href="${AQUASWAP_CANONICAL}">`;
+
+const TOKEN_DEEP_LINK_HEADERS = {
+  'Content-Type': 'text/html',
+  'X-Robots-Tag': 'noindex, follow',
+};
 
 function getTokenHtml(symbol, name, title, description, image, url, token, blockchain) {
   const img = htmlAttr(image);
@@ -124,6 +135,7 @@ function getTokenHtml(symbol, name, title, description, image, url, token, block
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>$${symbol} - ${name} │ Aquads DEX</title>
   <meta name="description" content="${description}">
+  ${TOKEN_DEEP_LINK_NOINDEX_HEAD}
   
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:site" content="@_Aquads">
@@ -149,14 +161,15 @@ function getTokenHtml(symbol, name, title, description, image, url, token, block
 </html>`;
 }
 
-function getDefaultHtml() {
+function getDefaultHtml({ noindex = false } = {}) {
+  const noindexBlock = noindex ? `\n  ${TOKEN_DEEP_LINK_NOINDEX_HEAD}` : '';
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AquaSwap - Aquads DEX</title>
-  <meta name="description" content="Trade tokens on Aquads DEX with live charts">
+  <meta name="description" content="Trade tokens on Aquads DEX with live charts">${noindexBlock}
   
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:site" content="@_Aquads">
