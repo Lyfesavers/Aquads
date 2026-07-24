@@ -50,6 +50,7 @@ const CreateAccountModal = ({ onCreateAccount, onSubmit, onClose }) => {
   /** Prevents ghost taps / carried-over clicks when "Next" is swapped for "Create account" in the same screen area */
   const [finalStepActionsUnlocked, setFinalStepActionsUnlocked] = useState(true);
   const [avatarUploading, setAvatarUploading] = useState(false);
+  const [acceptedNotice, setAcceptedNotice] = useState(false);
   const avatarInputRef = useRef(null);
 
   // Add countries list
@@ -470,6 +471,10 @@ const CreateAccountModal = ({ onCreateAccount, onSubmit, onClose }) => {
       setStep(2);
       return;
     }
+    if (!acceptedNotice) {
+      setError('Please accept the terms and marketing notice to create an account.');
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -826,11 +831,21 @@ const CreateAccountModal = ({ onCreateAccount, onSubmit, onClose }) => {
                 className={inputClass}
               />
             </div>
-            <div className="rounded-lg border border-blue-500/25 bg-blue-500/5 p-4">
-              <p className="text-sm leading-relaxed text-gray-300">
-                <span className="font-medium text-gray-200">Notice:</span> By creating an account, you accept our Terms & Conditions and understand that violation of platform rules, including taking leads or bookings outside of Aquads, will result in account suspension or termination.
-              </p>
-            </div>
+            <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-blue-500/25 bg-blue-500/5 p-4">
+              <input
+                type="checkbox"
+                checked={acceptedNotice}
+                onChange={(e) => {
+                  setAcceptedNotice(e.target.checked);
+                  setError('');
+                }}
+                required
+                className="mt-1 h-4 w-4 shrink-0 rounded border-gray-500 bg-gray-900 text-blue-500 focus:ring-blue-500 focus:ring-offset-0"
+              />
+              <span className="text-sm leading-relaxed text-gray-300">
+                I accept the Terms & Conditions and understand that violation of platform rules, including taking leads or bookings outside of Aquads, will result in account suspension or termination. I also agree to receive email marketing and newsletter updates from Aquads (you can unsubscribe anytime).
+              </span>
+            </label>
             </>
             )}
             {error && !isImageFlowMessage(error) && (
@@ -877,9 +892,15 @@ const CreateAccountModal = ({ onCreateAccount, onSubmit, onClose }) => {
                 <button
                   type="button"
                   onClick={() => commitCreateAccount()}
-                  disabled={isSubmitting || !finalStepActionsUnlocked}
+                  disabled={isSubmitting || !finalStepActionsUnlocked || !acceptedNotice}
                   className="flex items-center justify-center rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-500 disabled:opacity-50 sm:min-w-[10rem]"
-                  title={!finalStepActionsUnlocked ? 'Ready in a moment…' : undefined}
+                  title={
+                    !finalStepActionsUnlocked
+                      ? 'Ready in a moment…'
+                      : !acceptedNotice
+                        ? 'Please accept the notice to continue'
+                        : undefined
+                  }
                 >
                   {isSubmitting ? (
                     <>
