@@ -16,7 +16,8 @@ const socket = require('../socket');
 const telegramService = require('../utils/telegramService');
 const {
   isValidDeepDiveIntroVideoUrl,
-  MAX_BRANDING_VIDEO_URL_LENGTH
+  MAX_BRANDING_VIDEO_URL_LENGTH,
+  toPublicAdPayload
 } = require('../utils/brandingMedia');
 const { isValidProjectUrl, normalizeProjectUrl } = require('../utils/listingValidation');
 const {
@@ -243,14 +244,15 @@ const invalidateAdsCache = () => {
 };
 
 const fetchAndCacheAds = async () => {
-  // Public bubble list does not need voterData (can be megabytes across all listings).
+  // Public bubble list does not need voterData (megabytes) or customBrandingImage base64 blobs.
   const ads = await Ad.find({ status: { $in: ['active', 'approved'] } })
-    .select('-voterData')
+    .select('-voterData -customBrandingImage')
     .lean();
   const currentTime = Date.now();
   const processedAds = ads.map((ad) => {
     const voteBumped = isVoteBumped(ad.bullishVotes);
     const adObject = { ...ad };
+    adObject.hasCustomBrandingImage = (ad.customBrandingImageSize || 0) > 0;
     adObject.isBumped = voteBumped;
     if (!voteBumped) {
       const calculatedSize = computeShrunkSize(ad.createdAt, currentTime, {
@@ -262,12 +264,12 @@ const fetchAndCacheAds = async () => {
       if (calculatedSize !== ad.size) {
         adObject.size = calculatedSize;
       }
-      return adObject;
+      return toPublicAdPayload(adObject);
     }
     if (adObject.size !== MAX_SIZE) {
       adObject.size = MAX_SIZE;
     }
-    return adObject;
+    return toPublicAdPayload(adObject);
   });
   adsListCache = processedAds;
   adsListCacheTime = Date.now();
@@ -458,7 +460,7 @@ router.post('/upgrade-premium', auth, requireEmailVerification, emitAdEvent('upd
     }
 
     invalidateAdsCache();
-    socket.getIO().emit('adsUpdated', { type: 'update', ad });
+    socket.emitAdUpdate('update', ad);
     res.json(ad);
   } catch (error) {
     res.status(500).json({ error: 'Failed to upgrade listing', message: error.message });
@@ -600,7 +602,7 @@ router.post('/', auth, requireEmailVerification, emitAdEvent('create'), async (r
     }
 
     // Emit socket event for real-time updates
-    socket.getIO().emit('adsUpdated', { type: 'create', ad: savedAd });
+    socket.emitAdUpdate('create', savedAd);
 
     // If the ad is pending (non-admin user), notify admins
     if (savedAd.status === 'pending') {

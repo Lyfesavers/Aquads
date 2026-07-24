@@ -1289,13 +1289,15 @@ function getIO() {
   return io;
 }
 
+const { toPublicAdPayload } = require('./utils/brandingMedia');
+
 // Utility function to emit ad updates
 function emitAdUpdate(type, ad) {
   if (!io) {
     return;
   }
-  
-  io.emit('adsUpdated', { type, ad });
+
+  io.emit('adsUpdated', { type, ad: toPublicAdPayload(ad) });
 }
 
 // Utility function to emit token updates

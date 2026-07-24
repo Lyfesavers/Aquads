@@ -416,7 +416,6 @@ export const fetchAds = async () => {
       
       const response = await fetch(`${API_URL}/ads`, {
         signal: controller.signal,
-        cache: 'no-store',
       });
       
       clearTimeout(timeoutId);

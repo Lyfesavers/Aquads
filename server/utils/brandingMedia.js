@@ -59,6 +59,17 @@ function projectHasCustomBrandingMedia(project) {
   return projectUsesVideoBranding(project) || img;
 }
 
+/** Strip Telegram/Discord branding blobs from payloads sent to browsers (saves Railway egress). */
+function toPublicAdPayload(ad) {
+  if (!ad || typeof ad !== 'object') return ad;
+  const adObject = ad.toObject ? ad.toObject() : { ...ad };
+  const hasImage = !!(ad.customBrandingImage && ad.customBrandingImage.length > 0);
+  adObject.hasCustomBrandingImage = hasImage || (ad.customBrandingImageSize || 0) > 0;
+  adObject.customBrandingImageSize = ad.customBrandingImageSize || 0;
+  delete adObject.customBrandingImage;
+  return adObject;
+}
+
 /**
  * Deep dive intro video: direct HTTPS file URL only (.mp4 / .webm / .ogg), e.g. files.catbox.moe/….mp4
  */
@@ -83,6 +94,7 @@ module.exports = {
   isValidDeepDiveIntroVideoUrl,
   projectUsesVideoBranding,
   projectHasCustomBrandingMedia,
+  toPublicAdPayload,
   MAX_BRANDING_VIDEO_URL_LENGTH,
   BRANDING_VIDEO_MAX_MB,
   BRANDING_VIDEO_MAX_BYTES,

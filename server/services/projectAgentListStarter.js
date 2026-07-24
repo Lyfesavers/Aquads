@@ -177,7 +177,7 @@ async function submitStarterListingViaAgent({
   const savedAd = await ad.save();
 
   try {
-    socket.getIO().emit('adsUpdated', { type: 'create', ad: savedAd });
+    socket.emitAdUpdate('create', savedAd);
     socket.getIO().emit('newPendingAd', { ad: savedAd, createdAt: new Date() });
   } catch (socketErr) {
     console.error('[project-agent] list-starter socket emit failed:', socketErr.message);

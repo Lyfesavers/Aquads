@@ -129,9 +129,9 @@ async function listingExistsForToken(chainId, tokenAddress, pairAddress) {
 
 async function emitListingEvents(savedAd) {
   try {
-    const io = socket.getIO();
-    io.emit('adsUpdated', { type: 'create', ad: savedAd });
+    socket.emitAdUpdate('create', savedAd);
 
+    const io = socket.getIO();
     const unclaimedCount = await Ad.countDocuments({
       listingSource: LISTING_SOURCE_DEX_FEED,
       claimStatus: 'unclaimed',

@@ -899,7 +899,7 @@ app.get('/share-blog/:id', async (req, res) => {
 app.delete('/api/ads/:id', auth, async (req, res) => {
   try {
     const deletedAd = await Ad.findOneAndDelete({ id: req.params.id });
-    io.emit('adsUpdated', { type: 'delete', ad: deletedAd });
+    socketModule.emitAdUpdate('delete', deletedAd);
     res.json(deletedAd);
   } catch (error) {
     console.error('Error deleting ad:', error);
@@ -926,7 +926,7 @@ app.put('/api/ads/:id/position', async (req, res) => {
       return res.status(404).json({ error: 'Ad not found' });
     }
     
-    io.emit('adsUpdated', { type: 'update', ad: updatedAd });
+    socketModule.emitAdUpdate('update', updatedAd);
     res.json(updatedAd);
   } catch (error) {
     console.error('Error updating ad position:', error);

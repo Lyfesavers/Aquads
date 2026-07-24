@@ -63,8 +63,8 @@ async function transferDexFeedListing(adId, targetUsername) {
   }
 
   try {
+    socket.emitAdUpdate('update', ad);
     const io = socket.getIO();
-    io.emit('adsUpdated', { type: 'update', ad });
     const unclaimedCount = await Ad.countDocuments({
       listingSource: LISTING_SOURCE_DEX_FEED,
       claimStatus: CLAIM_STATUS_UNCLAIMED,
