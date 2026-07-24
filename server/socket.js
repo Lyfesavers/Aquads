@@ -1289,7 +1289,7 @@ function getIO() {
   return io;
 }
 
-const { toPublicAdPayload } = require('./utils/brandingMedia');
+const { toPublicBubbleListAd } = require('./utils/publicBubbleListAd');
 
 // Utility function to emit ad updates
 function emitAdUpdate(type, ad) {
@@ -1297,7 +1297,7 @@ function emitAdUpdate(type, ad) {
     return;
   }
 
-  io.emit('adsUpdated', { type, ad: toPublicAdPayload(ad) });
+  io.emit('adsUpdated', { type, ad: toPublicBubbleListAd(ad) });
 }
 
 // Utility function to emit token updates

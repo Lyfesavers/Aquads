@@ -16,9 +16,12 @@ const socket = require('../socket');
 const telegramService = require('../utils/telegramService');
 const {
   isValidDeepDiveIntroVideoUrl,
-  MAX_BRANDING_VIDEO_URL_LENGTH,
-  toPublicAdPayload
+  MAX_BRANDING_VIDEO_URL_LENGTH
 } = require('../utils/brandingMedia');
+const {
+  toPublicBubbleListAd,
+  PUBLIC_BUBBLE_LIST_SELECT
+} = require('../utils/publicBubbleListAd');
 const { isValidProjectUrl, normalizeProjectUrl } = require('../utils/listingValidation');
 const {
   isVoteBumped,
@@ -244,9 +247,9 @@ const invalidateAdsCache = () => {
 };
 
 const fetchAndCacheAds = async () => {
-  // Public bubble list does not need voterData (megabytes) or customBrandingImage base64 blobs.
+  // Public bubble list: no voterData/branding blobs; dex-feed summaries built in toPublicBubbleListAd.
   const ads = await Ad.find({ status: { $in: ['active', 'approved'] } })
-    .select('-voterData -customBrandingImage')
+    .select(PUBLIC_BUBBLE_LIST_SELECT)
     .lean();
   const currentTime = Date.now();
   const processedAds = ads.map((ad) => {
@@ -264,12 +267,12 @@ const fetchAndCacheAds = async () => {
       if (calculatedSize !== ad.size) {
         adObject.size = calculatedSize;
       }
-      return toPublicAdPayload(adObject);
+      return toPublicBubbleListAd(adObject);
     }
     if (adObject.size !== MAX_SIZE) {
       adObject.size = MAX_SIZE;
     }
-    return toPublicAdPayload(adObject);
+    return toPublicBubbleListAd(adObject);
   });
   adsListCache = processedAds;
   adsListCacheTime = Date.now();
