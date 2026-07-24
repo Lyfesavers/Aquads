@@ -843,7 +843,7 @@ const CreateAccountModal = ({ onCreateAccount, onSubmit, onClose }) => {
                 className="mt-1 h-4 w-4 shrink-0 rounded border-gray-500 bg-gray-900 text-blue-500 focus:ring-blue-500 focus:ring-offset-0"
               />
               <span className="text-sm leading-relaxed text-gray-300">
-                I accept the Terms & Conditions and understand that violation of platform rules, including taking leads or bookings outside of Aquads, will result in account suspension or termination. I also agree to receive email marketing and newsletter updates from Aquads (you can unsubscribe anytime).
+                I accept the Terms & Conditions and understand that violation of platform rules will result in account suspension or termination. I also agree to receive email marketing and newsletter updates from Aquads (you can unsubscribe anytime).
               </span>
             </label>
             </>
