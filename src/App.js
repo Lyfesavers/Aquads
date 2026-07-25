@@ -3504,6 +3504,10 @@ function App() {
                                 {/* Background of bubble */}
                                 <div className="bubble-bg"></div>
 
+                                {/* Curved text at top */}
+                              <div 
+                                className="bubble-text-curved"
+                              >
                                 {ad.projectProfile?.liquidityLock?.status === 'verified' && (
                                   <div
                                     className="bubble-lp-lock-icon"
@@ -3513,11 +3517,6 @@ function App() {
                                     🔒
                                   </div>
                                 )}
-                                
-                              {/* Curved text at top */}
-                              <div 
-                                className="bubble-text-curved"
-                              >
                                   <svg 
                                     width="100%" 
                                     height="40" 
