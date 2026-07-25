@@ -1116,11 +1116,7 @@ body {
 
 /* Curved text container for bubbles */
 .bubble-lp-lock-icon {
-  position: absolute;
-  top: 62%;
-  right: 6%;
-  transform: translateY(-50%);
-  z-index: 26;
+  flex-shrink: 0;
   font-size: 0.62rem;
   line-height: 1;
   padding: 2px 4px;
@@ -1131,8 +1127,24 @@ body {
   pointer-events: none;
 }
 
-.bubble-text-curved--has-lock {
-  padding-right: 20%;
+.bubble-bottom-badges {
+  position: absolute;
+  bottom: 5px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.bubble-bottom-badges .vote-percentage {
+  position: static;
+  transform: none;
+  bottom: auto;
+  left: auto;
 }
 
 .bubble-text-curved {
@@ -1207,6 +1219,11 @@ body {
     top: 16%;
     z-index: 20;
     pointer-events: none;
+  }
+
+  .bubble-bottom-badges {
+    bottom: 8px;
+    gap: 6px;
   }
   
   .bubble-text-curved span {

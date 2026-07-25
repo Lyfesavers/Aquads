@@ -597,10 +597,10 @@ function pickLinkInBioState(user) {
   return out;
 }
 
-/** Shorten bubble rim title so a verified LP lock badge always stays visible. */
-function formatBubbleMapTitle(title, hasLiquidityLock) {
+/** Shorten bubble rim title when it would overflow the curved path. */
+function formatBubbleMapTitle(title) {
   const upper = String(title || '').toUpperCase();
-  const maxLen = hasLiquidityLock ? 9 : 14;
+  const maxLen = 14;
   if (upper.length <= maxLen) return upper;
   return `${upper.slice(0, maxLen - 1)}…`;
 }
@@ -3514,17 +3514,8 @@ function App() {
 
                                 {/* Curved text at top */}
                               <div 
-                                className={`bubble-text-curved${ad.projectProfile?.liquidityLock?.status === 'verified' ? ' bubble-text-curved--has-lock' : ''}`}
+                                className="bubble-text-curved"
                               >
-                                {ad.projectProfile?.liquidityLock?.status === 'verified' && (
-                                  <div
-                                    className="bubble-lp-lock-icon"
-                                    title="Liquidity lock verified on-chain"
-                                    aria-label="Liquidity lock verified"
-                                  >
-                                    🔒
-                                  </div>
-                                )}
                                   <svg 
                                     width="100%" 
                                     height="40" 
@@ -3557,10 +3548,7 @@ function App() {
                                         href={`#curve-${ad.id}`} 
                                         startOffset="50%"
                                       >
-                                        {formatBubbleMapTitle(
-                                          ad.title,
-                                          ad.projectProfile?.liquidityLock?.status === 'verified'
-                                        )}
+                                        {formatBubbleMapTitle(ad.title)}
                                       </textPath>
                                     </text>
                                   </svg>
@@ -3586,24 +3574,38 @@ function App() {
                                   />
                                 </div>
                                 
-                                {/* Simple percentage indicator - changed to BUY/SELL */}
-                                {(ad.bullishVotes > 0 || ad.bearishVotes > 0) && (
-                                  <div 
-                                    className={`vote-percentage ${
-                                      ad.bullishVotes > ad.bearishVotes 
-                                        ? 'vote-bullish' 
-                                        : ad.bearishVotes > ad.bullishVotes 
-                                          ? 'vote-bearish' 
-                                          : 'vote-neutral'
-                                    }`}
-                                  >
-                                    {ad.bullishVotes + ad.bearishVotes > 0 
-                                      ? ad.bullishVotes > ad.bearishVotes 
-                                        ? 'BUY' 
-                                        : ad.bearishVotes > ad.bullishVotes 
-                                          ? 'SELL' 
-                                          : '50/50'
-                                      : 'No votes'}
+                                {(ad.projectProfile?.liquidityLock?.status === 'verified'
+                                  || ad.bullishVotes > 0
+                                  || ad.bearishVotes > 0) && (
+                                  <div className="bubble-bottom-badges">
+                                    {ad.projectProfile?.liquidityLock?.status === 'verified' && (
+                                      <div
+                                        className="bubble-lp-lock-icon"
+                                        title="Liquidity lock verified on-chain"
+                                        aria-label="Liquidity lock verified"
+                                      >
+                                        🔒
+                                      </div>
+                                    )}
+                                    {(ad.bullishVotes > 0 || ad.bearishVotes > 0) && (
+                                      <div 
+                                        className={`vote-percentage ${
+                                          ad.bullishVotes > ad.bearishVotes 
+                                            ? 'vote-bullish' 
+                                            : ad.bearishVotes > ad.bullishVotes 
+                                              ? 'vote-bearish' 
+                                              : 'vote-neutral'
+                                        }`}
+                                      >
+                                        {ad.bullishVotes + ad.bearishVotes > 0 
+                                          ? ad.bullishVotes > ad.bearishVotes 
+                                            ? 'BUY' 
+                                            : ad.bearishVotes > ad.bullishVotes 
+                                              ? 'SELL' 
+                                              : '50/50'
+                                          : 'No votes'}
+                                      </div>
+                                    )}
                                   </div>
                                 )}
                               </div>
