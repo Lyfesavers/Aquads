@@ -38,7 +38,7 @@ const {
 } = require('../utils/listingTier');
 const { grantStarterIfNeeded } = require('../services/projectAgentWallet');
 const { transferDexFeedListing } = require('../utils/transferDexFeedListing');
-const { verifyLiquidityLock } = require('../services/liquidityLockService');
+const { verifyLiquidityLock, friendlyVerifyError } = require('../services/liquidityLockService');
 const {
   LISTING_SOURCE_DEX_FEED,
   CLAIM_STATUS_UNCLAIMED,
@@ -754,7 +754,7 @@ router.post('/:id/verify-liquidity-lock', auth, requireEmailVerification, liquid
         lockedAmount: '',
         lockPermanent: false,
         verifiedAt: null,
-        verifyError: verifyError.message || 'Verification failed'
+        verifyError: friendlyVerifyError(verifyError)
       };
 
       const updatedAd = await Ad.findByIdAndUpdate(
@@ -770,7 +770,7 @@ router.post('/:id/verify-liquidity-lock', auth, requireEmailVerification, liquid
 
       invalidateAdsCache();
       return res.status(400).json({
-        message: verifyError.message || 'Verification failed',
+        message: friendlyVerifyError(verifyError),
         ad: updatedAd
       });
     }

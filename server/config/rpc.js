@@ -14,7 +14,8 @@ const SOLANA_RPCS_MAINNET = [
   ...(SOLANA_RPC_PRIMARY ? [SOLANA_RPC_PRIMARY] : []),
   'https://solana-rpc.publicnode.com',
   'https://api.mainnet-beta.solana.com',
-  'https://rpc.ankr.com/solana'
+  // Skip Ankr when Alchemy/primary is configured — it often 403s server IPs and masks the real error
+  ...(SOLANA_RPC_PRIMARY ? [] : ['https://rpc.ankr.com/solana']),
 ];
 
 const SOLANA_RPCS_DEVNET = [
@@ -64,6 +65,7 @@ async function solanaRpc(method, params = [], opts = {}) {
   const rpcList = getSolanaRpcList(Boolean(opts.useDevnet));
   const timeout = opts.timeoutMs ?? 15000;
   let lastError = null;
+  let blockedCount = 0;
 
   for (const rpcUrl of rpcList) {
     try {
@@ -72,17 +74,39 @@ async function solanaRpc(method, params = [], opts = {}) {
         { jsonrpc: '2.0', id: Date.now(), method, params },
         {
           headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-          timeout
+          timeout,
+          validateStatus: (status) => status < 500,
         }
       );
+      if (response.status === 403 || response.status === 401) {
+        blockedCount += 1;
+        lastError = `RPC blocked (${response.status})`;
+        continue;
+      }
+      if (response.status >= 400) {
+        lastError = response.data?.error?.message || `HTTP ${response.status}`;
+        continue;
+      }
       if (response.data?.error) {
         lastError = response.data.error.message || JSON.stringify(response.data.error);
         continue;
       }
       return response.data.result;
     } catch (err) {
+      const status = err.response?.status;
+      if (status === 403 || status === 401) {
+        blockedCount += 1;
+        lastError = `RPC blocked (${status})`;
+        continue;
+      }
       lastError = err.response?.data?.error?.message || err.message;
     }
+  }
+
+  if (blockedCount > 0 && blockedCount >= rpcList.length) {
+    throw new Error(
+      'Could not reach Solana RPC from the server (access blocked). Set ALCHEMY_SOLANA_RPC_URL on production or try again shortly.'
+    );
   }
 
   throw new Error(lastError || 'All Solana RPCs failed');

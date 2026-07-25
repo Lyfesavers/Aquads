@@ -270,8 +270,13 @@ async function verifyLiquidityLock({ blockchain, pairAddress, proofInput }) {
 }
 
 async function verifyEvmLock(txHash, lpCandidates, blockchain, proofInput) {
-  const provider = getEvmProvider(blockchain);
-  const receipt = await provider.getTransactionReceipt(txHash);
+  let receipt;
+  try {
+    const provider = getEvmProvider(blockchain);
+    receipt = await provider.getTransactionReceipt(txHash);
+  } catch (rpcError) {
+    throw new Error(friendlyVerifyError(rpcError));
+  }
 
   if (!receipt) {
     throw new Error('Transaction not found on this chain. Confirm the hash matches your listing blockchain.');
@@ -303,11 +308,32 @@ async function verifyEvmLock(txHash, lpCandidates, blockchain, proofInput) {
   });
 }
 
+function friendlyVerifyError(error) {
+  const raw = String(error?.message || error || '').trim();
+  if (!raw) return 'Verification failed. Please try again.';
+
+  if (/status code 403|rpc blocked|access blocked/i.test(raw)) {
+    return 'Could not read the blockchain from our server right now (RPC access blocked). Please try again in a minute or contact support if this persists.';
+  }
+  if (/status code 429|rate limit/i.test(raw)) {
+    return 'Blockchain RPC rate limit hit. Please wait a moment and try again.';
+  }
+  if (/all solana rpcs failed|could not reach solana/i.test(raw)) {
+    return raw;
+  }
+  return raw;
+}
+
 async function verifySolanaLock(txHash, lpCandidates, proofInput) {
-  const tx = await solanaRpc('getTransaction', [
-    txHash,
-    { encoding: 'jsonParsed', maxSupportedTransactionVersion: 0 },
-  ], { timeoutMs: 20000 });
+  let tx;
+  try {
+    tx = await solanaRpc('getTransaction', [
+      txHash,
+      { encoding: 'jsonParsed', maxSupportedTransactionVersion: 0 },
+    ], { timeoutMs: 20000 });
+  } catch (rpcError) {
+    throw new Error(friendlyVerifyError(rpcError));
+  }
 
   if (!tx) {
     throw new Error('Transaction not found on Solana.');
@@ -376,4 +402,5 @@ function buildVerifiedResult({
 module.exports = {
   extractTxHash,
   verifyLiquidityLock,
+  friendlyVerifyError,
 };

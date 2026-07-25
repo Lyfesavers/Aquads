@@ -571,7 +571,7 @@ export const verifyAdLiquidityLock = async (id, proofInput) => {
   });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
-    const err = new Error(data.message || 'Failed to verify liquidity lock');
+    const err = new Error(data.message || data.error || 'Failed to verify liquidity lock');
     if (data.ad) err.ad = data.ad;
     throw err;
   }
