@@ -1121,9 +1121,9 @@ body {
   right: 6%;
   transform: translateY(-50%);
   z-index: 26;
-  font-size: 0.48rem;
+  font-size: 0.62rem;
   line-height: 1;
-  padding: 1px 3px;
+  padding: 2px 4px;
   border-radius: 999px;
   background: rgba(16, 185, 129, 0.9);
   border: 1px solid rgba(255, 255, 255, 0.35);
