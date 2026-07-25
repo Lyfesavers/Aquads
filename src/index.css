@@ -1131,6 +1131,10 @@ body {
   pointer-events: none;
 }
 
+.bubble-text-curved--has-lock {
+  padding-right: 20%;
+}
+
 .bubble-text-curved {
   position: absolute;
   top: 8%;

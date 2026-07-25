@@ -597,6 +597,14 @@ function pickLinkInBioState(user) {
   return out;
 }
 
+/** Shorten bubble rim title so a verified LP lock badge always stays visible. */
+function formatBubbleMapTitle(title, hasLiquidityLock) {
+  const upper = String(title || '').toUpperCase();
+  const maxLen = hasLiquidityLock ? 9 : 14;
+  if (upper.length <= maxLen) return upper;
+  return `${upper.slice(0, maxLen - 1)}…`;
+}
+
 function App() {
   const [ads, setAds] = useState(() => {
     const cached = readAdsCache();
@@ -3506,7 +3514,7 @@ function App() {
 
                                 {/* Curved text at top */}
                               <div 
-                                className="bubble-text-curved"
+                                className={`bubble-text-curved${ad.projectProfile?.liquidityLock?.status === 'verified' ? ' bubble-text-curved--has-lock' : ''}`}
                               >
                                 {ad.projectProfile?.liquidityLock?.status === 'verified' && (
                                   <div
@@ -3525,6 +3533,7 @@ function App() {
                                     style={{
                                       overflow: 'visible'
                                     }}
+                                    title={ad.title}
                                   >
                                     <defs>
                                       <path 
@@ -3548,7 +3557,10 @@ function App() {
                                         href={`#curve-${ad.id}`} 
                                         startOffset="50%"
                                       >
-                                        {ad.title.toUpperCase()}
+                                        {formatBubbleMapTitle(
+                                          ad.title,
+                                          ad.projectProfile?.liquidityLock?.status === 'verified'
+                                        )}
                                       </textPath>
                                     </text>
                                   </svg>
