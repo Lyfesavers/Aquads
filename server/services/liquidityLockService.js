@@ -7,6 +7,7 @@ const {
   isEvmChain,
   SOLANA_LOCK_PROGRAM_META,
   SOLANA_LOCK_PROGRAMS,
+  STREAMFLOW_PROGRAM_IDS,
   SUPPORTED_LOCKER_NAMES,
 } = require('../constants/liquidityLockers');
 
@@ -20,40 +21,70 @@ const LOCKER_LABELS = {
 };
 
 /**
- * Extract tx hash from bare hash or provider URL (Team Finance, Unicrypt, Streamflow, explorers).
- * @param {string} input
- * @param {string} blockchain
+ * Parse lock proof: tx hash/signature, Streamflow contract URL, or explorer link.
+ * @returns {{ mode: 'tx' | 'streamflow_contract', value: string } | null}
  */
-function extractTxHash(input, blockchain) {
+function parseLockProofInput(input, blockchain) {
   const trimmed = String(input || '').trim();
   if (!trimmed) return null;
 
   const chain = String(blockchain || '').toLowerCase();
 
-  if (/^0x[a-fA-F0-9]{64}$/.test(trimmed)) {
-    return trimmed.toLowerCase();
+  if (/raydium\.io\/liquidity\/increase/i.test(trimmed)) {
+    throw new Error(
+      'That Raydium link is for adding liquidity, not proving a lock. Use the Solscan transaction from when you locked LP (Burn & Earn), or paste the lock tx hash.'
+    );
+  }
+  if (/streamflow\.finance\/token-dashboard/i.test(trimmed)) {
+    throw new Error(
+      'That Streamflow link is a token overview page, not a single lock. Open each lock → copy the contract URL (app.streamflow.finance/contract/solana/mainnet/...) or the lock creation tx from Solscan.'
+    );
   }
 
-  if (chain === 'solana' && /^[1-9A-HJ-NP-Za-km-z]{32,88}$/.test(trimmed)) {
-    return trimmed;
+  if (/^0x[a-fA-F0-9]{64}$/.test(trimmed)) {
+    return { mode: 'tx', value: trimmed.toLowerCase() };
   }
 
   const evmMatch = trimmed.match(/0x[a-fA-F0-9]{64}/i);
   if (evmMatch) {
-    return evmMatch[0].toLowerCase();
+    return { mode: 'tx', value: evmMatch[0].toLowerCase() };
   }
 
-  const solPathMatch = trimmed.match(/\/(?:tx|transaction)\/([1-9A-HJ-NP-Za-km-z]{32,88})/);
-  if (solPathMatch) {
-    return solPathMatch[1];
+  const streamflowContract = trimmed.match(
+    /streamflow\.finance\/contract\/solana\/mainnet\/([1-9A-HJ-NP-Za-km-z]{32,44})/i
+  );
+  if (streamflowContract) {
+    return { mode: 'streamflow_contract', value: streamflowContract[1] };
   }
 
-  const solQueryMatch = trimmed.match(/[?&](?:tx|signature)=([1-9A-HJ-NP-Za-km-z]{32,88})/);
-  if (solQueryMatch) {
-    return solQueryMatch[1];
+  const solTxPath = trimmed.match(/\/(?:tx|transaction)\/([1-9A-HJ-NP-Za-km-z]{80,88})/);
+  if (solTxPath) {
+    return { mode: 'tx', value: solTxPath[1] };
+  }
+
+  const solTxQuery = trimmed.match(/[?&](?:tx|signature)=([1-9A-HJ-NP-Za-km-z]{80,88})/);
+  if (solTxQuery) {
+    return { mode: 'tx', value: solTxQuery[1] };
+  }
+
+  // Solana tx signatures are ~87–88 base58 chars (not 32-char pubkeys)
+  if (chain === 'solana' && /^[1-9A-HJ-NP-Za-km-z]{80,88}$/.test(trimmed)) {
+    return { mode: 'tx', value: trimmed };
+  }
+
+  if (chain === 'solana' && /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(trimmed)) {
+    return { mode: 'streamflow_contract', value: trimmed };
   }
 
   return null;
+}
+
+/**
+ * @deprecated use parseLockProofInput — kept for tests
+ */
+function extractTxHash(input, blockchain) {
+  const parsed = parseLockProofInput(input, blockchain);
+  return parsed?.mode === 'tx' ? parsed.value : null;
 }
 
 function getEvmProvider(blockchain) {
@@ -241,11 +272,6 @@ function detectSolanaLockProvider(accountKeys, logs) {
  */
 async function verifyLiquidityLock({ blockchain, pairAddress, proofInput }) {
   const chain = String(blockchain || '').toLowerCase();
-  const txHash = extractTxHash(proofInput, chain);
-
-  if (!txHash) {
-    throw new Error('Enter a valid transaction hash or a lock URL that contains one.');
-  }
 
   if (!pairAddress?.trim()) {
     throw new Error('Listing is missing a pair address.');
@@ -256,17 +282,90 @@ async function verifyLiquidityLock({ blockchain, pairAddress, proofInput }) {
     throw new Error('Could not resolve LP token for this listing.');
   }
 
+  let proof;
+  try {
+    proof = parseLockProofInput(proofInput, chain);
+  } catch (parseError) {
+    throw parseError;
+  }
+
+  if (!proof) {
+    throw new Error(
+      'Enter a lock creation tx hash (Solscan/explorer link), a Streamflow contract URL (…/contract/solana/mainnet/…), or an EVM lock tx from Team Finance / Unicrypt / PinkLock.'
+    );
+  }
+
   if (chain === 'solana') {
-    return verifySolanaLock(txHash, lpCandidates, proofInput);
+    if (proof.mode === 'streamflow_contract') {
+      return verifyStreamflowContract(proof.value, lpCandidates, proofInput);
+    }
+    return verifySolanaLock(proof.value, lpCandidates, proofInput);
   }
 
   if (isEvmChain(chain)) {
-    return verifyEvmLock(txHash, lpCandidates, chain, proofInput);
+    if (proof.mode !== 'tx') {
+      throw new Error('For EVM chains, paste the lock creation transaction hash or explorer link.');
+    }
+    return verifyEvmLock(proof.value, lpCandidates, chain, proofInput);
   }
 
   throw new Error(
     `Automatic LP lock verification is not supported for this chain yet. Supported lockers: ${SUPPORTED_LOCKER_NAMES}.`
   );
+}
+
+async function verifyStreamflowContract(contractPubkey, lpCandidates, proofInput) {
+  let account;
+  try {
+    account = await solanaRpc('getAccountInfo', [
+      contractPubkey,
+      { encoding: 'jsonParsed' },
+    ], { timeoutMs: 20000 });
+  } catch (rpcError) {
+    throw new Error(friendlyVerifyError(rpcError));
+  }
+
+  const value = account?.value ?? account;
+  if (!value) {
+    throw new Error(
+      'Streamflow contract not found on-chain. Open the lock in Streamflow and copy the contract URL (…/contract/solana/mainnet/…).'
+    );
+  }
+
+  if (!STREAMFLOW_PROGRAM_IDS.includes(value.owner)) {
+    throw new Error(
+      'That address is not a Streamflow lock contract. Use the contract page URL from Streamflow, not the token dashboard.'
+    );
+  }
+
+  const serialized = JSON.stringify(value);
+  const involvesPair = lpCandidates.some((candidate) => serialized.includes(candidate));
+  if (!involvesPair) {
+    throw new Error('That Streamflow lock does not match this listing\'s pair/token address.');
+  }
+
+  let unlockAt = null;
+  const parsed = value.data?.parsed;
+  const endTime =
+    parsed?.info?.endTime ??
+    parsed?.info?.end_time ??
+    parsed?.info?.unlockTime ??
+    parsed?.info?.unlock_time;
+  if (endTime != null) {
+    const sec = Number(endTime);
+    if (Number.isFinite(sec) && sec > 0) {
+      unlockAt = new Date(sec > 1e12 ? sec : sec * 1000);
+    }
+  }
+
+  return buildVerifiedResult({
+    txHash: '',
+    proofInput,
+    provider: 'streamflow',
+    unlockAt,
+    lockedAmount: '',
+    lockPermanent: false,
+  });
 }
 
 async function verifyEvmLock(txHash, lpCandidates, blockchain, proofInput) {
@@ -401,6 +500,7 @@ function buildVerifiedResult({
 
 module.exports = {
   extractTxHash,
+  parseLockProofInput,
   verifyLiquidityLock,
   friendlyVerifyError,
 };

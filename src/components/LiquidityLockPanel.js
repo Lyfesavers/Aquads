@@ -64,20 +64,20 @@ const LiquidityLockPanel = ({ ad, onAdPatched, showNotification }) => {
         <div className="min-w-0 flex-1">
           <h4 className="text-white font-semibold text-sm">Liquidity lock verification</h4>
           <p className="text-gray-400 text-xs mt-1 leading-relaxed">
-            Submit the <strong className="text-gray-300">lock creation transaction</strong> — the tx from when
-            you locked LP on a supported platform (not a swap, transfer, or unrelated tx).
+            Submit the <strong className="text-gray-300">lock creation transaction</strong> or a{' '}
+            <strong className="text-gray-300">Streamflow contract link</strong> (…/contract/solana/mainnet/…).
+            Not a Raydium “add liquidity” page or Streamflow token dashboard.
           </p>
           <ul className="text-gray-500 text-xs mt-2 space-y-1 list-disc list-inside leading-relaxed">
+            <li>
+              <span className="text-gray-400">Solana:</span> Solscan lock tx, Streamflow{' '}
+              <span className="text-gray-400">contract</span> URL, StakePoint / Raydium lock tx
+            </li>
             <li>
               <span className="text-gray-400">EVM:</span> {SUPPORTED_EVM_LOCKERS}
             </li>
             <li>
-              <span className="text-gray-400">Solana:</span> {SUPPORTED_SOLANA_LOCKERS}
-            </li>
-            <li>
-              Paste the <strong className="text-gray-400">tx hash</strong> or a{' '}
-              <strong className="text-gray-400">lock URL / explorer link</strong> that contains that same
-              lock-creation transaction.
+              Verify <strong className="text-gray-400">one lock at a time</strong> — submit each lock separately
             </li>
           </ul>
         </div>
@@ -115,7 +115,7 @@ const LiquidityLockPanel = ({ ad, onAdPatched, showNotification }) => {
         type="text"
         value={proofInput}
         onChange={(e) => setProofInput(e.target.value)}
-        placeholder="Lock creation tx hash, or Solscan / Team Finance / StakePoint / Raydium lock page URL"
+        placeholder="Solscan tx, Streamflow contract URL, or 0x lock tx hash"
         className="w-full bg-gray-900/70 border border-gray-600 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/60"
         disabled={verifying}
       />

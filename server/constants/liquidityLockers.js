@@ -33,12 +33,17 @@ const EVM_CHAIN_RPC_KEYS = {
 };
 
 const STREAMFLOW_PROGRAM_ID = 'strmRqUCoQUgGUan5YzcUZb2EQhHu6qN2F2ZWF1pQmK';
+/** @deprecated legacy Streamflow deployment still seen on older locks */
+const STREAMFLOW_PROGRAM_ID_LEGACY = 'strmRqUCoQUgGUan5YhzUZa6KqdzwX5L6FpUxfmKg5m';
 const STAKEPOINT_PROGRAM_ID = 'gLHaGJsZ6G7AXZxoDL9EsSWkRbKAWhFHi73gVfNXuzK';
 const RAYDIUM_LP_LOCK_PROGRAM_ID = 'LockrWmn6K5twhz3y9w1dQERbmgSaRkfnTeTKbpofwE';
+
+const STREAMFLOW_PROGRAM_IDS = [STREAMFLOW_PROGRAM_ID, STREAMFLOW_PROGRAM_ID_LEGACY];
 
 /** @type {Record<string, { provider: string, permanent?: boolean }>} */
 const SOLANA_LOCK_PROGRAM_META = {
   [STREAMFLOW_PROGRAM_ID]: { provider: 'streamflow', permanent: false },
+  [STREAMFLOW_PROGRAM_ID_LEGACY]: { provider: 'streamflow', permanent: false },
   [STAKEPOINT_PROGRAM_ID]: { provider: 'stakepoint', permanent: false },
   [RAYDIUM_LP_LOCK_PROGRAM_ID]: { provider: 'raydium', permanent: true },
 };
@@ -69,6 +74,8 @@ module.exports = {
   EVM_LP_LOCKERS_BY_CHAIN,
   EVM_CHAIN_RPC_KEYS,
   STREAMFLOW_PROGRAM_ID,
+  STREAMFLOW_PROGRAM_ID_LEGACY,
+  STREAMFLOW_PROGRAM_IDS,
   STAKEPOINT_PROGRAM_ID,
   RAYDIUM_LP_LOCK_PROGRAM_ID,
   SOLANA_LOCK_PROGRAM_META,
