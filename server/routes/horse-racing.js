@@ -3,6 +3,7 @@ const crypto = require('crypto');
 const router = express.Router();
 const User = require('../models/User');
 const HorseRaceResult = require('../models/HorseRaceResult');
+const HorsePendingRace = require('../models/HorsePendingRace');
 const auth = require('../middleware/auth');
 const requireEmailVerification = require('../middleware/emailVerification');
 const { getIO } = require('../socket');
@@ -11,21 +12,8 @@ const RACE_TTL_MS = 30 * 60 * 1000;
 const MAX_VALID_ODDS = 4;
 const MIN_VALID_ODDS = 1.5;
 
-/** Server-authoritative pending races: raceId -> { userId, horses, createdAt } */
-const pendingRaces = new Map();
-
-function pruneExpiredRaces() {
-  const now = Date.now();
-  for (const [id, race] of pendingRaces.entries()) {
-    if (now - race.createdAt > RACE_TTL_MS) pendingRaces.delete(id);
-  }
-}
-
-function clearPendingRacesForUser(userId) {
-  const uid = userId.toString();
-  for (const [id, race] of pendingRaces.entries()) {
-    if (race.userId === uid) pendingRaces.delete(id);
-  }
+async function clearPendingRacesForUser(userId) {
+  await HorsePendingRace.deleteMany({ userId });
 }
 
 function sanitizeRaceHorses(horses) {
@@ -267,15 +255,14 @@ const simulateRace = (horses, playerBetHorseId, userPoints, betAmount) => {
 // Get fresh race data for a new race (stored server-side until bet is placed)
 router.get('/race-data', auth, async (req, res) => {
   try {
-    pruneExpiredRaces();
-    clearPendingRacesForUser(req.user.userId);
+    await clearPendingRacesForUser(req.user.userId);
 
     const raceHorses = sanitizeRaceHorses(generateRaceData());
     const raceId = crypto.randomUUID();
-    pendingRaces.set(raceId, {
-      userId: req.user.userId.toString(),
-      horses: raceHorses,
-      createdAt: Date.now()
+    await HorsePendingRace.create({
+      raceId,
+      userId: req.user.userId,
+      horses: raceHorses
     });
 
     res.json({ raceId, horses: raceHorses });
@@ -295,18 +282,18 @@ router.post('/place-bet', auth, requireEmailVerification, async (req, res) => {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    pruneExpiredRaces();
-    const pending = pendingRaces.get(raceId);
-    if (!pending || pending.userId !== req.user.userId.toString()) {
+    const pending = await HorsePendingRace.findOneAndDelete({
+      raceId,
+      userId: req.user.userId
+    });
+    if (!pending) {
       return res.status(400).json({ error: 'Invalid or expired race. Please start a new race.' });
     }
-    if (Date.now() - pending.createdAt > RACE_TTL_MS) {
-      pendingRaces.delete(raceId);
+    if (Date.now() - pending.createdAt.getTime() > RACE_TTL_MS) {
       return res.status(400).json({ error: 'Race expired. Please start a new race.' });
     }
 
     const horses = pending.horses;
-    pendingRaces.delete(raceId);
 
     if (betAmount < MIN_BET || betAmount > MAX_BET) {
       return res.status(400).json({ error: `Bet amount must be between ${MIN_BET} and ${MAX_BET} points` });

@@ -24,6 +24,9 @@ const HorseRacing = ({ currentUser }) => {
 
   const raceTrackRef = useRef(null);
   const hasSubmittedRef = useRef(false);
+  const placingBetRef = useRef(false);
+  const comebackTriggeredRef = useRef(false);
+  const comebackHorseRef = useRef(null);
   
   // Audio system state
   const [audioEnabled, setAudioEnabled] = useState(true);
@@ -349,7 +352,7 @@ const HorseRacing = ({ currentUser }) => {
   // Advanced comeback system with sophisticated psychology
   const checkForComeback = (horses, maxPosition) => {
     // Only trigger comeback in final 30% of race and if not already triggered
-    if (maxPosition < 70 || comebackTriggered) return null;
+    if (maxPosition < 70 || comebackTriggeredRef.current) return null;
     
     const userHorse = horses.find(h => h.id === currentBet?.horseId);
     const isUserOnWorstOdds = userHorse && userHorse.odds >= Math.max(...horses.map(h => h.odds));
@@ -387,23 +390,18 @@ const HorseRacing = ({ currentUser }) => {
     // Find horses in last 3 positions who could make a comeback
     const sortedByPosition = [...horses].sort((a, b) => b.position - a.position);
     const lastThreeHorses = sortedByPosition.slice(-3);
-    
-    // If user bet on worst odds horse and it's in last 3, prioritize it
+
     let potentialComebackHorse;
     if (isUserOnWorstOdds && lastThreeHorses.includes(userHorse)) {
-      potentialComebackHorse = userHorse; // Give user's horse the comeback
-      console.log(`🎯 USER'S UNDERDOG COMEBACK! Horse #${potentialComebackHorse.id + 1} (${potentialComebackHorse.name}) with ${potentialComebackHorse.odds}:1 odds!`);
+      potentialComebackHorse = userHorse;
     } else {
-      // Prioritize horses with worst odds (highest odds = worst chances)
       const sortedByOdds = lastThreeHorses.sort((a, b) => b.odds - a.odds);
-      potentialComebackHorse = sortedByOdds[0]; // Pick worst odds horse first
-      console.log(`🏇 RANDOM COMEBACK! Horse #${potentialComebackHorse.id + 1} (${potentialComebackHorse.name}) with ${potentialComebackHorse.odds}:1 odds!`);
+      potentialComebackHorse = sortedByOdds[0];
     }
-    
-    // Reduced gap requirement - just need to be behind (at least 5 positions)
+
     const leadingPosition = sortedByPosition[0].position;
     if (leadingPosition - potentialComebackHorse.position < 5) return null;
-    
+
     return potentialComebackHorse;
   };
 
@@ -475,6 +473,10 @@ const HorseRacing = ({ currentUser }) => {
       return;
     }
 
+    if (placingBetRef.current || loading || raceInProgress) {
+      return;
+    }
+
     // SIMPLE SAFETY NET: Points-based limits (backend handles psychology)
     let minKeep = 25; // Base minimum to keep
     
@@ -505,6 +507,7 @@ const HorseRacing = ({ currentUser }) => {
     }
 
     setLoading(true);
+    placingBetRef.current = true;
     
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL}/api/horse-racing/place-bet`, {
@@ -551,8 +554,12 @@ const HorseRacing = ({ currentUser }) => {
 
     } catch (error) {
       console.error('Failed to place bet:', error);
+      if (error.message?.includes('Invalid or expired race') || error.message?.includes('Race expired')) {
+        await initializeHorses();
+      }
       alert(error.message || 'Failed to place bet. Please try again.');
     } finally {
+      placingBetRef.current = false;
       setLoading(false);
     }
   };
@@ -568,6 +575,14 @@ const HorseRacing = ({ currentUser }) => {
     setRaceInProgress(true);
     setRaceFinished(false);
     resetHorsePositions();
+    comebackTriggeredRef.current = false;
+    comebackHorseRef.current = null;
+    setComebackTriggered(false);
+    setComebackHorse(null);
+    comebackTriggeredRef.current = false;
+    comebackHorseRef.current = null;
+    setComebackTriggered(false);
+    setComebackHorse(null);
     
     // Play pre-race commentary
     playCommentary("Ladies and gentlemen, the horses are at the starting line!");
@@ -639,6 +654,10 @@ const HorseRacing = ({ currentUser }) => {
     setRaceInProgress(true);
     setRaceFinished(false);
     setRaceResults(results);
+    comebackTriggeredRef.current = false;
+    comebackHorseRef.current = null;
+    setComebackTriggered(false);
+    setComebackHorse(null);
     resetHorsePositions();
     
     // Play race start audio with proper timing
@@ -680,6 +699,20 @@ const HorseRacing = ({ currentUser }) => {
     
     const raceInterval = setInterval(() => {
       setHorses(prevHorses => {
+        const currentMaxPosition = Math.max(...prevHorses.map(h => h.position));
+
+        if (!comebackTriggeredRef.current && currentMaxPosition > 70) {
+          const comebackCandidate = checkForComeback(prevHorses, currentMaxPosition);
+          if (comebackCandidate) {
+            comebackTriggeredRef.current = true;
+            comebackHorseRef.current = comebackCandidate;
+            setComebackTriggered(true);
+            setComebackHorse(comebackCandidate);
+            const commentaryIndex = Math.floor(Math.random() * comebackCommentary.length);
+            setTimeout(() => playCommentary(comebackCommentary[commentaryIndex]), 300);
+          }
+        }
+
         const updatedHorses = prevHorses.map(horse => {
           if (horse.finished) return horse;
           
@@ -691,7 +724,6 @@ const HorseRacing = ({ currentUser }) => {
           let speed = 1.1 - (finishPosition * 0.05); // Winner gets 1.1, last gets ~0.75 (extremely close!)
           
           // Strong rubber band effect - keep all horses bunched together
-          const currentMaxPosition = Math.max(...prevHorses.map(h => h.position));
           const positionGap = currentMaxPosition - horse.position;
           if (positionGap > 10) {
             speed += 0.4; // Strong boost to catch up
@@ -706,23 +738,9 @@ const HorseRacing = ({ currentUser }) => {
             speed *= 0.6; // 40% slower for dramatic finish buildup
           }
 
-          // Check for dramatic comeback opportunity in backend races too
-          if (!comebackTriggered && currentMaxPosition > 70) {
-            const comebackCandidate = checkForComeback(prevHorses, currentMaxPosition);
-            if (comebackCandidate && comebackCandidate.id === horse.id) {
-              setComebackTriggered(true);
-              setComebackHorse(horse);
-              // Balanced speed boost for backend races
-              speed += 1.8; // Reduced from 2.5 for balance
-              // Play comeback commentary
-              const commentaryIndex = Math.floor(Math.random() * comebackCommentary.length);
-              setTimeout(() => playCommentary(comebackCommentary[commentaryIndex]), 300);
-            }
-          }
-
           // Continue moderate speed boost for comeback horse in backend races
-          if (comebackTriggered && comebackHorse && comebackHorse.id === horse.id) {
-            speed += 1.4; // Reduced from 2.0 for balance
+          if (comebackTriggeredRef.current && comebackHorseRef.current?.id === horse.id) {
+            speed += 1.4;
           }
           
           const newPosition = horse.position + speed;
@@ -823,6 +841,20 @@ const HorseRacing = ({ currentUser }) => {
     
     const raceInterval = setInterval(() => {
       setHorses(prevHorses => {
+        const currentMaxPosition = Math.max(...prevHorses.map(h => h.position));
+
+        if (!comebackTriggeredRef.current && currentMaxPosition > 70) {
+          const comebackCandidate = checkForComeback(prevHorses, currentMaxPosition);
+          if (comebackCandidate) {
+            comebackTriggeredRef.current = true;
+            comebackHorseRef.current = comebackCandidate;
+            setComebackTriggered(true);
+            setComebackHorse(comebackCandidate);
+            const commentaryIndex = Math.floor(Math.random() * comebackCommentary.length);
+            setTimeout(() => playCommentary(comebackCommentary[commentaryIndex]), 500);
+          }
+        }
+
         const updatedHorses = prevHorses.map(horse => {
           if (horse.finished) return horse;
           
@@ -833,7 +865,6 @@ const HorseRacing = ({ currentUser }) => {
           let randomSpeed = (Math.random() * 0.25 + 0.85) * horse.speed * speedMultiplier;
           
           // Strong rubber band mechanics to keep all horses bunched together
-          const currentMaxPosition = Math.max(...prevHorses.map(h => h.position));
           const positionGap = currentMaxPosition - horse.position;
           if (positionGap > 10) {
             randomSpeed *= 1.5; // Strong boost to catch up
@@ -848,23 +879,9 @@ const HorseRacing = ({ currentUser }) => {
             randomSpeed *= 0.65; // 35% slower for maximum drama
           }
 
-          // Check for dramatic comeback opportunity
-          if (!comebackTriggered && currentMaxPosition > 70) {
-            const comebackCandidate = checkForComeback(prevHorses, currentMaxPosition);
-            if (comebackCandidate && comebackCandidate.id === horse.id) {
-              setComebackTriggered(true);
-              setComebackHorse(horse);
-              // Balanced comeback speed boost
-              randomSpeed *= 2.2; // Reduced from 3.5 for balance
-              // Play comeback commentary
-              const commentaryIndex = Math.floor(Math.random() * comebackCommentary.length);
-              setTimeout(() => playCommentary(comebackCommentary[commentaryIndex]), 500);
-            }
-          }
-
           // Continue moderate speed boost for comeback horse
-          if (comebackTriggered && comebackHorse && comebackHorse.id === horse.id) {
-            randomSpeed *= 1.8; // Reduced from 3.0 for balance
+          if (comebackTriggeredRef.current && comebackHorseRef.current?.id === horse.id) {
+            randomSpeed *= 1.8;
           }
 
           // EXCITING LAST-MINUTE COMEBACK: Make winning horse seem like it's going to lose
@@ -1044,6 +1061,8 @@ const HorseRacing = ({ currentUser }) => {
     // Reset race completion state
     setRaceCompleting(false);
     // Reset comeback mechanics
+    comebackTriggeredRef.current = false;
+    comebackHorseRef.current = null;
     setComebackTriggered(false);
     setComebackHorse(null);
     setLastMinuteComebackTriggered(false);
