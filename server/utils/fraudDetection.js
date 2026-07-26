@@ -9,6 +9,109 @@ const TwitterRaid = require('../models/TwitterRaid');
 const TokenPurchase = require('../models/TokenPurchase');
 const mongoose = require('mongoose');
 
+/** Days of slow, non-spike growth before historical burst penalties decay */
+const REHAB_WINDOW_DAYS = 30;
+/** Max new referrals in the rehab window to count as slow growth */
+const REHAB_SLOW_SIGNUPS_MAX = 8;
+/** Multiplier applied to historical spike penalties when rehabilitation qualifies (0.5 = half weight) */
+const HISTORICAL_SPIKE_DECAY = 0.5;
+
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+/** Min referrals in any 24h span to count as a rapid signup cluster */
+const RAPID_SIGNUP_CLUSTER_MIN = 5;
+
+const HISTORICAL_SPIKE_FLAGS = new Set([
+  'rapid_affiliate_signups',
+  'elevated_affiliate_count',
+  'high_affiliate_count',
+  'high_affiliate_velocity',
+  'new_account_high_affiliates',
+  'rapid_affiliate_farming'
+]);
+
+const CURRENT_NETWORK_FRAUD_FLAGS = new Set([
+  'mostly_inactive_affiliates',
+  'inactive_affiliates',
+  'mostly_unverified_affiliates',
+  'fake_affiliate_network',
+  'shared_ips_with_affiliates'
+]);
+
+function countRapidSignupAffiliates(affiliateList) {
+  const rapidIdSet = new Set();
+  const withDates = affiliateList.filter((a) => a.createdAt);
+  for (let i = 0; i < withDates.length; i++) {
+    const ti = new Date(withDates[i].createdAt).getTime();
+    if (isNaN(ti)) continue;
+    let inWindow = 0;
+    for (let j = 0; j < withDates.length; j++) {
+      const tj = new Date(withDates[j].createdAt).getTime();
+      if (!isNaN(tj) && Math.abs(ti - tj) < MS_PER_DAY) inWindow++;
+    }
+    if (inWindow >= RAPID_SIGNUP_CLUSTER_MIN) rapidIdSet.add(withDates[i]._id.toString());
+  }
+  return rapidIdSet;
+}
+
+function assessAffiliateGrowthRehabilitation(affiliates, accountAgeDays) {
+  const now = Date.now();
+  const windowStart = now - REHAB_WINDOW_DAYS * MS_PER_DAY;
+  const recentAffiliates = affiliates.filter((a) => {
+    const t = a.createdAt ? new Date(a.createdAt).getTime() : NaN;
+    return !isNaN(t) && t >= windowStart;
+  });
+  const recentSignups = recentAffiliates.length;
+  const recentRapidIds = countRapidSignupAffiliates(recentAffiliates);
+  const hasRecentRapidCluster = recentRapidIds.size >= RAPID_SIGNUP_CLUSTER_MIN;
+  const slowRecentGrowth = recentSignups <= REHAB_SLOW_SIGNUPS_MAX;
+  const qualifies = slowRecentGrowth && !hasRecentRapidCluster;
+
+  let daysSinceLastSignup = accountAgeDays;
+  for (const affiliate of affiliates) {
+    const t = affiliate.createdAt ? new Date(affiliate.createdAt).getTime() : NaN;
+    if (!isNaN(t)) {
+      daysSinceLastSignup = Math.min(daysSinceLastSignup, (now - t) / MS_PER_DAY);
+    }
+  }
+
+  return {
+    qualifies,
+    recentSignups,
+    recentRapidSignups: recentRapidIds.size,
+    daysSinceLastSignup: Math.round(daysSinceLastSignup),
+    rehabWindowDays: REHAB_WINDOW_DAYS,
+    slowSignupsThreshold: REHAB_SLOW_SIGNUPS_MAX
+  };
+}
+
+function applyActivityLegitimacyBonus(riskScore, flags, activityAnalysis, rehabQualifies) {
+  const totalActivities = activityAnalysis.totalActivities || 0;
+  let bonus = 0;
+  if (totalActivities >= 20) bonus = 0.3;
+  else if (totalActivities >= 10) bonus = 0.2;
+  if (bonus === 0) return { riskScore, activityBonusApplied: 0 };
+
+  const hasHistoricalSpike = flags.some((f) => HISTORICAL_SPIKE_FLAGS.has(f));
+  const hasCurrentNetworkFraud = flags.some((f) => CURRENT_NETWORK_FRAUD_FLAGS.has(f));
+
+  let multiplier = 1;
+  if (hasCurrentNetworkFraud && hasHistoricalSpike) {
+    multiplier = 0.4;
+  } else if (hasCurrentNetworkFraud) {
+    multiplier = 0.5;
+  } else if (hasHistoricalSpike && rehabQualifies) {
+    multiplier = 1;
+  } else if (hasHistoricalSpike) {
+    multiplier = 0.65;
+  }
+
+  const applied = bonus * multiplier;
+  return {
+    riskScore: Math.max(0, riskScore - applied),
+    activityBonusApplied: Math.round(applied * 100) / 100
+  };
+}
+
 const calculateActivityDiversityScore = async (userInput) => {
   try {
     // Accept either userId or user object for flexibility
@@ -286,6 +389,12 @@ const calculateAdvancedFraudScore = async (user, affiliates) => {
       flags: [],
       details: {}
     };
+    let spikePenalty = 0;
+
+    const addSpikePenalty = (amount) => {
+      analysis.riskScore += amount;
+      spikePenalty += amount;
+    };
 
     // 1. Network diversity — rollup across referrer + all affiliates
     const referrerIPs = new Set();
@@ -362,19 +471,9 @@ const calculateAdvancedFraudScore = async (user, affiliates) => {
         }
       }
 
-      // Signups that sit in a dense window: ≥3 referrals whose createdAt falls within any 24h span
-      const rapidIdSet = new Set();
+      // Signups that sit in a dense window: ≥5 referrals whose createdAt falls within any 24h span
       const withDates = affiliates.filter((a) => a.createdAt);
-      for (let i = 0; i < withDates.length; i++) {
-        const ti = new Date(withDates[i].createdAt).getTime();
-        if (isNaN(ti)) continue;
-        let inWindow = 0;
-        for (let j = 0; j < withDates.length; j++) {
-          const tj = new Date(withDates[j].createdAt).getTime();
-          if (!isNaN(tj) && Math.abs(ti - tj) < 24 * 60 * 60 * 1000) inWindow++;
-        }
-        if (inWindow >= 3) rapidIdSet.add(withDates[i]._id.toString());
-      }
+      const rapidIdSet = countRapidSignupAffiliates(withDates);
       const rapidSignups = Array.from(rapidIdSet);
 
       analysis.details.affiliateNetwork = {
@@ -391,7 +490,7 @@ const calculateAdvancedFraudScore = async (user, affiliates) => {
       const rapidSignupRatio = rapidSignups.length / affiliates.length;
       if (rapidSignups.length > 5 && rapidSignupRatio > 0.3) {
         analysis.flags.push('rapid_affiliate_signups');
-        analysis.riskScore += 0.25;
+        addSpikePenalty(0.25);
       }
 
       // Flag: High percentage of inactive/unverified affiliates (KEY FRAUD INDICATOR)
@@ -422,10 +521,10 @@ const calculateAdvancedFraudScore = async (user, affiliates) => {
       // Flag: Suspiciously high affiliate count for referral fraud
       if (affiliates.length > 50) {
         analysis.flags.push('high_affiliate_count');
-        analysis.riskScore += 0.2;
+        addSpikePenalty(0.2);
       } else if (affiliates.length > 25) {
         analysis.flags.push('elevated_affiliate_count');
-        analysis.riskScore += 0.1;
+        addSpikePenalty(0.1);
       }
 
       // Flag: Shared IPs with affiliates (only if significant)
@@ -467,26 +566,6 @@ const calculateAdvancedFraudScore = async (user, affiliates) => {
       analysis.flags.push('low_activity_diversity');
       analysis.riskScore += 0.15;
     }
-    
-    // Give bonus for high activity ONLY if no suspicious affiliate patterns
-    const hasSuspiciousAffiliates = analysis.flags.includes('mostly_inactive_affiliates') || 
-                                   analysis.flags.includes('inactive_affiliates') ||
-                                   analysis.flags.includes('mostly_unverified_affiliates') ||
-                                   analysis.flags.includes('fake_affiliate_network') ||
-                                   analysis.flags.includes('high_affiliate_count') ||
-                                   analysis.flags.includes('rapid_affiliate_signups');
-    
-    if (!hasSuspiciousAffiliates) {
-      // Only give activity bonuses to users without referral fraud patterns
-      if ((activityAnalysis.totalActivities || 0) >= 20) {
-        analysis.riskScore = Math.max(0, analysis.riskScore - 0.3); // Reduce risk for very active users
-      } else if ((activityAnalysis.totalActivities || 0) >= 10) {
-        analysis.riskScore = Math.max(0, analysis.riskScore - 0.2); // Reduce risk for active users
-      }
-    } else {
-      // Users with suspicious affiliate patterns get additional penalty even if personally active
-      analysis.riskScore += 0.1; // Small additional penalty for trying to hide fraud with activity
-    }
 
     // 4. Login Pattern Analysis (no granular login history in User — frequency score only)
     const loginAnalysis = calculateLoginFrequencyAnalysis(user);
@@ -495,23 +574,54 @@ const calculateAdvancedFraudScore = async (user, affiliates) => {
     // 5. Account Age vs Activity Analysis
     const accountAge = (new Date() - new Date(user.createdAt)) / (1000 * 60 * 60 * 24); // days
     const affiliateCount = analysis.details.affiliateNetwork?.totalAffiliates || 0;
-    
+
     // Flag new accounts with too many affiliates too quickly
     if (accountAge < 7 && affiliateCount > 10) {
       analysis.flags.push('new_account_high_affiliates');
-      analysis.riskScore += 0.3;
+      addSpikePenalty(0.3);
     } else if (accountAge < 30 && affiliateCount > 50) {
       analysis.flags.push('rapid_affiliate_farming');
-      analysis.riskScore += 0.4;
+      addSpikePenalty(0.4);
     }
-    
+
     // Flag accounts with affiliate-to-age ratio that suggests farming
     if (accountAge > 7) {
       const affiliatesPerDay = affiliateCount / accountAge;
       if (affiliatesPerDay > 2) { // More than 2 affiliates per day on average
         analysis.flags.push('high_affiliate_velocity');
-        analysis.riskScore += 0.25;
+        addSpikePenalty(0.25);
       }
+    }
+
+    // 6. Rehabilitation — decay historical burst penalties after a clean, slow-growth window
+    let rehabQualifies = false;
+    if (affiliates && affiliates.length > 0) {
+      const rehab = assessAffiliateGrowthRehabilitation(affiliates, accountAge);
+      rehabQualifies = rehab.qualifies;
+      if (rehab.qualifies && spikePenalty > 0) {
+        const decayReduction = spikePenalty * (1 - HISTORICAL_SPIKE_DECAY);
+        analysis.riskScore = Math.max(0, analysis.riskScore - decayReduction);
+        analysis.details.rehabilitation = {
+          ...rehab,
+          spikePenaltyBeforeDecay: Math.round(spikePenalty * 100) / 100,
+          decayReduction: Math.round(decayReduction * 100) / 100,
+          decayFactor: HISTORICAL_SPIKE_DECAY
+        };
+      } else {
+        analysis.details.rehabilitation = rehab;
+      }
+    }
+
+    // 7. Personal activity can offset network spike history (graduated, not blocked)
+    const { riskScore: scoreAfterBonus, activityBonusApplied } = applyActivityLegitimacyBonus(
+      analysis.riskScore,
+      analysis.flags,
+      activityAnalysis,
+      rehabQualifies
+    );
+    analysis.riskScore = scoreAfterBonus;
+    if (activityBonusApplied > 0) {
+      analysis.details.activityLegitimacyBonus = activityBonusApplied;
     }
 
     // Determine risk level

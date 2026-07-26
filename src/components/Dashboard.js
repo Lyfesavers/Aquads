@@ -5107,7 +5107,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onAdPatche
                               {affiliateAnalytics.fraudAnalysis.networkAnalysis.rapidSignups}
                             </p>
                             <p className="text-xs text-gray-400">Burst signups</p>
-                            <p className="text-[10px] text-gray-500 mt-0.5">3+ in 24h window</p>
+                            <p className="text-[10px] text-gray-500 mt-0.5">5+ in 24h window</p>
                           </div>
                         </div>
                       </div>
