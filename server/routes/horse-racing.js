@@ -1,5 +1,6 @@
 const express = require('express');
 const crypto = require('crypto');
+const mongoose = require('mongoose');
 const router = express.Router();
 const User = require('../models/User');
 const HorseRaceResult = require('../models/HorseRaceResult');
@@ -13,7 +14,18 @@ const MAX_VALID_ODDS = 4;
 const MIN_VALID_ODDS = 1.5;
 
 async function clearPendingRacesForUser(userId) {
-  await HorsePendingRace.deleteMany({ userId });
+  const normalizedUserId = normalizeUserId(userId);
+  if (!normalizedUserId) return;
+  await HorsePendingRace.deleteMany({ userId: normalizedUserId });
+}
+
+function normalizeUserId(userId) {
+  if (!userId) return null;
+  try {
+    return new mongoose.Types.ObjectId(String(userId));
+  } catch {
+    return null;
+  }
 }
 
 function sanitizeRaceHorses(horses) {
@@ -259,9 +271,14 @@ router.get('/race-data', auth, async (req, res) => {
 
     const raceHorses = sanitizeRaceHorses(generateRaceData());
     const raceId = crypto.randomUUID();
+    const normalizedUserId = normalizeUserId(req.user.userId);
+    if (!normalizedUserId) {
+      return res.status(400).json({ error: 'Invalid user session' });
+    }
+
     await HorsePendingRace.create({
       raceId,
-      userId: req.user.userId,
+      userId: normalizedUserId,
       horses: raceHorses
     });
 
@@ -282,9 +299,14 @@ router.post('/place-bet', auth, requireEmailVerification, async (req, res) => {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
+    const normalizedUserId = normalizeUserId(req.user.userId);
+    if (!normalizedUserId) {
+      return res.status(400).json({ error: 'Invalid user session' });
+    }
+
     const pending = await HorsePendingRace.findOneAndDelete({
       raceId,
-      userId: req.user.userId
+      userId: normalizedUserId
     });
     if (!pending) {
       return res.status(400).json({ error: 'Invalid or expired race. Please start a new race.' });

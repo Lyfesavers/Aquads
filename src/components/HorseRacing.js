@@ -27,6 +27,22 @@ const HorseRacing = ({ currentUser }) => {
   const placingBetRef = useRef(false);
   const comebackTriggeredRef = useRef(false);
   const comebackHorseRef = useRef(null);
+  const raceIdRef = useRef(null);
+  const raceInProgressRef = useRef(false);
+  const initRequestRef = useRef(0);
+  const currentUserRef = useRef(currentUser);
+
+  useEffect(() => {
+    currentUserRef.current = currentUser;
+  }, [currentUser]);
+
+  useEffect(() => {
+    raceInProgressRef.current = raceInProgress;
+  }, [raceInProgress]);
+
+  useEffect(() => {
+    raceIdRef.current = raceId;
+  }, [raceId]);
   
   // Audio system state
   const [audioEnabled, setAudioEnabled] = useState(true);
@@ -47,12 +63,23 @@ const HorseRacing = ({ currentUser }) => {
 
 
 
-  // Initialize component
+  const userId = currentUser?.userId ?? currentUser?.id ?? currentUser?._id;
+
+  // Only re-init when the logged-in user changes — not on every currentUser object refresh
   useEffect(() => {
+    if (!userId) {
+      setHorses([]);
+      setRaceId(null);
+      raceIdRef.current = null;
+      setUserPoints(0);
+      setGameHistory([]);
+      return;
+    }
+
     loadUserPoints();
-    initializeHorses();
+    initializeHorses({ force: true });
     loadGameHistory();
-  }, [currentUser]);
+  }, [userId]);
 
   // Load user points
   const loadUserPoints = async () => {
@@ -71,19 +98,27 @@ const HorseRacing = ({ currentUser }) => {
   };
 
   // Initialize horses for a new race from backend
-  const initializeHorses = async () => {
-    if (!currentUser) {
+  const initializeHorses = async ({ force = false } = {}) => {
+    const user = currentUserRef.current;
+    if (!user) {
       setHorses([]);
-      return;
+      setRaceId(null);
+      raceIdRef.current = null;
+      return null;
     }
 
+    if (!force && (raceInProgressRef.current || placingBetRef.current)) {
+      return raceIdRef.current;
+    }
+
+    const requestId = ++initRequestRef.current;
     setLoading(true);
     setError(null);
     
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL}/api/horse-racing/race-data`, {
         headers: {
-          'Authorization': `Bearer ${currentUser.token}`,
+          'Authorization': `Bearer ${user.token}`,
           'Content-Type': 'application/json'
         }
       });
@@ -96,7 +131,13 @@ const HorseRacing = ({ currentUser }) => {
       if (!data.raceId || !Array.isArray(data.horses)) {
         throw new Error('Invalid race data from server');
       }
+
+      if (requestId !== initRequestRef.current) {
+        return null;
+      }
+
       setRaceId(data.raceId);
+      raceIdRef.current = data.raceId;
       const raceHorses = data.horses.map(horse => ({
         ...horse,
         position: 0,
@@ -105,12 +146,20 @@ const HorseRacing = ({ currentUser }) => {
         finishTime: null
       }));
       setHorses(raceHorses);
+      return data.raceId;
     } catch (error) {
-      console.error('Failed to initialize horses:', error);
-      setError('Failed to load race data. Please try again.');
-      setHorses([]);
+      if (requestId === initRequestRef.current) {
+        console.error('Failed to initialize horses:', error);
+        setError('Failed to load race data. Please try again.');
+        setHorses([]);
+        setRaceId(null);
+        raceIdRef.current = null;
+      }
+      return null;
     } finally {
-      setLoading(false);
+      if (requestId === initRequestRef.current) {
+        setLoading(false);
+      }
     }
   };
 
@@ -466,6 +515,63 @@ const HorseRacing = ({ currentUser }) => {
     }));
   };
 
+  const submitBet = async (activeRaceId, isRetry = false) => {
+    const user = currentUserRef.current;
+    if (!user || !currentBet) return false;
+
+    const response = await fetch(`${process.env.REACT_APP_API_URL}/api/horse-racing/place-bet`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${user.token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        horseId: currentBet.horseId,
+        betAmount: currentBet.amount,
+        raceId: activeRaceId
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      const message = errorData.error || `Failed to place bet: ${response.status}`;
+
+      if (
+        !isRetry &&
+        (message.includes('Invalid or expired race') || message.includes('Race expired'))
+      ) {
+        const freshRaceId = await initializeHorses({ force: true });
+        if (freshRaceId) {
+          return submitBet(freshRaceId, true);
+        }
+      }
+
+      throw new Error(message);
+    }
+
+    const results = await response.json();
+    setRaceId(null);
+    raceIdRef.current = null;
+
+    setUserPoints(results.newBalance);
+    setCurrentBet(prev => ({ ...prev, placed: true }));
+
+    const nextRaceResults = {
+      winner: results.winner,
+      playerHorse: results.playerHorse,
+      won: results.won,
+      betAmount: results.betAmount,
+      payout: results.payout,
+      sortedHorses: results.raceResults
+    };
+
+    setTimeout(() => {
+      animateRaceWithResults(nextRaceResults);
+    }, 500);
+
+    return true;
+  };
+
   // Place bet with safety net - never let players go broke!
   const placeBet = async () => {
     if (!currentBet || !currentUser || currentBet.amount < 10) {
@@ -500,63 +606,21 @@ const HorseRacing = ({ currentUser }) => {
       return;
     }
 
-    if (!raceId) {
-      alert('Race data expired. Please wait for a new race to load.');
-      await initializeHorses();
-      return;
+    if (!raceIdRef.current) {
+      const freshRaceId = await initializeHorses({ force: true });
+      if (!freshRaceId) {
+        alert('Race data is not ready yet. Please try again in a moment.');
+        return;
+      }
     }
 
     setLoading(true);
     placingBetRef.current = true;
     
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/horse-racing/place-bet`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${currentUser.token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          horseId: currentBet.horseId,
-          betAmount: currentBet.amount,
-          raceId
-        })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `Failed to place bet: ${response.status}`);
-      }
-
-      const results = await response.json();
-      setRaceId(null);
-
-      // Update user points from backend response
-      setUserPoints(results.newBalance);
-      
-      // Mark bet as placed
-      setCurrentBet(prev => ({ ...prev, placed: true }));
-
-      // Set race results from backend
-      const raceResults = {
-        winner: results.winner,
-        playerHorse: results.playerHorse,
-        won: results.won,
-        betAmount: results.betAmount,
-        payout: results.payout,
-        sortedHorses: results.raceResults
-      };
-
-      // Show race animation
-      setTimeout(() => {
-        animateRaceWithResults(raceResults);
-      }, 500);
-
+      await submitBet(raceIdRef.current);
     } catch (error) {
       console.error('Failed to place bet:', error);
-      if (error.message?.includes('Invalid or expired race') || error.message?.includes('Race expired')) {
-        await initializeHorses();
-      }
       alert(error.message || 'Failed to place bet. Please try again.');
     } finally {
       placingBetRef.current = false;
@@ -812,6 +876,13 @@ const HorseRacing = ({ currentUser }) => {
           
           // Update after race
           updateAfterRace();
+
+          // Preload the next race so "New Race" / next bet uses a fresh server-side race
+          setTimeout(() => {
+            if (!raceInProgressRef.current && !placingBetRef.current) {
+              initializeHorses({ force: true });
+            }
+          }, 1000);
         }
         
         return updatedHorses;
@@ -1067,7 +1138,7 @@ const HorseRacing = ({ currentUser }) => {
     setComebackHorse(null);
     setLastMinuteComebackTriggered(false);
     hasSubmittedRef.current = false;
-    initializeHorses();
+    initializeHorses({ force: true });
   };
 
   // Darken color helper
@@ -1216,7 +1287,7 @@ const HorseRacing = ({ currentUser }) => {
           <button
             onClick={() => {
               setError(null);
-              initializeHorses();
+              initializeHorses({ force: true });
             }}
             disabled={loading}
             className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-600 px-4 py-2 rounded font-semibold transition-colors"
