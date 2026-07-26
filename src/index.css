@@ -1149,13 +1149,13 @@ body {
 
 .bubble-text-curved {
   position: absolute;
-  top: 8%;
+  top: 6%;
   left: 0;
   width: 100%;
   text-align: center;
   z-index: 20;
   transform: translateY(-50%);
-  padding: 0 10%;
+  padding: 0 6%;
 }
 
 .bubble-text-curved span {

@@ -597,12 +597,22 @@ function pickLinkInBioState(user) {
   return out;
 }
 
-/** Shorten bubble rim title when it would overflow the curved path. */
 function formatBubbleMapTitle(title) {
-  const upper = String(title || '').toUpperCase();
-  const maxLen = 14;
-  if (upper.length <= maxLen) return upper;
-  return `${upper.slice(0, maxLen - 1)}…`;
+  return String(title || '').toUpperCase();
+}
+
+/** Scale rim title so full text fits along the curved path without truncation. */
+function getBubbleTitleFontSize(title, bubblePx) {
+  const len = formatBubbleMapTitle(title).length;
+  const base = Math.max(bubblePx * 0.14, 12);
+  if (len <= 14) return base;
+  if (len <= 22) return Math.max(base * 0.82, 10);
+  if (len <= 32) return Math.max(base * 0.68, 9);
+  return Math.max(base * 0.55, 8);
+}
+
+function shouldCompressBubbleTitle(title) {
+  return formatBubbleMapTitle(title).length > 20;
 }
 
 function App() {
@@ -3518,8 +3528,8 @@ function App() {
                               >
                                   <svg 
                                     width="100%" 
-                                    height="40" 
-                                    viewBox="0 0 120 40"
+                                    height="48" 
+                                    viewBox="0 0 120 48"
                                     className="hover:opacity-75 transition-opacity duration-300"
                                     style={{
                                       overflow: 'visible'
@@ -3529,12 +3539,13 @@ function App() {
                                     <defs>
                                       <path 
                                         id={`curve-${ad.id}`} 
-                                        d="M 10 30 Q 60 5 110 30" 
+                                        d="M 2 38 Q 60 -6 118 38" 
                                         fill="transparent"
+                                        pathLength="100"
                                       />
                                     </defs>
                                     <text 
-                                      fontSize={`${Math.max(bubblePx * 0.15, 14)}px`}
+                                      fontSize={`${getBubbleTitleFontSize(ad.title, bubblePx)}px`}
                                       fill="white"
                                       textAnchor="middle"
                                       dominantBaseline="middle"
@@ -3547,6 +3558,9 @@ function App() {
                                       <textPath 
                                         href={`#curve-${ad.id}`} 
                                         startOffset="50%"
+                                        {...(shouldCompressBubbleTitle(ad.title)
+                                          ? { textLength: 96, lengthAdjust: 'spacingAndGlyphs' }
+                                          : {})}
                                       >
                                         {formatBubbleMapTitle(ad.title)}
                                       </textPath>
