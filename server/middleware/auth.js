@@ -90,7 +90,7 @@ const auth = async (req, res, next) => {
       lastUpdateCache.set(userId, now);
       
       // Update user's lastActivity in database (non-blocking)
-      User.findByIdAndUpdate(userId, { lastActivity: new Date() })
+      User.findByIdAndUpdate(userId, { lastActivity: new Date(), lastSeen: new Date() })
         .catch(error => {
           // Silent error handling - don't break the request if update fails
           console.error('Activity update failed for user:', userId, error.message);

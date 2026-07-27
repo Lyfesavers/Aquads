@@ -85,12 +85,15 @@ router.get('/user/:userId/affiliates', auth, isAdmin, adminRateLimit, async (req
           // NEW: Enhanced metrics
           activityScore: activityAnalysis.score,
           activityDetails: activityAnalysis.activities,
-                                loginFrequency: loginAnalysis.frequencyScore,
-                      isDormant: loginAnalysis.isDormant,
-                      isUnverified: loginAnalysis.isUnverified,
-                      daysSinceLastSeen: loginAnalysis.daysSinceLastActivity,
-                      hasRealActivityData: loginAnalysis.hasRealActivityData,
-                      accountAgeDays: loginAnalysis.accountAgeDays,
+          loginFrequency: loginAnalysis.frequencyScore,
+          isDormant: loginAnalysis.isDormant,
+          isHighlyDormant: loginAnalysis.isHighlyDormant,
+          isUnverified: loginAnalysis.isUnverified,
+          daysSinceLastSeen: loginAnalysis.daysSinceLastSeen,
+          daysSinceLastActivity: loginAnalysis.daysSinceLastActivity,
+          hasRealActivityData: loginAnalysis.hasRealActivityData,
+          accountAgeDays: loginAnalysis.accountAgeDays,
+          mostRecentActivity: loginAnalysis.mostRecentActivity,
           // Include their own affiliates for pattern detection
           subAffiliates: affiliateInfo?.affiliates || []
         };
@@ -481,26 +484,6 @@ router.get('/debug/dormant-detection/:userId', auth, isAdmin, async (req, res) =
     }
 
     const loginAnalysis = calculateLoginFrequencyAnalysis(user);
-    
-    // Get detailed breakdown of the calculation
-    const now = new Date();
-    const createdAt = new Date(user.createdAt);
-    const accountAgeMs = now.getTime() - createdAt.getTime();
-    const accountAgeDays = Math.max(0, Math.floor(accountAgeMs / (1000 * 60 * 60 * 24)));
-    
-    const timestamps = [user.lastSeen, user.lastActivity]
-      .filter(Boolean)
-      .map(t => {
-        const date = new Date(t);
-        return isNaN(date.getTime()) ? null : date;
-      })
-      .filter(Boolean);
-    
-    const mostRecentActivity = timestamps.length > 0 ? new Date(Math.max(...timestamps)) : null;
-    const hasRealActivityData = mostRecentActivity !== null;
-    const lastActivityTime = mostRecentActivity || createdAt;
-    
-    const daysSinceLastActivity = Math.max(0, Math.floor((now.getTime() - lastActivityTime.getTime()) / (1000 * 60 * 60 * 24)));
 
     res.json({
       userId: user._id,
@@ -511,16 +494,16 @@ router.get('/debug/dormant-detection/:userId', auth, isAdmin, async (req, res) =
       lastActivity: user.lastActivity,
       isOnline: user.isOnline,
       
-      // Calculation breakdown
+      // Calculation breakdown (mirrors calculateLoginFrequencyAnalysis)
       calculationDetails: {
-        now: now.toISOString(),
-        accountAgeDays,
-        hasRealActivityData,
-        mostRecentActivity: mostRecentActivity?.toISOString(),
-        lastActivityTime: lastActivityTime.toISOString(),
-        daysSinceLastActivity,
-        timestampsFound: timestamps.length,
-        validTimestamps: timestamps.map(t => t.toISOString())
+        now: new Date().toISOString(),
+        accountAgeDays: loginAnalysis.accountAgeDays,
+        hasRealActivityData: loginAnalysis.hasRealActivityData,
+        mostRecentActivity: loginAnalysis.mostRecentActivity,
+        daysSinceLastActivity: loginAnalysis.daysSinceLastActivity,
+        daysSinceLastSeen: loginAnalysis.daysSinceLastSeen,
+        parsedLastSeen: loginAnalysis.lastSeen,
+        parsedLastActivity: loginAnalysis.lastActivity
       },
       
       // Results

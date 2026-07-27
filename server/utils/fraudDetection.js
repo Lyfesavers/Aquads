@@ -19,6 +19,8 @@ const HISTORICAL_SPIKE_DECAY = 0.5;
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 /** Min referrals in any 24h span to count as a rapid signup cluster */
 const RAPID_SIGNUP_CLUSTER_MIN = 5;
+/** lastSeen/lastActivity within this window of signup are schema defaults, not real visits */
+const SIGNUP_ACTIVITY_BUFFER_MS = 10 * 60 * 1000;
 
 const HISTORICAL_SPIKE_FLAGS = new Set([
   'rapid_affiliate_signups',
@@ -263,11 +265,18 @@ const calculateLoginFrequencyAnalysis = (user) => {
       })
       .filter(Boolean);
     
-    const mostRecentActivity = timestamps.length > 0 ? new Date(Math.max(...timestamps)) : null;
-    
-    // If no activity timestamps are available, use creation date but flag it
-    const hasRealActivityData = mostRecentActivity !== null;
-    const lastActivityTime = mostRecentActivity || createdAt;
+    const mostRecentActivity = timestamps.length > 0
+      ? new Date(Math.max(...timestamps.map((t) => t.getTime())))
+      : null;
+
+    // Schema defaults both fields to signup time — only count as real if they moved past signup
+    const msSinceSignup = mostRecentActivity
+      ? mostRecentActivity.getTime() - createdAt.getTime()
+      : 0;
+    const hasRealActivityData = Boolean(user.isOnline) || (
+      mostRecentActivity !== null && msSinceSignup > SIGNUP_ACTIVITY_BUFFER_MS
+    );
+    const lastActivityTime = (hasRealActivityData && mostRecentActivity) ? mostRecentActivity : createdAt;
     
     // Separate lastSeen and lastActivity for more granular tracking
     const lastSeen = user.lastSeen ? new Date(user.lastSeen) : null;
@@ -283,17 +292,20 @@ const calculateLoginFrequencyAnalysis = (user) => {
       Math.max(0, Math.floor((now.getTime() - lastSeen.getTime()) / (1000 * 60 * 60 * 24))) : 
       daysSinceLastActivity;
 
-    // More accurate dormant detection with better thresholds
-    // For accounts with real activity data: dormant after 14 days, highly dormant after 60 days
-    // For accounts without real activity data: be more lenient and consider account age
-    // For unverified users: treat as inactive since they cannot access features
+    // Dormant detection thresholds:
+    // - Verified + real activity timestamps: dormant after 7 days idle, highly dormant after 30
+    // - Verified without real activity: age-ratio rules (see branches below)
+    // - Unverified: dormant after 3 days, highly dormant after 14
     let isDormant = false;
     let isHighlyDormant = false;
     
     // Check if user is unverified (cannot access features, so treat as inactive)
     const isUnverified = user.email && !user.emailVerified;
     
-    if (isUnverified) {
+    if (user.isOnline) {
+      isDormant = false;
+      isHighlyDormant = false;
+    } else if (isUnverified) {
       // Unverified users are considered dormant if account is older than 3 days
       // This is because they cannot access any features and are essentially inactive
       isDormant = accountAgeDays > 3;
@@ -435,31 +447,18 @@ const calculateAdvancedFraudScore = async (user, affiliates) => {
           });
         }
 
-        // CRITICAL: Check if affiliate is actually active - with null checks
-        const createdAt = affiliate.createdAt ? new Date(affiliate.createdAt) : null;
-        if (!createdAt || isNaN(createdAt.getTime())) {
-          // Skip invalid affiliate data
+        if (!affiliate.createdAt) {
           continue;
         }
-        
-        const accountAge = (now - createdAt) / (1000 * 60 * 60 * 24); // days
-        const lastActivity = affiliate.lastActivity ? new Date(affiliate.lastActivity) : createdAt;
-        const daysSinceLastActivity = isNaN(lastActivity.getTime()) ? accountAge : (now - lastActivity) / (1000 * 60 * 60 * 24);
-        
-        // More aggressive inactivity detection for fraud prevention
-        // Flag as inactive if:
-        // 1. Account is over 3 days old AND no activity in last 14 days, OR
-        // 2. Account is over 14 days old AND no activity in last 30 days, OR  
-        // 3. Account is over 30 days old AND no activity in last 60 days
-        const isInactive = (accountAge > 3 && daysSinceLastActivity > 14) || 
-                          (accountAge > 14 && daysSinceLastActivity > 30) ||
-                          (accountAge > 30 && daysSinceLastActivity > 60) ||
-                          (!affiliate.lastActivity && accountAge > 1); // No lastActivity and older than 1 day
-        
-        // Additional check: Low engagement patterns (common in fake accounts)
+
+        // Same dormant/login analysis used in admin UI — max(lastSeen, lastActivity) with real-data check
+        const affiliateLoginAnalysis = calculateLoginFrequencyAnalysis(affiliate);
+        const accountAge = affiliateLoginAnalysis.accountAgeDays;
+
+        // Low engagement patterns (common in fake accounts)
         // Users get 1000 bonus points for signing up with affiliate, so threshold should be higher
-        const hasMinimalEngagement = (affiliate.points || 0) <= 1100 && accountAge > 7; // Only signup bonus + minimal activity after 1 week
-                const isLikelyFake = hasMinimalEngagement || isInactive;
+        const hasMinimalEngagement = (affiliate.points || 0) <= 1100 && accountAge > 7;
+        const isLikelyFake = hasMinimalEngagement || affiliateLoginAnalysis.isDormant;
         
         if (isLikelyFake) {
           inactiveAffiliates.push(affiliate._id);

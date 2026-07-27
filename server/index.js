@@ -83,10 +83,7 @@ setInterval(async () => {
         isOnline: true,
         lastActivity: { $lt: fiveMinutesAgo }
       },
-      {
-        isOnline: false,
-        lastSeen: new Date()
-      }
+      [{ $set: { isOnline: false, lastSeen: '$lastActivity' } }]
     );
     
     if (result.modifiedCount > 0) {

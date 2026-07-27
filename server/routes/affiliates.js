@@ -292,10 +292,13 @@ router.get('/analytics', auth, async (req, res) => {
     const thisWeekSignups = affiliates.filter(a => new Date(a.createdAt) >= oneWeekAgo).length;
     const thisMonthSignups = affiliates.filter(a => new Date(a.createdAt) >= oneMonthAgo).length;
 
-    // Activity metrics
-    const activeThisWeek = affiliates.filter(a => 
-      a.lastSeen && new Date(a.lastSeen) >= oneWeekAgo
-    ).length;
+    // Activity metrics — use the later of lastSeen and lastActivity (API vs socket tracking)
+    const activeThisWeek = affiliates.filter((a) => {
+      const lastSeenMs = a.lastSeen ? new Date(a.lastSeen).getTime() : 0;
+      const lastActivityMs = a.lastActivity ? new Date(a.lastActivity).getTime() : 0;
+      const lastActiveMs = Math.max(lastSeenMs, lastActivityMs);
+      return lastActiveMs > 0 && lastActiveMs >= oneWeekAgo.getTime();
+    }).length;
     const verifiedAffiliates = affiliates.filter(a => a.emailVerified).length;
 
     // Engagement metrics

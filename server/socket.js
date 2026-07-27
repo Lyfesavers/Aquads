@@ -526,7 +526,8 @@ function init(server) {
         try {
           const User = require('./models/User');
           await User.findByIdAndUpdate(userData.userId, {
-            lastActivity: new Date()
+            lastActivity: new Date(),
+            lastSeen: new Date()
           });
         } catch (error) {
           // Silent error handling
