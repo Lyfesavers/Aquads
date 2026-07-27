@@ -171,6 +171,65 @@ const MOBILE_BUBBLEMAP_FIVE_COL_MIN_VIEWPORT = 360;
 const BANNER_HEIGHT = 0; // Height of the banner area including nav and token banner
 const TOP_PADDING = BANNER_HEIGHT + 5; // Additional padding from top to account for banner
 
+/** Bumped bubbles per page on 1080p desktop panels (user-tested). */
+const BUBBLE_MAP_ITEMS_PER_PAGE_1080P = 90;
+
+/**
+ * True when the primary monitor is a 1080p desktop panel.
+ * Uses screen.* (not innerWidth) so Windows/macOS display scaling still matches:
+ * 100% → 1920×1080, 125% → 1536×864, 150% → 1280×720, ~110% → ~1745×982.
+ */
+function is1080pDesktopMonitor() {
+  const sw = window.screen.width;
+  const sh = window.screen.height;
+  const w = Math.max(sw, sh);
+  const h = Math.min(sw, sh);
+
+  // 1366×768 laptops have their own tuned page size — do not treat as 1080p.
+  if (w >= 1340 && w <= 1390 && h >= 740 && h <= 790) {
+    return false;
+  }
+
+  if (w >= 1880 && w <= 1940 && h >= 1000 && h <= 1120) return true; // 100% scale (1080px tall)
+  if (w >= 1700 && w <= 1780 && h >= 940 && h <= 1020) return true;  // ~110% scale
+  if (w >= 1520 && w <= 1560 && h >= 820 && h <= 900) return true;  // 125% scale
+  if (w >= 1260 && w <= 1300 && h >= 680 && h <= 760) return true;  // 150% scale
+  return false;
+}
+
+/** How many bubbles fit per pagination page for this viewport / monitor. */
+function calculateBubbleMapItemsPerPage(viewportWidth, viewportHeight) {
+  if (is1080pDesktopMonitor()) {
+    return BUBBLE_MAP_ITEMS_PER_PAGE_1080P;
+  }
+
+  if (viewportWidth === 2560 && viewportHeight === 1440) {
+    return 70;
+  }
+  if (viewportWidth === 1366 && viewportHeight === 768) {
+    return 58;
+  }
+  if (viewportWidth >= 400 && viewportWidth <= 420 && viewportHeight >= 900 && viewportHeight <= 930) {
+    return 48;
+  }
+  if (viewportWidth <= 480) {
+    return 40;
+  }
+  if (viewportWidth <= 768) {
+    return 35;
+  }
+  if (viewportWidth >= 2400) {
+    return 70;
+  }
+  if (viewportWidth >= 1440) {
+    return 65;
+  }
+  if (viewportWidth >= 1200) {
+    return 58;
+  }
+  return 58;
+}
+
 /**
  * Largest column count ≤ maxPrefer whose row fits at minimum bubble diameter.
  * Actual bumped/unbumped sizes clamp into each lane via getMobileBubbleMapDisplaySize — column count must not use the pre-clamp bumped diameter or we never reach 4-up on typical phones (~103px discs).
@@ -724,7 +783,9 @@ function App() {
   // New state for blockchain filter and pagination
   const [blockchainFilter, setBlockchainFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(50);
+  const [itemsPerPage, setItemsPerPage] = useState(() =>
+    calculateBubbleMapItemsPerPage(window.innerWidth, window.innerHeight)
+  );
   const [totalPages, setTotalPages] = useState(1);
   const [votePopup, setVotePopup] = useState(null);
   const [partnershipPopup, setPartnershipPopup] = useState(null);
@@ -775,44 +836,13 @@ function App() {
   }, [currentUser?.userId, currentUser?.email, currentUser?.emailVerified]);
   
   /**
-   * Determine how many bubbles to show per page based on screen size.
-   * User testing has determined optimal bubble counts for different screens:
-   * - 2560x1440: 70 bubbles maximum
-   * - 1920x1080 (1080p): 90 bubbles maximum
-   * - 1366x768: 58 bubbles maximum
-   *
-   * Limiting bubbles per page based on screen size prevents performance issues
-   * and improves the user experience by avoiding overcrowded displays.
-   * Additional bubbles are placed on subsequent pages accessible via pagination.
+   * Bubbles per page from monitor + viewport (see calculateBubbleMapItemsPerPage).
+   * 1080p panels use screen dimensions so Windows 125%/150% scaling still gets 90.
    */
   useEffect(() => {
-    const calculateItemsPerPage = () => {
-      const viewportWidth = window.innerWidth;
-      const viewportHeight = window.innerHeight;
-
-      if (viewportWidth === 2560 && viewportHeight === 1440) {
-        return 70;
-      } else if (viewportWidth >= 1880 && viewportWidth <= 1940 && viewportHeight >= 850 && viewportHeight <= 1120) {
-        return 90; // 1080p desktop — taskbar/chrome often reports height below 1080
-      } else if (viewportWidth === 1366 && viewportHeight === 768) {
-        return 58;
-      } else if (viewportWidth >= 400 && viewportWidth <= 420 && viewportHeight >= 900 && viewportHeight <= 930) {
-        return 48;
-      } else if (viewportWidth <= 480) {
-        return 40;
-      } else if (viewportWidth <= 768) {
-        return 35;
-      } else if (viewportWidth >= 2400) {
-        return 70;
-      } else if (viewportWidth >= 1440) {
-        return 65;
-      } else if (viewportWidth >= 1200) {
-        return 58;
-      } else {
-        return 58;
-      }
-    };
-    setItemsPerPage(calculateItemsPerPage());
+    setItemsPerPage(
+      calculateBubbleMapItemsPerPage(window.innerWidth, window.innerHeight)
+    );
   }, [windowSize]);
 
   // Calculate total pages whenever ads or filter changes
