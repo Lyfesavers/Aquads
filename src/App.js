@@ -171,68 +171,6 @@ const MOBILE_BUBBLEMAP_FIVE_COL_MIN_VIEWPORT = 360;
 const BANNER_HEIGHT = 0; // Height of the banner area including nav and token banner
 const TOP_PADDING = BANNER_HEIGHT + 5; // Additional padding from top to account for banner
 
-/** Desktop grid cell width — must stay in sync with arrangeDesktopGrid(). */
-const DESKTOP_GRID_CELL_WIDTH = 115;
-const DESKTOP_GRID_H_MARGIN = 10;
-const DESKTOP_GRID_V_MARGIN = 30;
-
-/**
- * Bumped bubbles per pagination page from viewport size (matches arrangeDesktopGrid packing).
- * Page 1 is bumped-only; capacity should reflect how many fit above the hub footer strip.
- */
-function calculateBubbleMapItemsPerPage(viewportWidth, viewportHeight) {
-  if (viewportWidth >= 400 && viewportWidth <= 420 && viewportHeight >= 900 && viewportHeight <= 930) {
-    return 48;
-  }
-  if (viewportWidth <= 480) {
-    return 40;
-  }
-  if (viewportWidth <= 768) {
-    return 35;
-  }
-
-  const bubbleSize = getMaxSize();
-  const rowHeight = bubbleSize + DESKTOP_GRID_V_MARGIN;
-  const columns = Math.max(
-    1,
-    Math.floor((viewportWidth - DESKTOP_GRID_H_MARGIN * 2) / DESKTOP_GRID_CELL_WIDTH)
-  );
-
-  // Approximate chrome above the bubble grid and the hub footer banners below it.
-  const topChrome = 220;
-  const footerChrome = viewportWidth >= 1024 ? 280 : 200;
-  const availableHeight = viewportHeight - topChrome - footerChrome;
-  const rows = Math.max(
-    1,
-    Math.floor((availableHeight - TOP_PADDING - DESKTOP_GRID_V_MARGIN) / rowHeight)
-  );
-  const gridCapacity = columns * rows;
-
-  if (viewportWidth === 2560 && viewportHeight === 1440) {
-    return Math.max(gridCapacity, 70);
-  }
-  // 1920×1080: ~16 cols — page 1 was ~20 bumped with ~25 more slots visible (~3 rows).
-  if (viewportWidth === 1920 && viewportHeight === 1080) {
-    return Math.max(gridCapacity, columns * 3);
-  }
-  if (viewportWidth >= 1900 && viewportWidth <= 1940 && viewportHeight >= 1040 && viewportHeight <= 1120) {
-    return Math.max(gridCapacity, columns * 3);
-  }
-  if (viewportWidth === 1366 && viewportHeight === 768) {
-    return Math.max(gridCapacity, 58);
-  }
-  if (viewportWidth >= 2400) {
-    return Math.max(gridCapacity, 70);
-  }
-  if (viewportWidth >= 1440) {
-    return Math.max(gridCapacity, 65);
-  }
-  if (viewportWidth >= 1200) {
-    return Math.max(gridCapacity, 58);
-  }
-  return Math.max(gridCapacity, 58);
-}
-
 /**
  * Largest column count ≤ maxPrefer whose row fits at minimum bubble diameter.
  * Actual bumped/unbumped sizes clamp into each lane via getMobileBubbleMapDisplaySize — column count must not use the pre-clamp bumped diameter or we never reach 4-up on typical phones (~103px discs).
@@ -837,13 +775,44 @@ function App() {
   }, [currentUser?.userId, currentUser?.email, currentUser?.emailVerified]);
   
   /**
-   * Bumped bubbles per page — derived from viewport grid capacity (see calculateBubbleMapItemsPerPage).
-   * 1920×1080 ≈ 64 (16×4); 2560×1440 ≈ 70; 1366×768 ≈ 58.
+   * Determine how many bubbles to show per page based on screen size.
+   * User testing has determined optimal bubble counts for different screens:
+   * - 2560x1440: 70 bubbles maximum
+   * - 1920x1080 (1080p): 90 bubbles maximum
+   * - 1366x768: 58 bubbles maximum
+   *
+   * Limiting bubbles per page based on screen size prevents performance issues
+   * and improves the user experience by avoiding overcrowded displays.
+   * Additional bubbles are placed on subsequent pages accessible via pagination.
    */
   useEffect(() => {
-    setItemsPerPage(
-      calculateBubbleMapItemsPerPage(window.innerWidth, window.innerHeight)
-    );
+    const calculateItemsPerPage = () => {
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+
+      if (viewportWidth === 2560 && viewportHeight === 1440) {
+        return 70;
+      } else if (viewportWidth >= 1880 && viewportWidth <= 1940 && viewportHeight >= 850 && viewportHeight <= 1120) {
+        return 90; // 1080p desktop — taskbar/chrome often reports height below 1080
+      } else if (viewportWidth === 1366 && viewportHeight === 768) {
+        return 58;
+      } else if (viewportWidth >= 400 && viewportWidth <= 420 && viewportHeight >= 900 && viewportHeight <= 930) {
+        return 48;
+      } else if (viewportWidth <= 480) {
+        return 40;
+      } else if (viewportWidth <= 768) {
+        return 35;
+      } else if (viewportWidth >= 2400) {
+        return 70;
+      } else if (viewportWidth >= 1440) {
+        return 65;
+      } else if (viewportWidth >= 1200) {
+        return 58;
+      } else {
+        return 58;
+      }
+    };
+    setItemsPerPage(calculateItemsPerPage());
   }, [windowSize]);
 
   // Calculate total pages whenever ads or filter changes
@@ -2778,11 +2747,16 @@ function App() {
     const screenWidth = window.innerWidth;
     const screenHeight = window.innerHeight;
     
-    const cellWidth = DESKTOP_GRID_CELL_WIDTH;
-    const horizontalMargin = DESKTOP_GRID_H_MARGIN;
-    const verticalMargin = DESKTOP_GRID_V_MARGIN;
+    // FIXED CELL WIDTH for consistent spacing across ALL screen sizes!
+    // 115px matches our grid system = tight consistent packing everywhere
+    const FIXED_CELL_WIDTH = 115;
+    const cellWidth = FIXED_CELL_WIDTH;
+
+    // Calculate columns based on screen width (auto-adjusts to fit)
+    const horizontalMargin = 10;
+    const verticalMargin = 30;
     const availableWidth = screenWidth - (horizontalMargin * 2);
-    const columns = Math.floor(availableWidth / DESKTOP_GRID_CELL_WIDTH);
+    const columns = Math.floor(availableWidth / FIXED_CELL_WIDTH);
     
     // Store current positions to check if we need to update the model
     const originalPositions = {};
