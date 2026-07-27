@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { API_URL, fetchPendingAds, approveAd, rejectAd, fetchPendingServices, approveService, rejectService, getClickStats, getClickTrends, getRecentClicks, upgradePremiumListing, fetchMyBubbleAnalytics, transferDexFeedOwnership, approveListingClaim, rejectListingClaim } from '../services/api';
+import { API_URL, fetchPendingAds, approveAd, rejectAd, fetchPendingServices, approveService, rejectService, getClickStats, getClickTrends, getRecentClicks, upgradePremiumListing, fetchMyBubbleAnalytics, fetchRaiderAnalytics, transferDexFeedOwnership, approveListingClaim, rejectListingClaim } from '../services/api';
 import BookingManagement from './BookingManagement';
 import ServiceReviews from './ServiceReviews';
 import JobList from './JobList';
@@ -279,7 +279,11 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onAdPatche
   const [loadingAffiliateData, setLoadingAffiliateData] = useState(false);
   // User affiliate analytics states
   const [affiliateAnalytics, setAffiliateAnalytics] = useState(null);
+  const [raiderAnalytics, setRaiderAnalytics] = useState(null);
   const [loadingAnalytics, setLoadingAnalytics] = useState(false);
+  const [loadingRaiderAnalytics, setLoadingRaiderAnalytics] = useState(false);
+  const analyticsFetchGenRef = useRef(0);
+  const analyticsAbortRef = useRef(null);
   // Add refresh timestamps
   const [lastRefreshTime, setLastRefreshTime] = useState(null);
   
@@ -341,6 +345,11 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onAdPatche
       setAquaPayStats({ totalReceived: 0, totalTransactions: 0 });
       setAquaPayPaymentHistory([]);
       setAffiliateAnalytics(null);
+      setRaiderAnalytics(null);
+      if (analyticsAbortRef.current) {
+        analyticsAbortRef.current.abort();
+        analyticsAbortRef.current = null;
+      }
       setSuspiciousUsers([]);
       setSuspiciousUsersSummary(null);
       setSuspiciousScanMeta(null);
@@ -1192,27 +1201,69 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onAdPatche
 
 
 
-  const fetchAffiliateAnalytics = async () => {
+  const fetchAnalyticsTab = async () => {
+    if (!currentUser?.token) return;
+
+    if (analyticsAbortRef.current) {
+      analyticsAbortRef.current.abort();
+    }
+    const abortController = new AbortController();
+    analyticsAbortRef.current = abortController;
+    const fetchGen = ++analyticsFetchGenRef.current;
+
     setLoadingAnalytics(true);
+    setLoadingRaiderAnalytics(true);
+
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/affiliates/analytics`, {
-        headers: {
-          'Authorization': `Bearer ${currentUser.token}`
-        }
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setAffiliateAnalytics(data);
-      } else {
+      const authHeaders = { Authorization: `Bearer ${currentUser.token}` };
+      const [affiliateResult, raiderResult] = await Promise.allSettled([
+        fetch(`${process.env.REACT_APP_API_URL}/api/affiliates/analytics`, {
+          headers: authHeaders,
+          signal: abortController.signal
+        }),
+        fetchRaiderAnalytics(abortController.signal)
+      ]);
+
+      if (fetchGen !== analyticsFetchGenRef.current) return;
+
+      if (affiliateResult.status === 'fulfilled' && affiliateResult.value.ok) {
+        setAffiliateAnalytics(await affiliateResult.value.json());
+      } else if (affiliateResult.status === 'fulfilled') {
         showNotification('Failed to fetch affiliate analytics', 'error');
+      } else if (affiliateResult.reason?.name !== 'AbortError') {
+        showNotification('Error fetching affiliate analytics', 'error');
       }
-    } catch (error) {
-      showNotification('Error fetching affiliate analytics', 'error');
+
+      if (raiderResult.status === 'fulfilled') {
+        setRaiderAnalytics(raiderResult.value);
+      } else if (raiderResult.reason?.name !== 'AbortError') {
+        showNotification('Error fetching raider analytics', 'error');
+      }
     } finally {
-      setLoadingAnalytics(false);
+      if (fetchGen === analyticsFetchGenRef.current) {
+        setLoadingAnalytics(false);
+        setLoadingRaiderAnalytics(false);
+        if (analyticsAbortRef.current === abortController) {
+          analyticsAbortRef.current = null;
+        }
+      }
     }
   };
+
+  const fetchAffiliateAnalytics = fetchAnalyticsTab;
+
+  useEffect(() => {
+    if (activeTab !== 'affiliateAnalytics' || !currentUser?.token) return;
+    if (!affiliateAnalytics || !raiderAnalytics) {
+      fetchAnalyticsTab();
+    }
+  }, [activeTab, currentUser?.token, currentUser?.userId]);
+
+  useEffect(() => () => {
+    if (analyticsAbortRef.current) {
+      analyticsAbortRef.current.abort();
+    }
+  }, []);
 
   const handleRedeemPoints = async () => {
     if (!aquaPayLink || !aquaPayLink.trim()) {
@@ -3686,7 +3737,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onAdPatche
     { id: 'bookings', label: 'Bookings', icon: '📋', show: true },
     { id: 'linkinbio', label: 'Link in bio', icon: '🔗', show: true },
     { id: 'aquapay', label: 'AquaPay', icon: '💸', show: true },
-    { id: 'affiliateAnalytics', label: 'Affiliate Analytics', icon: '📈', show: true, onSelect: () => { if (!affiliateAnalytics) fetchAffiliateAnalytics(); } },
+    { id: 'affiliateAnalytics', label: 'Analytics', icon: '📈', show: true },
     { id: 'admin', label: 'Admin Panel', icon: '🛡️', show: currentUser.isAdmin },
     { id: 'twitterRaids', label: 'Twitter Raids', icon: '🐦', show: currentUser.isAdmin },
     { id: 'facebookRaids', label: 'Facebook Raids', icon: '📘', show: currentUser.isAdmin },
@@ -3730,7 +3781,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onAdPatche
     bookings: 'View and manage your service bookings',
     linkinbio: 'One link for all your socials — powered by Aquads.xyz',
     aquapay: 'Payment settings and transaction history',
-    affiliateAnalytics: 'Track your referral performance and earnings',
+    affiliateAnalytics: 'Track your raid performance and referral network',
     admin: 'Platform administration and moderation',
     twitterRaids: 'Review and manage Twitter raid requests',
     facebookRaids: 'Review and manage Facebook raid requests',
@@ -4879,19 +4930,267 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onAdPatche
           )}
 
           {activeTab === 'affiliateAnalytics' && (
-            <div className="space-y-6">
+            <div className="space-y-8">
               <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-semibold text-white">Affiliate Analytics</h2>
+                <h2 className="text-2xl font-semibold text-white">Analytics</h2>
                 <button
-                  onClick={fetchAffiliateAnalytics}
-                  disabled={loadingAnalytics}
+                  onClick={fetchAnalyticsTab}
+                  disabled={loadingAnalytics || loadingRaiderAnalytics}
                   className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-50"
                 >
-                  {loadingAnalytics ? 'Loading...' : 'Refresh'}
+                  {(loadingAnalytics || loadingRaiderAnalytics) ? 'Loading...' : 'Refresh'}
                 </button>
               </div>
 
-              {loadingAnalytics ? (
+              {/* Raider Performance */}
+              <section className="space-y-4">
+                <div>
+                  <h3 className="text-xl font-semibold text-white">Raider Performance</h3>
+                  <p className="text-sm text-gray-400 mt-1">
+                    Quality score is based on the points tier you earn per raid (5–50 pts).
+                  </p>
+                </div>
+
+                {loadingRaiderAnalytics && !raiderAnalytics ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-purple-400"></div>
+                  </div>
+                ) : raiderAnalytics ? (
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                      <div className="bg-gradient-to-br from-purple-900/40 to-gray-800 rounded-xl p-5 border border-purple-500/30">
+                        <p className="text-sm text-gray-400 mb-1">Raider Rating</p>
+                        <p className="text-4xl font-bold text-white">{raiderAnalytics.summary.raiderRating}</p>
+                        <p className="text-xs text-gray-500 mt-2">
+                          Quality {raiderAnalytics.summary.qualityScore}% · Approval {raiderAnalytics.summary.approvalRate}%
+                        </p>
+                        {raiderAnalytics.leaderboard?.userIsRaider ? (
+                          <p className="text-sm text-amber-300 mt-3 font-medium">
+                            #{raiderAnalytics.summary.leaderboardRank} of {raiderAnalytics.summary.totalActiveRaiders} active raiders
+                          </p>
+                        ) : (
+                          <p className="text-xs text-gray-500 mt-3">
+                            Complete raids to join the leaderboard
+                          </p>
+                        )}
+                      </div>
+                      <div className="bg-gray-700 rounded-xl p-5 lg:col-span-2">
+                        <p className="text-sm font-medium text-gray-400 mb-3">Points Tier Breakdown</p>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                          {[
+                            { tier: 5, label: 'Text only', color: 'text-gray-300' },
+                            { tier: 10, label: 'Verified text', color: 'text-blue-300' },
+                            { tier: 20, label: 'With image', color: 'text-green-300' },
+                            { tier: 50, label: 'Image + verified', color: 'text-cyan-300' },
+                          ].map(({ tier, label, color }) => (
+                            <div key={tier} className="bg-gray-800 rounded-lg p-3 text-center">
+                              <p className={`text-xl font-bold ${color}`}>{raiderAnalytics.tierBreakdown[tier] ?? 0}</p>
+                              <p className="text-xs text-gray-500 mt-1">{tier} pts</p>
+                              <p className="text-[10px] text-gray-600 mt-0.5">{label}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                      {[
+                        { label: 'Approved', value: raiderAnalytics.summary.approved, color: 'text-green-400' },
+                        { label: 'Pending', value: raiderAnalytics.summary.pending, color: 'text-yellow-400' },
+                        { label: 'Rejected', value: raiderAnalytics.summary.rejected, color: 'text-red-400' },
+                        { label: 'Raid Points', value: raiderAnalytics.summary.totalRaidPointsEarned, color: 'text-cyan-400' },
+                        { label: 'Avg / Raid', value: raiderAnalytics.summary.avgPointsPerRaid, color: 'text-blue-400' },
+                        { label: 'This Week', value: raiderAnalytics.summary.thisWeek, color: 'text-orange-400' },
+                      ].map(({ label, value, color }) => (
+                        <div key={label} className="bg-gray-700 rounded-lg p-3 text-center">
+                          <p className={`text-xl font-bold ${color}`}>{value}</p>
+                          <p className="text-xs text-gray-400 mt-1">{label}</p>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="bg-gray-700 rounded-lg p-4">
+                        <h4 className="text-sm font-medium text-gray-400 mb-2">Streaks</h4>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-300">Current</span>
+                          <span className="text-orange-400 font-bold">{raiderAnalytics.summary.currentStreak} days</span>
+                        </div>
+                        <div className="flex justify-between text-sm mt-2">
+                          <span className="text-gray-300">Best</span>
+                          <span className="text-purple-400 font-bold">{raiderAnalytics.summary.bestStreak} days</span>
+                        </div>
+                      </div>
+                      <div className="bg-gray-700 rounded-lg p-4">
+                        <h4 className="text-sm font-medium text-gray-400 mb-2">Platforms</h4>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-300">Twitter</span>
+                          <span className="text-blue-400 font-bold">{raiderAnalytics.summary.twitterCompletions}</span>
+                        </div>
+                        <div className="flex justify-between text-sm mt-2">
+                          <span className="text-gray-300">Facebook</span>
+                          <span className="text-indigo-400 font-bold">{raiderAnalytics.summary.facebookCompletions}</span>
+                        </div>
+                      </div>
+                      <div className="bg-gray-700 rounded-lg p-4">
+                        <h4 className="text-sm font-medium text-gray-400 mb-2">This Month</h4>
+                        <p className="text-2xl font-bold text-green-400">{raiderAnalytics.summary.thisMonth}</p>
+                        <p className="text-xs text-gray-500 mt-1">approved raids</p>
+                      </div>
+                    </div>
+
+                    <div className="bg-gray-700 rounded-lg p-4">
+                      <h4 className="text-lg font-semibold text-white mb-3">Badges</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {raiderAnalytics.badges.map((badge) => (
+                          <div
+                            key={badge.id}
+                            title={badge.description}
+                            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm border ${
+                              badge.earned
+                                ? 'bg-purple-500/20 border-purple-400/40 text-purple-200'
+                                : 'bg-gray-800/60 border-gray-600/40 text-gray-500 opacity-60'
+                            }`}
+                          >
+                            <span>{badge.icon}</span>
+                            <span>{badge.label}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="bg-gray-700 rounded-lg p-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
+                        <div>
+                          <h4 className="text-lg font-semibold text-white">Raider Leaderboard</h4>
+                          <p className="text-xs text-gray-500 mt-1">
+                            Ranked by total raid points earned. Only users with raid points count as active raiders.
+                          </p>
+                        </div>
+                        {raiderAnalytics.leaderboard?.totalRaiders > 0 && (
+                          <p className="text-sm text-gray-400">
+                            {raiderAnalytics.leaderboard.totalRaiders} active raider{raiderAnalytics.leaderboard.totalRaiders !== 1 ? 's' : ''}
+                          </p>
+                        )}
+                      </div>
+
+                      {raiderAnalytics.leaderboard?.topRaiders?.length > 0 ? (
+                        <div className="space-y-2">
+                          {raiderAnalytics.leaderboard.topRaiders.map((entry) => (
+                            <div
+                              key={`${entry.rank}-${entry.username}`}
+                              className={`rounded-lg p-3 flex items-center justify-between gap-3 ${
+                                entry.isCurrentUser
+                                  ? 'bg-purple-500/15 border border-purple-400/40'
+                                  : 'bg-gray-800'
+                              }`}
+                            >
+                              <div className="flex items-center gap-3 min-w-0">
+                                <span className={`text-lg font-bold w-8 text-center ${
+                                  entry.rank === 1 ? 'text-yellow-400' :
+                                  entry.rank === 2 ? 'text-gray-300' :
+                                  entry.rank === 3 ? 'text-amber-600' :
+                                  'text-gray-500'
+                                }`}>
+                                  {entry.rank}
+                                </span>
+                                <div className="min-w-0">
+                                  <p className="text-white font-medium truncate">
+                                    {entry.username}
+                                    {entry.isCurrentUser && (
+                                      <span className="text-purple-300 text-xs ml-2">(You)</span>
+                                    )}
+                                  </p>
+                                  <p className="text-xs text-gray-500">
+                                    {entry.approvedRaids} raid{entry.approvedRaids !== 1 ? 's' : ''} · {entry.qualityScore}% quality
+                                  </p>
+                                </div>
+                              </div>
+                              <p className="text-cyan-400 font-bold flex-shrink-0">{entry.totalRaidPoints.toLocaleString()} pts</p>
+                            </div>
+                          ))}
+
+                          {raiderAnalytics.leaderboard.currentUserEntry && (
+                            <>
+                              <div className="text-center text-gray-600 text-xs py-1">• • •</div>
+                              <div className="rounded-lg p-3 flex items-center justify-between gap-3 bg-purple-500/15 border border-purple-400/40">
+                                <div className="flex items-center gap-3 min-w-0">
+                                  <span className="text-lg font-bold w-8 text-center text-purple-300">
+                                    {raiderAnalytics.leaderboard.currentUserEntry.rank}
+                                  </span>
+                                  <div className="min-w-0">
+                                    <p className="text-white font-medium truncate">
+                                      {raiderAnalytics.leaderboard.currentUserEntry.username}
+                                      <span className="text-purple-300 text-xs ml-2">(You)</span>
+                                    </p>
+                                    <p className="text-xs text-gray-500">
+                                      {raiderAnalytics.leaderboard.currentUserEntry.approvedRaids} raids · {raiderAnalytics.leaderboard.currentUserEntry.qualityScore}% quality
+                                    </p>
+                                  </div>
+                                </div>
+                                <p className="text-cyan-400 font-bold flex-shrink-0">
+                                  {raiderAnalytics.leaderboard.currentUserEntry.totalRaidPoints.toLocaleString()} pts
+                                </p>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      ) : (
+                        <p className="text-gray-400 text-sm text-center py-6">
+                          No active raiders yet. Be the first to earn raid points!
+                        </p>
+                      )}
+                    </div>
+
+                    {raiderAnalytics.recentActivity.length > 0 && (
+                      <div className="bg-gray-700 rounded-lg p-4">
+                        <h4 className="text-lg font-semibold text-white mb-3">Recent Raids</h4>
+                        <div className="space-y-2">
+                          {raiderAnalytics.recentActivity.map((item, index) => (
+                            <div key={index} className="bg-gray-800 rounded-lg p-3 flex items-center justify-between gap-3">
+                              <div className="min-w-0">
+                                <p className="text-white text-sm font-medium truncate">{item.raidTitle}</p>
+                                <p className="text-xs text-gray-500">
+                                  {item.platform === 'twitter' ? '🐦 Twitter' : '📘 Facebook'}
+                                  {item.completedAt ? ` · ${new Date(item.completedAt).toLocaleDateString()}` : ''}
+                                </p>
+                              </div>
+                              <div className="text-right flex-shrink-0">
+                                <span className={`text-xs px-2 py-1 rounded ${
+                                  item.status === 'approved' ? 'bg-green-500/20 text-green-400' :
+                                  item.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
+                                  'bg-red-500/20 text-red-400'
+                                }`}>
+                                  {item.status}
+                                </span>
+                                {item.pointsEarned != null && (
+                                  <p className="text-xs text-cyan-400 mt-1">+{item.pointsEarned} pts</p>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 bg-gray-700/50 rounded-lg">
+                    <p className="text-gray-400 mb-4">No raider data loaded yet</p>
+                    <button
+                      onClick={fetchAnalyticsTab}
+                      className="bg-purple-500 hover:bg-purple-600 text-white px-6 py-2 rounded"
+                    >
+                      Load Raider Stats
+                    </button>
+                  </div>
+                )}
+              </section>
+
+              <div className="border-t border-gray-700/60 pt-2">
+                <h3 className="text-xl font-semibold text-white mb-4">Referral Network</h3>
+              </div>
+
+              {loadingAnalytics && !affiliateAnalytics ? (
                 <div className="flex items-center justify-center py-12">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400"></div>
                 </div>
@@ -5172,10 +5471,10 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onAdPatche
                 <div className="text-center py-12">
                   <p className="text-gray-400 mb-4">No affiliate data available</p>
                   <button
-                    onClick={fetchAffiliateAnalytics}
+                    onClick={fetchAnalyticsTab}
                     className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded"
                   >
-                    Load Analytics
+                    Load Referral Analytics
                   </button>
                 </div>
               )}

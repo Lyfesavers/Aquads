@@ -2468,6 +2468,18 @@ export const trackBubbleClick = (adId) => {
   fetch(`${API_URL}/ads/${encodeURIComponent(adId)}/click`, { method: 'POST' }).catch(() => {});
 };
 
+// Dashboard Analytics tab: raider performance stats
+export const fetchRaiderAnalytics = async (signal) => {
+  const response = await fetch(`${API_URL}/raids/my-analytics`, {
+    headers: getAuthHeader(),
+    signal
+  });
+  if (!response.ok) {
+    throw new Error('Failed to fetch raider analytics');
+  }
+  return response.json();
+};
+
 // Dashboard: bubble clicks, map rank, and raid analytics for project owner
 export const fetchMyBubbleAnalytics = async () => {
   const response = await fetch(`${API_URL}/ads/my-analytics`, {

@@ -497,6 +497,13 @@ router.post('/:raidId/approve/:completionId', auth, requireEmailVerification, as
         const points = req.body.points || raid.points || 20;
         const isVerifiedBonus = req.body.points === 10 || req.body.points === 50;
         user.points += points;
+        user.pointsHistory = user.pointsHistory || [];
+        user.pointsHistory.push({
+          amount: points,
+          reason: `Facebook raid approved${isVerifiedBonus ? ' (verified account)' : ''}: ${raid.title}`,
+          socialRaidId: raid._id,
+          createdAt: new Date()
+        });
         await user.save();
         completion.pointsAwarded = true;
 
