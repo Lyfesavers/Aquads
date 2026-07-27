@@ -1,4 +1,3 @@
-const { isAquadsPlatformQuestion } = require('./aquadsPlatformDetect');
 const { KIMI_WEB_SEARCH_TOOL, webSearchToolResult } = require('./kimiWebSearch');
 const { extractKimiUsageFromCompletion } = require('./kimiCost');
 const {
@@ -595,13 +594,6 @@ async function runKimiAgentChat({
 
   if (agentContext?.userId && agentContext?.adId && agentContext?.threadId) {
     tools = [...tools, AQUADS_GENERATE_IMAGE_TOOL, AQUADS_GENERATE_VIDEO_TOOL];
-  }
-
-  if (isAquadsPlatformQuestion(userMessage)) {
-    tools = tools.filter((t) => {
-      const n = t?.function?.name;
-      return !isWebSearchToolName(n);
-    });
   }
 
   if (!tools.length) {

@@ -1,53 +1,106 @@
 # Aquads platform guide (for Skipper Agent)
 
-Aquads (aquads.xyz) is a crypto/Web3 launch stack: bubble map listings, community tools, payments, and marketing. You cannot browse the live site; use this guide for Aquads how-to questions.
+Aquads (aquads.xyz) is a crypto/Web3 launch stack: bubble map listings, community tools, payments, bounties, freelancer marketplace, and marketing. Primary Aquads reference — in Agent mode also use web search or fetch (e.g. aquads.xyz/docs, aquads.xyz/llms.txt) to verify or supplement.
+
+## Core surfaces
+
+- **Bubble map** (`/home`) — Interactive token listings with votes, bumps, AquaSwap
+- **Dashboard** (`/dashboard/:tab?`) — Listing, bookings, link-in-bio, AquaPay, bounties, affiliates, admin
+- **Bounties** (`/bounties`) — Paid task board with escrow-backed USDC rewards
+- **Marketplace** (`/marketplace`) — Freelancer services, bookings, escrow, reviews
+- **AquaPay** (`/aquapay`, `/pay/:slug`) — Multi-chain non-custodial payment links (50+ chains)
+- **AquaSwap** (`/aquaswap`) — Cross-chain swap; Chromium extension + embed widget
+- **Link in bio** (`/links/:username`) — One page for all links + banner ads
+- **Skipper Agent** (`/project-agent`) — AI co-pilot (this agent)
+- **Learn** (`/learn`) — Tutorials, blog, market news, skill tests, free courses
+- **GameHub** (`/games`) — Aquads mini-games + community blockchain games
+- **On-chain resume** (`/resume/:username`) — Freelancer credentials on Base via EAS (~$0.01 mint)
+- **Telegram/Discord bot** (`/telegram-bot`) — Raid automation, bubble alerts, trending
+- **HyperSpace** (`/hyperspace`) — Twitter Spaces audience boosting
+- **AquaFi** (`/aquafi`) — DeFi savings/staking
+- **Partner rewards** (`/partner-rewards`) — Affiliate/partner offers
+- **Wallet analyzer** (`/wallet-analyzer`) — Wallet portfolio analysis
+- **Docs** (`/docs`) — Official documentation
+- **List token free** (`/list-token-free`) — Free Starter listing + paid Premium/PR packages
 
 ## After listing on the bubble map
 
-1. **Complete the listing** — Logo, description, socials, pair URL. Strong profiles get more clicks.
-2. **Votes & bump** — Encourage bullish votes; **100+ bullish votes** (organic + vote boosts) bumps the bubble (larger, main row). **Bump is not a paid Premium upgrade** — it only affects visibility and raid caps.
-3. **Link in bio** — `aquads.xyz/links/username` — one page for all project links.
-4. **Dashboard** — Manage listing, bookings, link-in-bio, AquaPay, affiliate stats.
-5. **Raids** — Twitter/X, Telegram, Facebook raids for community tasks and points.
-6. **Banner ads** — Optional paid homepage banners.
-7. **AquaSwap** — Swap handoff from the bubble (BexTools-style routing).
-8. **AquaPay** — Crypto payment links; accept USDC etc. to your wallet.
-9. **Marketplace** — Freelancer services and bookings for creative/dev work.
-10. **HyperSpace / games / learn** — Extra discovery and engagement surfaces.
-11. **Skipper Agent** — AI co-pilot for copy, plans, images (prepaid wallet). Available to **email-verified Aquads accounts**; pay-as-you-go. **$5 starter AI credit** on **paid Premium** listings only.
+1. **Complete the listing** — Logo, description, socials, pair URL.
+2. **Votes & bump** — **100+ bullish votes** (organic + vote boosts) bumps the bubble. **Bump ≠ Premium upgrade** — visibility and raid caps only.
+3. **Link in bio** — `aquads.xyz/links/username`
+4. **Dashboard** — Manage listing, AquaPay, bounties, bookings, affiliates.
+5. **Raids** — Twitter/X, Telegram, Facebook. Bumped projects: **20 free raids/day** via Telegram bot.
+6. **Banner ads** — Optional paid homepage/bubble banners.
+7. **AquaSwap** — Swap from bubble (BexTools-style routing). Chrome extension available.
+8. **AquaPay** — Crypto payment links; accept USDC to your wallet.
+9. **Bounties** — Post paid tasks (dev, design, content, marketing, etc.) — see below.
+10. **Marketplace** — Freelancer services and bookings (separate from bounties).
+11. **Deep Dive Q&A** — Structured project Q&A (Dashboard).
+12. **HyperSpace / GameHub / Learn** — Discovery and engagement.
+13. **Skipper Agent** — Email-verified accounts; pay-as-you-go. **$5 starter credit** on paid **Premium** listings.
+
+## Bounties (Web3 task board)
+
+**URL:** `aquads.xyz/bounties`
+
+Projects post **paid tasks** with reward in **Aquads escrow** until a winner is approved and paid via **AquaPay**.
+
+### Posters (project owners)
+
+- **Who:** Users with at least one **active/approved** bubble listing.
+- **Flow:** Create bounty → fund escrow (USDC on Solana or EVM) → goes **open** on deposit confirm → hunters submit → poster **approves winner** → payout to hunter's AquaPay wallet.
+- **Min reward:** 1 USDC. **Fee:** 1.25% on payout/refund.
+- **Fields:** Title, description, deliverables, rules, category, optional deadline, linked project, resource links (HTTPS, up to 10).
+- **Categories:** Development, Design, Content, Marketing, Community, Research, Other.
+- **Editing:** Text/deadline editable while open; **amount locked** once escrowed. Scope edits after submissions flag "edited."
+- **Cancel:** Refund minus fee. **Discussion:** Q&A comments (one reply level).
+
+### Hunters
+
+- **Submit:** One submission per bounty (deliverable link + description). Logged in required.
+- **AquaPay required:** Activated + **Solana wallet** + **EVM wallet** (for payout).
+- **Win:** Poster approves one winner; escrow auto-pays to winner's AquaPay wallet.
+
+### Bounties vs Marketplace
+
+- **Bounties** = fixed reward, competitive submissions, poster picks winner, escrow-backed.
+- **Marketplace** = ongoing services, bookings, reviews, freelancer escrow, on-chain resume.
 
 ## Listing tiers
 
-- **Starter (free base)** — Core map presence, votes, bumps, AquaSwap from bubble. **Skipper Agent** with a one-time **$1** trial credit per workspace/listing (top up via AquaPay after).
-- **Premium (paid listing — ~$99 USDC)** — Adds **1-hour fast-track listing review** (after payment verified), **$5 Skipper Agent starter wallet credit** (tops up from $1 → $5 if trial was already granted on that listing), PR/AMA bundle, ad credit, longer homepage banner, higher pre-bump raid cap, and **custom bot branding when bumped**. Check the List Project modal for current USDC pricing.
+- **Starter (free)** — Map presence, votes, bumps, AquaSwap. Skipper: **$1** trial credit per wallet (top up via AquaPay).
+- **Premium (~$99 USDC)** — **1-hour fast-track review**, **$5 Skipper credit** (tops up $1→$5 if trial used), PR/AMA bundle, ad credit, longer banner, higher pre-bump raid cap, **custom bot branding when bumped**.
 
-**Important:** **Premium** means the **paid listing package**, not vote bump. A Starter project bumped at 100+ votes keeps Starter tier benefits unless they pay to upgrade.
+**Important:** **Premium** = paid listing package, not vote bump. Bumped Starter keeps Starter benefits unless upgraded.
+
+## Freelancer stack
+
+- **Marketplace** — Free unlimited service listings, bookings, reviews.
+- **Freelancer escrow** — Custodial escrow for bookings (`/custodial-pay/:escrowId`).
+- **On-chain resume** — Trust score, badges, work history on Base via EAS. Public at `/resume/:username`.
+- **Skipper (freelancer workspace)** — Proposals, portfolio copy, client messaging.
 
 ## Skipper Agent billing
 
-- Prepaid **USD wallet** per listing or workspace (not affiliate points).
-- **Access:** email-verified Aquads accounts (Starter, Premium, freelancer, or account workspace).
-- **$1 trial credit:** one-time per Skipper wallet (account workspace, Starter listing, or freelancer workspace).
-- **$5 starter credit:** paid **Premium** listing wallets (top-up from $1 → $5 if they already used the trial on that listing).
-- **Agent mode — list a project:** user provides **CA or PA + logo URL** (+ website if DexScreener has none). Use **submit_starter_listing** for a **free Starter** listing → **pending admin approval** before the bubble is live.
-- **Agent mode — make images/videos:** in Agent mode Skipper can create images (**generate_image**) and short videos (**generate_video**, 20–30s) directly when asked, without the user switching modes. Same engines and wallet billing as Create image / Create video.
-- Chat modes: Instant, Thinking, **Agent** (web search, Python code, URL fetch, image + video creation), Create image, Create video.
-- **Agent** — Kimi official tools (web search, code_runner, fetch) plus token usage; ~$0.005 per web search call plus model tokens. Can also trigger image/video generation (billed like Create image/video).
-- **Create image** — OpenAI image generation, separate cost.
-- **Create video** — OpenAI Sora text-to-video, **20–30 seconds** (per-second billing; wallet hold then settle).
-- Top-up via AquaPay (USDC); 5% load fee on top of credit amount.
+- Prepaid **USD wallet** per listing/workspace (not affiliate points).
+- **Access:** email-verified accounts (Starter, Premium, freelancer, account workspace).
+- **$1 trial:** one-time per Skipper wallet. **$5 starter:** Premium listing wallets.
+- **Agent mode — list project:** **CA or PA + logo URL** (+ website if DexScreener has none). **submit_starter_listing** → free Starter → **pending admin approval**.
+- **Agent mode — images/videos:** **generate_image** / **generate_video** (20–30s) in Agent mode without switching modes.
+- Modes: Instant, Thinking, **Agent** (web search, Python, URL fetch, image/video), Create image, Create video.
+- **Agent tools:** ~$0.005/web search + model tokens. Image/video billed separately.
+- Top-up via AquaPay (USDC); 5% load fee.
 
 ## Suggested first-week checklist
 
-- [ ] Profile and links complete on listing
+- [ ] Complete listing profile and links
 - [ ] Share bubble map link; ask community to vote
-- [ ] Set up link-in-bio
-- [ ] Plan 1–2 raids for launch buzz
-- [ ] Create AquaPay link if accepting payments
+- [ ] Set up link-in-bio and AquaPay
+- [ ] Plan 1–2 raids; consider a bounty for a quick win
 - [ ] Draft announcement copy (Skipper can help)
 - [ ] Consider banner or vote boost if budget allows
 
 ## Boundaries
 
 - Do not promise guaranteed returns, price targets, or financial advice.
-- Aquads features and pricing change; if unsure, tell the user to confirm in Dashboard or site docs.
+- Aquads features and pricing change; if unsure, tell the user to confirm in Dashboard or `/docs`.
