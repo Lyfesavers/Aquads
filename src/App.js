@@ -173,6 +173,58 @@ const TOP_PADDING = BANNER_HEIGHT + 5; // Additional padding from top to account
 
 /** Bumped bubbles per page on 1080p desktop panels (user-tested). */
 const BUBBLE_MAP_ITEMS_PER_PAGE_1080P = 90;
+/** 1440p @ 100% scale — user-tested: ~10 rows × 20 cols (65 shown + 135 more room). */
+const BUBBLE_MAP_ITEMS_PER_PAGE_1440P = 200;
+/** Desktop grid geometry — keep in sync with arrangeDesktopGrid(). */
+const DESKTOP_GRID_CELL_WIDTH = 115;
+const DESKTOP_GRID_H_MARGIN = 10;
+const DESKTOP_GRID_V_MARGIN = 30;
+
+function desktopBubbleGridColumns(viewportWidth) {
+  return Math.max(
+    1,
+    Math.floor((viewportWidth - DESKTOP_GRID_H_MARGIN * 2) / DESKTOP_GRID_CELL_WIDTH)
+  );
+}
+
+/** Rows that fit above the hub footer strip without scrolling behind it. */
+function estimateDesktopBubbleRows(viewportHeight) {
+  const topChrome = 280;
+  const footerChrome = 300;
+  const rowHeight = getMaxSize() + DESKTOP_GRID_V_MARGIN;
+  const available = viewportHeight - topChrome - footerChrome - TOP_PADDING;
+  return Math.max(1, Math.floor(available / rowHeight));
+}
+
+function estimateDesktopBubblePageCapacity(viewportWidth, viewportHeight) {
+  return desktopBubbleGridColumns(viewportWidth) * estimateDesktopBubbleRows(viewportHeight);
+}
+
+/**
+ * True when the primary monitor is a 1440p (2560×1440) panel at 100% scale.
+ */
+function is1440pDesktopMonitor100() {
+  const w = Math.max(window.screen.width, window.screen.height);
+  const h = Math.min(window.screen.width, window.screen.height);
+  return w >= 2480 && w <= 2640 && h >= 1380 && h <= 1500;
+}
+
+/**
+ * True when the primary monitor is a 1440p (2560×1440) panel at 125% scale.
+ */
+function is1440pDesktopMonitor125() {
+  const w = Math.max(window.screen.width, window.screen.height);
+  const h = Math.min(window.screen.width, window.screen.height);
+  return w >= 2000 && w <= 2100 && h >= 1120 && h <= 1180;
+}
+
+/**
+ * True when the primary monitor is a 1440p (2560×1440) panel at 100% or 125% scale.
+ * (150% scale is excluded — it overlaps 1080p logical sizes; use 100% on QHD.)
+ */
+function is1440pDesktopMonitor() {
+  return is1440pDesktopMonitor100() || is1440pDesktopMonitor125();
+}
 
 /**
  * True when the primary monitor is a 1080p desktop panel.
@@ -180,10 +232,12 @@ const BUBBLE_MAP_ITEMS_PER_PAGE_1080P = 90;
  * 100% → 1920×1080, 125% → 1536×864, 150% → 1280×720, ~110% → ~1745×982.
  */
 function is1080pDesktopMonitor() {
-  const sw = window.screen.width;
-  const sh = window.screen.height;
-  const w = Math.max(sw, sh);
-  const h = Math.min(sw, sh);
+  if (is1440pDesktopMonitor()) {
+    return false;
+  }
+
+  const w = Math.max(window.screen.width, window.screen.height);
+  const h = Math.min(window.screen.width, window.screen.height);
 
   // 1366×768 laptops have their own tuned page size — do not treat as 1080p.
   if (w >= 1340 && w <= 1390 && h >= 740 && h <= 790) {
@@ -191,7 +245,7 @@ function is1080pDesktopMonitor() {
   }
 
   if (w >= 1880 && w <= 1940 && h >= 1000 && h <= 1120) return true; // 100% scale (1080px tall)
-  if (w >= 1700 && w <= 1780 && h >= 940 && h <= 1020) return true;  // ~110% scale
+  if (w >= 1720 && w <= 1780 && h >= 960 && h <= 1020) return true;  // ~110% scale
   if (w >= 1520 && w <= 1560 && h >= 820 && h <= 900) return true;  // 125% scale
   if (w >= 1260 && w <= 1300 && h >= 680 && h <= 760) return true;  // 150% scale
   return false;
@@ -201,6 +255,13 @@ function is1080pDesktopMonitor() {
 function calculateBubbleMapItemsPerPage(viewportWidth, viewportHeight) {
   if (is1080pDesktopMonitor()) {
     return BUBBLE_MAP_ITEMS_PER_PAGE_1080P;
+  }
+  if (is1440pDesktopMonitor100()) {
+    return BUBBLE_MAP_ITEMS_PER_PAGE_1440P;
+  }
+  if (is1440pDesktopMonitor125()) {
+    const gridCap = estimateDesktopBubblePageCapacity(viewportWidth, viewportHeight);
+    return Math.max(110, Math.min(gridCap, 160));
   }
 
   if (viewportWidth === 2560 && viewportHeight === 1440) {
@@ -837,7 +898,7 @@ function App() {
   
   /**
    * Bubbles per page from monitor + viewport (see calculateBubbleMapItemsPerPage).
-   * 1080p panels use screen dimensions so Windows 125%/150% scaling still gets 90.
+   * 1080p panels → 90; 1440p @ 100% → 200; 1440p @ 125% → ~110–160.
    */
   useEffect(() => {
     setItemsPerPage(
@@ -2779,14 +2840,13 @@ function App() {
     
     // FIXED CELL WIDTH for consistent spacing across ALL screen sizes!
     // 115px matches our grid system = tight consistent packing everywhere
-    const FIXED_CELL_WIDTH = 115;
+    const FIXED_CELL_WIDTH = DESKTOP_GRID_CELL_WIDTH;
     const cellWidth = FIXED_CELL_WIDTH;
 
-    // Calculate columns based on screen width (auto-adjusts to fit)
-    const horizontalMargin = 10;
-    const verticalMargin = 30;
+    const horizontalMargin = DESKTOP_GRID_H_MARGIN;
+    const verticalMargin = DESKTOP_GRID_V_MARGIN;
     const availableWidth = screenWidth - (horizontalMargin * 2);
-    const columns = Math.floor(availableWidth / FIXED_CELL_WIDTH);
+    const columns = Math.floor(availableWidth / DESKTOP_GRID_CELL_WIDTH);
     
     // Store current positions to check if we need to update the model
     const originalPositions = {};
