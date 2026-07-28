@@ -214,32 +214,49 @@ function is1440pDesktopMonitor100() {
 
 /**
  * Viewport fallback when screen.* reports the wrong monitor (common with multi-monitor).
- * 1080p innerHeight tops out ~1080; 1440p maximized is typically ≥1100 tall.
+ * 1440p @ 100% Windows scale only — not 125% (shorter viewport at 100% browser zoom).
  */
 function is1440pTallViewport(viewportWidth, viewportHeight) {
+  if (is1440pDesktopMonitor125()) {
+    return false;
+  }
   return viewportWidth >= 1900 && viewportHeight >= 1100 && viewportHeight <= 1450;
 }
 
 /**
- * Viewport fallback for 1440p @ 125% (logical ~2048×1152 → innerHeight ~900–1100).
- * Width ≥1900 excludes 1080p @ 125% (~1536px wide).
+ * Viewport fallback for 1440p @ 125% at 100% browser zoom (logical ~2048×1152).
+ * Browser zoom changes innerWidth/innerHeight — do not rely on this alone; screen check first.
+ * Width ≥1930 excludes 1080p (~1920); upper band catches 100% zoom before 90% zoom inflates size.
  */
 function is1440p125Viewport(viewportWidth, viewportHeight) {
-  return (
-    viewportWidth >= 1900 &&
-    viewportWidth <= 2150 &&
+  if (is1440pDesktopMonitor125()) {
+    return true;
+  }
+  // Typical 1080p maximized @ 100% browser — do not misclassify when screen.* is wrong
+  if (
+    viewportWidth >= 1850 &&
+    viewportWidth <= 1930 &&
     viewportHeight >= 900 &&
-    viewportHeight <= 1160
+    viewportHeight <= 1045
+  ) {
+    return false;
+  }
+  return (
+    viewportWidth >= 1930 &&
+    viewportWidth <= 2200 &&
+    viewportHeight >= 920 &&
+    viewportHeight <= 1090
   );
 }
 
 /**
- * True when the primary monitor is a 1440p (2560×1440) panel at 125% scale.
+ * True when the primary monitor is a 1440px-tall panel at 125% Windows scale.
+ * 2560×1440 → 2048×1152; ultrawide 3440×1440 → 2752×1152. Browser zoom does not affect this.
  */
 function is1440pDesktopMonitor125() {
   const w = Math.max(window.screen.width, window.screen.height);
   const h = Math.min(window.screen.width, window.screen.height);
-  return w >= 2000 && w <= 2100 && h >= 1120 && h <= 1180;
+  return h >= 1100 && h <= 1200 && w >= 2000;
 }
 
 /**
@@ -277,7 +294,7 @@ function is1080pDesktopMonitor() {
 
 /** How many bubbles fit per pagination page for this viewport / monitor. */
 function calculateBubbleMapItemsPerPage(viewportWidth, viewportHeight) {
-  // 1440p before 1080p — viewport fallbacks for multi-monitor + 125% scale
+  // 125% 1440p — screen check is browser-zoom-proof; viewport is fallback only
   if (is1440pDesktopMonitor125() || is1440p125Viewport(viewportWidth, viewportHeight)) {
     return BUBBLE_MAP_ITEMS_PER_PAGE_1440P_125;
   }
