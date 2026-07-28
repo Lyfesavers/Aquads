@@ -176,41 +176,11 @@ const BUBBLE_MAP_ITEMS_PER_PAGE_1080P = 90;
 /** 1440p @ 100% scale — user-tested: ~10 rows × 20 cols (65 shown + 135 more room). */
 const BUBBLE_MAP_ITEMS_PER_PAGE_1440P = 200;
 /** 1440p @ 125% scale (Windows recommended) — user-tested fit at 100% browser zoom. */
-const BUBBLE_MAP_ITEMS_PER_PAGE_1440P_125 = 112;
+const BUBBLE_MAP_ITEMS_PER_PAGE_1440P_125 = 96;
 /** Desktop grid geometry — keep in sync with arrangeDesktopGrid(). */
 const DESKTOP_GRID_CELL_WIDTH = 115;
 const DESKTOP_GRID_H_MARGIN = 10;
 const DESKTOP_GRID_V_MARGIN = 30;
-
-function desktopBubbleGridColumns(viewportWidth) {
-  return Math.max(
-    1,
-    Math.floor((viewportWidth - DESKTOP_GRID_H_MARGIN * 2) / DESKTOP_GRID_CELL_WIDTH)
-  );
-}
-
-/** Rows that fit above the hub footer strip without scrolling behind it. */
-function estimateDesktopBubbleRows(viewportHeight) {
-  const topChrome = 280;
-  const footerChrome = 300;
-  const rowHeight = getMaxSize() + DESKTOP_GRID_V_MARGIN;
-  const available = viewportHeight - topChrome - footerChrome - TOP_PADDING;
-  return Math.max(1, Math.floor(available / rowHeight));
-}
-
-function estimateDesktopBubblePageCapacity(viewportWidth, viewportHeight) {
-  return desktopBubbleGridColumns(viewportWidth) * estimateDesktopBubbleRows(viewportHeight);
-}
-
-/**
- * True when the primary monitor is a 1440px-tall panel at 100% scale.
- * QHD 2560×1440, ultrawide 3440×1440, etc.
- */
-function is1440pDesktopMonitor100() {
-  const w = Math.max(window.screen.width, window.screen.height);
-  const h = Math.min(window.screen.width, window.screen.height);
-  return h >= 1380 && h <= 1500 && w >= 2480;
-}
 
 function getScreenLogicalDimensions() {
   return {
@@ -219,163 +189,61 @@ function getScreenLogicalDimensions() {
   };
 }
 
-/** Usable monitor height — stable at 100% browser zoom; 1440p @ 125% is taller than 1080p. */
-function getScreenAvailMinDimension() {
-  return Math.min(window.screen.availWidth, window.screen.availHeight);
-}
-
-/** Windows/macOS 125% display scale via media query (more reliable than dpr alone on Edge). */
-function isOs125PercentDisplayScale() {
-  if (typeof window.matchMedia !== 'function') {
-    return false;
-  }
-  return (
-    window.matchMedia('(min-resolution: 1.19dppx) and (max-resolution: 1.31dppx)').matches ||
-    window.matchMedia('(-webkit-min-device-pixel-ratio: 1.19) and (-webkit-max-device-pixel-ratio: 1.31)').matches
-  );
+/**
+ * True when the primary monitor is a 1440px-tall panel at 100% scale.
+ * QHD 2560×1440, ultrawide 3440×1440, etc.
+ */
+function is1440pDesktopMonitor100() {
+  const { w, h } = getScreenLogicalDimensions();
+  return h >= 1380 && h <= 1500 && w >= 2480;
 }
 
 /**
- * Viewport fallback when screen.* reports the wrong monitor (common with multi-monitor).
- * 1440p @ 100% Windows scale only — not 125% (shorter viewport at 100% browser zoom).
+ * True when the primary monitor is a QHD panel at ~125% Windows scale.
+ * Standard: 2048×1152. Fractional scale (e.g. dpr 1.375): ~1862×1048.
+ */
+function is1440pDesktopMonitor125() {
+  const { w, h } = getScreenLogicalDimensions();
+  if (h >= 1100 && h <= 1200 && w >= 2000) {
+    return true;
+  }
+  if (w >= 1840 && w <= 1890 && h >= 1035 && h <= 1065) {
+    return true;
+  }
+  return false;
+}
+
+function is1440pDesktopMonitor() {
+  return is1440pDesktopMonitor100() || is1440pDesktopMonitor125();
+}
+
+/**
+ * Viewport fallback for 1440p @ 100% when screen.* reports the wrong monitor.
  */
 function is1440pTallViewport(viewportWidth, viewportHeight) {
-  if (is1440p125Display(viewportWidth, viewportHeight)) {
+  if (is1440pDesktopMonitor125()) {
     return false;
   }
   return viewportWidth >= 1900 && viewportHeight >= 1100 && viewportHeight <= 1450;
 }
 
 /**
- * 1440p panel at 125% Windows scale (logical ~2048×1152).
- *
- * Why 100% browser zoom failed but 90% worked:
- * - Browser zoom inflates innerWidth — only the >=1940px viewport fallback matched at 90%.
- * - At 100% browser zoom, innerWidth is ~1910–2048 (same CSS width as 1080p).
- * - Edge often reports devicePixelRatio=1 even at 125% Windows scale.
- * - screen.width can misreport 1920×1080 on a 1440p panel, but screen.availHeight stays
- *   ~1100+ on QHD @ 125% vs ~1040 on true 1080p — use that before viewport width bands.
- */
-function is1440p125Display(viewportWidth, viewportHeight) {
-  const { w: logicalW, h: logicalH } = getScreenLogicalDimensions();
-  const dpr = window.devicePixelRatio || 1;
-  const physW = logicalW * dpr;
-  const physH = logicalH * dpr;
-  const availMin = getScreenAvailMinDimension();
-
-  // Logical screen ~2048×1152 (125% on 2560×1440) — browser zoom does not change this
-  if (logicalH >= 1100 && logicalH <= 1200 && logicalW >= 2000) {
-    return true;
-  }
-
-  // Physical ~2560×1440 when logical screen or dpr is wrong
-  if (physH >= 1300 && physW >= 2400) {
-    return true;
-  }
-
-  // QHD @ 125% has more usable vertical space than 1080p even when screen.width lies
-  if (
-    availMin >= 1085 &&
-    viewportWidth >= 1440 &&
-    viewportHeight >= 900 &&
-    viewportHeight <= 1160
-  ) {
-    return true;
-  }
-
-  // OS 125% scale + desktop viewport (dpr can read 1.0 on Edge at 100% browser zoom)
-  if (
-    isOs125PercentDisplayScale() &&
-    viewportWidth >= 1820 &&
-    viewportWidth <= 2150 &&
-    viewportHeight >= 920 &&
-    viewportHeight <= 1160
-  ) {
-    return true;
-  }
-
-  // Windows 125% DPI when dpr is reported correctly
-  if (
-    dpr >= 1.15 &&
-    dpr <= 1.35 &&
-    viewportWidth >= 1820 &&
-    viewportHeight >= 920 &&
-    viewportHeight <= 1160
-  ) {
-    return true;
-  }
-
-  // Wider than 1080p can ever be at 100% browser (~1925px max on 1080p panels)
-  if (viewportWidth >= 1936 && viewportHeight >= 920 && viewportHeight <= 1160) {
-    return true;
-  }
-
-  // 100% browser on QHD @ 125% — width overlaps 1080p (~1910–2048), height is the tell
-  if (
-    viewportWidth >= 1850 &&
-    viewportWidth <= 2060 &&
-    viewportHeight >= 950 &&
-    viewportHeight <= 1160 &&
-    availMin >= 1060
-  ) {
-    return true;
-  }
-
-  // Browser zoomed out (~90%) — layout viewport expands (kept for zoom changes after load)
-  if (viewportWidth >= 1940 && viewportHeight >= 920 && viewportHeight <= 1160) {
-    return true;
-  }
-
-  return false;
-}
-
-/** @deprecated alias — use is1440p125Display */
-function is1440p125Viewport(viewportWidth, viewportHeight) {
-  return is1440p125Display(viewportWidth, viewportHeight);
-}
-
-/**
- * True when the primary monitor is a 1440px-tall panel at 125% Windows scale.
- * 2560×1440 → 2048×1152; ultrawide 3440×1440 → 2752×1152. Browser zoom does not affect this.
- */
-function is1440pDesktopMonitor125() {
-  const w = Math.max(window.screen.width, window.screen.height);
-  const h = Math.min(window.screen.width, window.screen.height);
-  return h >= 1100 && h <= 1200 && w >= 2000;
-}
-
-/**
- * True when the primary monitor is a 1440p (2560×1440) panel at 100% or 125% scale.
- * (150% scale is excluded — it overlaps 1080p logical sizes; use 100% on QHD.)
- */
-function is1440pDesktopMonitor() {
-  return is1440pDesktopMonitor100() || is1440pDesktopMonitor125();
-}
-
-/**
  * True when the primary monitor is a 1080p desktop panel.
- * Uses screen.* (not innerWidth) so Windows/macOS display scaling still matches:
- * 100% → 1920×1080, 125% → 1536×864, 150% → 1280×720, ~110% → ~1745×982.
+ * Uses screen.* (not innerWidth) so Windows/macOS display scaling still matches.
  */
 function is1080pDesktopMonitor() {
   if (is1440pDesktopMonitor()) {
     return false;
   }
 
-  // QHD @ 125% can misreport as 1920×1080 — usable height is still ~1100+
-  if (getScreenAvailMinDimension() >= 1085) {
-    return false;
-  }
-
-  const w = Math.max(window.screen.width, window.screen.height);
-  const h = Math.min(window.screen.width, window.screen.height);
+  const { w, h } = getScreenLogicalDimensions();
 
   // 1366×768 laptops have their own tuned page size — do not treat as 1080p.
   if (w >= 1340 && w <= 1390 && h >= 740 && h <= 790) {
     return false;
   }
 
-  if (w >= 1880 && w <= 1940 && h >= 1000 && h <= 1120) return true; // 100% scale (1080px tall)
+  if (w >= 1880 && w <= 1940 && h >= 1000 && h <= 1120) return true; // 100% scale
   if (w >= 1720 && w <= 1780 && h >= 960 && h <= 1020) return true;  // ~110% scale
   if (w >= 1520 && w <= 1560 && h >= 820 && h <= 900) return true;  // 125% scale
   if (w >= 1260 && w <= 1300 && h >= 680 && h <= 760) return true;  // 150% scale
@@ -384,14 +252,12 @@ function is1080pDesktopMonitor() {
 
 /** How many bubbles fit per pagination page for this viewport / monitor. */
 function calculateBubbleMapItemsPerPage(viewportWidth, viewportHeight) {
-  // 125% 1440p — screen check is browser-zoom-proof; viewport is fallback only
-  if (is1440p125Display(viewportWidth, viewportHeight)) {
+  if (is1440pDesktopMonitor125()) {
     return BUBBLE_MAP_ITEMS_PER_PAGE_1440P_125;
   }
   if (is1440pDesktopMonitor100() || is1440pTallViewport(viewportWidth, viewportHeight)) {
     return BUBBLE_MAP_ITEMS_PER_PAGE_1440P;
   }
-
   if (is1080pDesktopMonitor()) {
     return BUBBLE_MAP_ITEMS_PER_PAGE_1080P;
   }
@@ -1030,7 +896,7 @@ function App() {
   
   /**
    * Bubbles per page from monitor + viewport (see calculateBubbleMapItemsPerPage).
-   * 1080p panels → 90; 1440p @ 100% → 200; 1440p @ 125% → ~110–160.
+   * 1080p → 90; 1440p @ 100% → 200; 1440p @ 125% → 96.
    */
   useEffect(() => {
     const syncItemsPerPage = () => {
@@ -1042,15 +908,11 @@ function App() {
     syncItemsPerPage();
 
     window.addEventListener('resize', syncItemsPerPage);
-    const visualViewport = window.visualViewport;
-    visualViewport?.addEventListener('resize', syncItemsPerPage);
-    // Browser zoom (Ctrl +/-) changes layout viewport; not all browsers fire window resize
-    visualViewport?.addEventListener('scroll', syncItemsPerPage);
+    window.visualViewport?.addEventListener('resize', syncItemsPerPage);
 
     return () => {
       window.removeEventListener('resize', syncItemsPerPage);
-      visualViewport?.removeEventListener('resize', syncItemsPerPage);
-      visualViewport?.removeEventListener('scroll', syncItemsPerPage);
+      window.visualViewport?.removeEventListener('resize', syncItemsPerPage);
     };
   }, [windowSize]);
 
@@ -1461,10 +1323,6 @@ function App() {
         width: window.innerWidth,
         height: window.innerHeight
       });
-
-      setItemsPerPage(
-        calculateBubbleMapItemsPerPage(window.innerWidth, window.innerHeight)
-      );
 
       // Update bubble sizes when window size changes
       const newMaxSize = getMaxSize();
