@@ -175,8 +175,8 @@ const TOP_PADDING = BANNER_HEIGHT + 5; // Additional padding from top to account
 const BUBBLE_MAP_ITEMS_PER_PAGE_1080P = 90;
 /** 1440p @ 100% scale — user-tested: ~10 rows × 20 cols (65 shown + 135 more room). */
 const BUBBLE_MAP_ITEMS_PER_PAGE_1440P = 200;
-/** 1440p @ 125% scale (Windows recommended) — user-tested: 65 shown + 105 more room. */
-const BUBBLE_MAP_ITEMS_PER_PAGE_1440P_125 = 170;
+/** 1440p @ 125% scale (Windows recommended) — user-tested fit at 100% browser zoom. */
+const BUBBLE_MAP_ITEMS_PER_PAGE_1440P_125 = 112;
 /** Desktop grid geometry — keep in sync with arrangeDesktopGrid(). */
 const DESKTOP_GRID_CELL_WIDTH = 115;
 const DESKTOP_GRID_H_MARGIN = 10;
@@ -224,28 +224,23 @@ function is1440pTallViewport(viewportWidth, viewportHeight) {
 }
 
 /**
- * Viewport fallback for 1440p @ 125% at 100% browser zoom (logical ~2048×1152).
- * Browser zoom changes innerWidth/innerHeight — do not rely on this alone; screen check first.
- * Width ≥1930 excludes 1080p (~1920); upper band catches 100% zoom before 90% zoom inflates size.
+ * Viewport fallback for 1440p @ 125% at 100% browser zoom (~1860–2060 × ~960–1080).
+ * At 100% browser zoom innerWidth is ~1860–2048 — NOT ~1930+ (that only happens at 90% zoom).
  */
 function is1440p125Viewport(viewportWidth, viewportHeight) {
-  if (is1440pDesktopMonitor125()) {
-    return true;
-  }
-  // Typical 1080p maximized @ 100% browser — do not misclassify when screen.* is wrong
+  // 1080p maximized @ 100% browser (~1900–1935 wide) — narrow band only
   if (
-    viewportWidth >= 1850 &&
-    viewportWidth <= 1930 &&
+    viewportWidth >= 1895 &&
+    viewportWidth <= 1935 &&
     viewportHeight >= 900 &&
     viewportHeight <= 1045
   ) {
     return false;
   }
   return (
-    viewportWidth >= 1930 &&
-    viewportWidth <= 2200 &&
-    viewportHeight >= 920 &&
-    viewportHeight <= 1090
+    viewportWidth >= 1860 &&
+    viewportHeight >= 930 &&
+    viewportHeight <= 1160
   );
 }
 
