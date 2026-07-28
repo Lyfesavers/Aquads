@@ -201,12 +201,21 @@ function estimateDesktopBubblePageCapacity(viewportWidth, viewportHeight) {
 }
 
 /**
- * True when the primary monitor is a 1440p (2560×1440) panel at 100% scale.
+ * True when the primary monitor is a 1440px-tall panel at 100% scale.
+ * QHD 2560×1440, ultrawide 3440×1440, etc.
  */
 function is1440pDesktopMonitor100() {
   const w = Math.max(window.screen.width, window.screen.height);
   const h = Math.min(window.screen.width, window.screen.height);
-  return w >= 2480 && w <= 2640 && h >= 1380 && h <= 1500;
+  return h >= 1380 && h <= 1500 && w >= 2480;
+}
+
+/**
+ * Viewport fallback when screen.* reports the wrong monitor (common with multi-monitor).
+ * 1080p innerHeight tops out ~1080; 1440p maximized is typically ≥1100 tall.
+ */
+function is1440pTallViewport(viewportWidth, viewportHeight) {
+  return viewportWidth >= 1900 && viewportHeight >= 1100 && viewportHeight <= 1450;
 }
 
 /**
@@ -253,19 +262,21 @@ function is1080pDesktopMonitor() {
 
 /** How many bubbles fit per pagination page for this viewport / monitor. */
 function calculateBubbleMapItemsPerPage(viewportWidth, viewportHeight) {
-  if (is1080pDesktopMonitor()) {
-    return BUBBLE_MAP_ITEMS_PER_PAGE_1080P;
-  }
-  if (is1440pDesktopMonitor100()) {
-    return BUBBLE_MAP_ITEMS_PER_PAGE_1440P;
-  }
+  // 1440p before 1080p — viewport height catches multi-monitor when screen.* is wrong
   if (is1440pDesktopMonitor125()) {
     const gridCap = estimateDesktopBubblePageCapacity(viewportWidth, viewportHeight);
     return Math.max(110, Math.min(gridCap, 160));
   }
+  if (is1440pDesktopMonitor100() || is1440pTallViewport(viewportWidth, viewportHeight)) {
+    return BUBBLE_MAP_ITEMS_PER_PAGE_1440P;
+  }
+
+  if (is1080pDesktopMonitor()) {
+    return BUBBLE_MAP_ITEMS_PER_PAGE_1080P;
+  }
 
   if (viewportWidth === 2560 && viewportHeight === 1440) {
-    return 70;
+    return BUBBLE_MAP_ITEMS_PER_PAGE_1440P;
   }
   if (viewportWidth === 1366 && viewportHeight === 768) {
     return 58;
@@ -280,7 +291,7 @@ function calculateBubbleMapItemsPerPage(viewportWidth, viewportHeight) {
     return 35;
   }
   if (viewportWidth >= 2400) {
-    return 70;
+    return BUBBLE_MAP_ITEMS_PER_PAGE_1440P;
   }
   if (viewportWidth >= 1440) {
     return 65;
