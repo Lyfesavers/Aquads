@@ -175,6 +175,8 @@ const TOP_PADDING = BANNER_HEIGHT + 5; // Additional padding from top to account
 const BUBBLE_MAP_ITEMS_PER_PAGE_1080P = 90;
 /** 1440p @ 100% scale — user-tested: ~10 rows × 20 cols (65 shown + 135 more room). */
 const BUBBLE_MAP_ITEMS_PER_PAGE_1440P = 200;
+/** 1440p @ 125% scale (Windows recommended) — user-tested: 65 shown + 105 more room. */
+const BUBBLE_MAP_ITEMS_PER_PAGE_1440P_125 = 170;
 /** Desktop grid geometry — keep in sync with arrangeDesktopGrid(). */
 const DESKTOP_GRID_CELL_WIDTH = 115;
 const DESKTOP_GRID_H_MARGIN = 10;
@@ -216,6 +218,19 @@ function is1440pDesktopMonitor100() {
  */
 function is1440pTallViewport(viewportWidth, viewportHeight) {
   return viewportWidth >= 1900 && viewportHeight >= 1100 && viewportHeight <= 1450;
+}
+
+/**
+ * Viewport fallback for 1440p @ 125% (logical ~2048×1152 → innerHeight ~900–1100).
+ * Width ≥1900 excludes 1080p @ 125% (~1536px wide).
+ */
+function is1440p125Viewport(viewportWidth, viewportHeight) {
+  return (
+    viewportWidth >= 1900 &&
+    viewportWidth <= 2150 &&
+    viewportHeight >= 900 &&
+    viewportHeight <= 1160
+  );
 }
 
 /**
@@ -262,10 +277,9 @@ function is1080pDesktopMonitor() {
 
 /** How many bubbles fit per pagination page for this viewport / monitor. */
 function calculateBubbleMapItemsPerPage(viewportWidth, viewportHeight) {
-  // 1440p before 1080p — viewport height catches multi-monitor when screen.* is wrong
-  if (is1440pDesktopMonitor125()) {
-    const gridCap = estimateDesktopBubblePageCapacity(viewportWidth, viewportHeight);
-    return Math.max(110, Math.min(gridCap, 160));
+  // 1440p before 1080p — viewport fallbacks for multi-monitor + 125% scale
+  if (is1440pDesktopMonitor125() || is1440p125Viewport(viewportWidth, viewportHeight)) {
+    return BUBBLE_MAP_ITEMS_PER_PAGE_1440P_125;
   }
   if (is1440pDesktopMonitor100() || is1440pTallViewport(viewportWidth, viewportHeight)) {
     return BUBBLE_MAP_ITEMS_PER_PAGE_1440P;
