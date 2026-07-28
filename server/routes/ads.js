@@ -20,7 +20,8 @@ const {
 } = require('../utils/brandingMedia');
 const {
   toPublicBubbleListAd,
-  PUBLIC_BUBBLE_LIST_SELECT
+  PUBLIC_BUBBLE_LIST_SELECT,
+  DEX_FEED_BUBBLE_MONGO_SELECT
 } = require('../utils/publicBubbleListAd');
 const { isValidProjectUrl, normalizeProjectUrl } = require('../utils/listingValidation');
 const {
@@ -180,7 +181,11 @@ const updateAdSize = async (ad) => {
     const { changed, $set } = getBumpSyncUpdate(ad, ad.bullishVotes, sizeOpts);
 
     if (changed) {
-      const result = await Ad.findByIdAndUpdate(ad._id, { $set }, { new: true });
+      const result = await Ad.findByIdAndUpdate(
+        ad._id,
+        { $set },
+        { new: true, select: '_id id size bullishVotes bearishVotes isBumped status createdAt' }
+      );
       if (result) {
         invalidateAdsCache();
         socket.emitAdUpdate('update', result);
@@ -190,9 +195,11 @@ const updateAdSize = async (ad) => {
 
     if (isVoteBumped(ad.bullishVotes)) {
       if (ad.size !== MAX_SIZE) {
-        const result = await Ad.findByIdAndUpdate(ad._id, {
-          $set: { size: MAX_SIZE }
-        }, { new: true });
+        const result = await Ad.findByIdAndUpdate(
+          ad._id,
+          { $set: { size: MAX_SIZE } },
+          { new: true, select: '_id id size bullishVotes bearishVotes isBumped status createdAt' }
+        );
         if (result) {
           socket.emitAdUpdate('update', result);
         }
@@ -209,9 +216,11 @@ const updateAdSize = async (ad) => {
     newSize = Math.max(MIN_SIZE, Math.round(newSize * 10) / 10);
 
     if (newSize !== ad.size) {
-      const result = await Ad.findByIdAndUpdate(ad._id, {
-        $set: { size: newSize }
-      }, { new: true });
+      const result = await Ad.findByIdAndUpdate(
+        ad._id,
+        { $set: { size: newSize } },
+        { new: true, select: '_id id size bullishVotes bearishVotes isBumped status createdAt' }
+      );
       if (result) {
         socket.emitAdUpdate('update', result);
       }
@@ -221,11 +230,13 @@ const updateAdSize = async (ad) => {
   }
 };
 
-// Periodic check
+// Periodic bubble shrink — only fetch fields needed for size math (NOT full docs).
 setInterval(async () => {
   try {
-    const ads = await Ad.find({});
-    
+    const ads = await Ad.find({ status: { $in: ['active', 'approved'] } })
+      .select('_id id size bullishVotes createdAt status')
+      .lean();
+
     for (const ad of ads) {
       await updateAdSize(ad);
     }
@@ -247,10 +258,28 @@ const invalidateAdsCache = () => {
 };
 
 const fetchAndCacheAds = async () => {
-  // Public bubble list: no voterData/branding blobs; dex-feed summaries built in toPublicBubbleListAd.
-  const ads = await Ad.find({ status: { $in: ['active', 'approved'] } })
-    .select(PUBLIC_BUBBLE_LIST_SELECT)
-    .lean();
+  const activeFilter = { status: { $in: ['active', 'approved'] } };
+
+  const [dexAds, otherAds] = await Promise.all([
+    Ad.find({
+      ...activeFilter,
+      listingSource: LISTING_SOURCE_DEX_FEED,
+      claimStatus: CLAIM_STATUS_UNCLAIMED
+    })
+      .select(DEX_FEED_BUBBLE_MONGO_SELECT)
+      .lean(),
+    Ad.find({
+      ...activeFilter,
+      $or: [
+        { listingSource: { $ne: LISTING_SOURCE_DEX_FEED } },
+        { claimStatus: { $ne: CLAIM_STATUS_UNCLAIMED } }
+      ]
+    })
+      .select(PUBLIC_BUBBLE_LIST_SELECT)
+      .lean()
+  ]);
+
+  const ads = [...otherAds, ...dexAds];
   const currentTime = Date.now();
   const processedAds = ads.map((ad) => {
     const voteBumped = isVoteBumped(ad.bullishVotes);
