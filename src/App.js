@@ -217,31 +217,45 @@ function is1440pDesktopMonitor100() {
  * 1440p @ 100% Windows scale only — not 125% (shorter viewport at 100% browser zoom).
  */
 function is1440pTallViewport(viewportWidth, viewportHeight) {
-  if (is1440pDesktopMonitor125()) {
+  if (is1440p125Display(viewportWidth, viewportHeight)) {
     return false;
   }
   return viewportWidth >= 1900 && viewportHeight >= 1100 && viewportHeight <= 1450;
 }
 
 /**
- * Viewport fallback for 1440p @ 125% at 100% browser zoom (~1860–2060 × ~960–1080).
- * At 100% browser zoom innerWidth is ~1860–2048 — NOT ~1930+ (that only happens at 90% zoom).
+ * 1440p panel at 125% Windows scale (logical ~2048×1152).
+ * At 100% browser zoom, innerWidth (~1920) matches 1080p — use devicePixelRatio (~1.25) to tell them apart.
  */
-function is1440p125Viewport(viewportWidth, viewportHeight) {
-  // 1080p maximized @ 100% browser (~1900–1935 wide) — narrow band only
-  if (
-    viewportWidth >= 1895 &&
-    viewportWidth <= 1935 &&
-    viewportHeight >= 900 &&
-    viewportHeight <= 1045
-  ) {
-    return false;
+function is1440p125Display(viewportWidth, viewportHeight) {
+  const logicalW = Math.max(window.screen.width, window.screen.height);
+  const logicalH = Math.min(window.screen.width, window.screen.height);
+  const dpr = window.devicePixelRatio || 1;
+
+  if (logicalH >= 1100 && logicalH <= 1200 && logicalW >= 2000) {
+    return true;
   }
-  return (
-    viewportWidth >= 1860 &&
-    viewportHeight >= 930 &&
+
+  if (
+    dpr >= 1.2 &&
+    dpr <= 1.35 &&
+    viewportWidth >= 1820 &&
+    viewportHeight >= 935 &&
     viewportHeight <= 1160
-  );
+  ) {
+    return true;
+  }
+
+  if (viewportWidth >= 1940 && viewportHeight >= 920 && viewportHeight <= 1160) {
+    return true;
+  }
+
+  return false;
+}
+
+/** @deprecated alias — use is1440p125Display */
+function is1440p125Viewport(viewportWidth, viewportHeight) {
+  return is1440p125Display(viewportWidth, viewportHeight);
 }
 
 /**
@@ -290,7 +304,7 @@ function is1080pDesktopMonitor() {
 /** How many bubbles fit per pagination page for this viewport / monitor. */
 function calculateBubbleMapItemsPerPage(viewportWidth, viewportHeight) {
   // 125% 1440p — screen check is browser-zoom-proof; viewport is fallback only
-  if (is1440pDesktopMonitor125() || is1440p125Viewport(viewportWidth, viewportHeight)) {
+  if (is1440p125Display(viewportWidth, viewportHeight)) {
     return BUBBLE_MAP_ITEMS_PER_PAGE_1440P_125;
   }
   if (is1440pDesktopMonitor100() || is1440pTallViewport(viewportWidth, viewportHeight)) {
