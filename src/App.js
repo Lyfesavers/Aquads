@@ -171,8 +171,10 @@ const MOBILE_BUBBLEMAP_FIVE_COL_MIN_VIEWPORT = 360;
 const BANNER_HEIGHT = 0; // Height of the banner area including nav and token banner
 const TOP_PADDING = BANNER_HEIGHT + 5; // Additional padding from top to account for banner
 
-/** Bumped bubbles per page on 1080p desktop panels (user-tested). */
+/** Bumped bubbles per page on 1080p desktop panels @ 100–125% scale (user-tested). */
 const BUBBLE_MAP_ITEMS_PER_PAGE_1080P = 90;
+/** 1080p panel @ 150% Windows scale — logical ~1280×720; smaller viewport than 90-cap. */
+const BUBBLE_MAP_ITEMS_PER_PAGE_1080P_150 = 48;
 /** 1440p @ 100% scale — user-tested: ~10 rows × 20 cols (65 shown + 135 more room). */
 const BUBBLE_MAP_ITEMS_PER_PAGE_1440P = 200;
 /** 1440p @ 125% scale (Windows recommended) — user-tested fit at 100% browser zoom. */
@@ -228,11 +230,22 @@ function is1440pTallViewport(viewportWidth, viewportHeight) {
 }
 
 /**
- * True when the primary monitor is a 1080p desktop panel.
+ * True when the primary monitor is a 1080p panel at 150% Windows scale (~1280×720).
+ */
+function is1080pDesktopMonitor150() {
+  if (is1440pDesktopMonitor()) {
+    return false;
+  }
+  const { w, h } = getScreenLogicalDimensions();
+  return w >= 1260 && w <= 1300 && h >= 680 && h <= 760;
+}
+
+/**
+ * True when the primary monitor is a 1080p desktop panel @ 100–125% scale.
  * Uses screen.* (not innerWidth) so Windows/macOS display scaling still matches.
  */
 function is1080pDesktopMonitor() {
-  if (is1440pDesktopMonitor()) {
+  if (is1440pDesktopMonitor() || is1080pDesktopMonitor150()) {
     return false;
   }
 
@@ -246,7 +259,6 @@ function is1080pDesktopMonitor() {
   if (w >= 1880 && w <= 1940 && h >= 1000 && h <= 1120) return true; // 100% scale
   if (w >= 1720 && w <= 1780 && h >= 960 && h <= 1020) return true;  // ~110% scale
   if (w >= 1520 && w <= 1560 && h >= 820 && h <= 900) return true;  // 125% scale
-  if (w >= 1260 && w <= 1300 && h >= 680 && h <= 760) return true;  // 150% scale
   return false;
 }
 
@@ -257,6 +269,9 @@ function calculateBubbleMapItemsPerPage(viewportWidth, viewportHeight) {
   }
   if (is1440pDesktopMonitor100() || is1440pTallViewport(viewportWidth, viewportHeight)) {
     return BUBBLE_MAP_ITEMS_PER_PAGE_1440P;
+  }
+  if (is1080pDesktopMonitor150()) {
+    return BUBBLE_MAP_ITEMS_PER_PAGE_1080P_150;
   }
   if (is1080pDesktopMonitor()) {
     return BUBBLE_MAP_ITEMS_PER_PAGE_1080P;
@@ -896,7 +911,7 @@ function App() {
   
   /**
    * Bubbles per page from monitor + viewport (see calculateBubbleMapItemsPerPage).
-   * 1080p → 90; 1440p @ 100% → 200; 1440p @ 125% → 96.
+   * 1080p @ 100–125% → 90; 1080p @ 150% → 48; 1440p @ 100% → 200; 1440p @ 125% → 96.
    */
   useEffect(() => {
     const syncItemsPerPage = () => {
