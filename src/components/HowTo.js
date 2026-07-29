@@ -39,6 +39,7 @@ import {
   tutorialPlaylistUrl,
   watchUrl,
   thumbUrl,
+  TUTORIAL_VIDEOS,
 } from '../data/tutorialVideos';
 
 const MARKET_NEWS_PAGE_SIZE = 20;
@@ -233,9 +234,9 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
         });
       } catch (e) {
         if (!cancelled) {
-          setTutorialVideosError(e.message || 'Failed to load tutorial videos');
-          setTutorialVideos([]);
-          setSelectedTutorialId(null);
+          setTutorialVideosError(null);
+          setTutorialVideos(TUTORIAL_VIDEOS);
+          setSelectedTutorialId(TUTORIAL_VIDEOS[0]?.id ?? null);
         }
       } finally {
         if (!cancelled) setTutorialVideosLoading(false);
