@@ -164,10 +164,15 @@ const MOBILE_BUBBLEMAP_GRID_MARGIN_H = 3;
 const MOBILE_BUBBLEMAP_INTER_COLUMN_GAP_PX = 2;
 /** Min column budget (legacy); column math uses packed width + gap above. */
 const MOBILE_BUBBLEMAP_VOTE_STRIP_MIN_WIDTH = 84;
-/** Gap between successive bubble rows — disc bottom to next row disc top after per-row tallest bubble (votes/BUY untouched in CSS). */
-const MOBILE_BUBBLEMAP_ROW_CLEARANCE_BELOW_TOP = 14;
-/** Minimum viewport width (px) to switch pure-unbumped rows to 5-across on mobile — narrower phones (iPhone SE 320px) stay 4-across to preserve current disc sizes without shrinkage. Bumped rows always stay 4-across regardless of viewport (~93px discs cannot pack 5 per row on any phone). */
-const MOBILE_BUBBLEMAP_FIVE_COL_MIN_VIEWPORT = 360;
+/** Breathing room between a row's rendered bottom and the next row's vote strip. */
+const MOBILE_BUBBLEMAP_ROW_CLEARANCE_PX = 8;
+/** Horizontal gap bounds between rendered lanes. A lane is as wide as the vote strip, which is wider than the disc it sits above. */
+const MOBILE_BUBBLEMAP_MIN_LANE_GAP_PX = 6;
+const MOBILE_BUBBLEMAP_MAX_LANE_GAP_PX = 14;
+/** Upper bound on packed columns; phones resolve to 4–5 from the measured lane width. */
+const MOBILE_BUBBLEMAP_MAX_COLUMNS = 6;
+/** Slack under the last row so the map container never clips the final discs. */
+const MOBILE_BUBBLEMAP_BOTTOM_PADDING_PX = 24;
 const BANNER_HEIGHT = 0; // Height of the banner area including nav and token banner
 const TOP_PADDING = BANNER_HEIGHT + 5; // Additional padding from top to account for banner
 
@@ -390,6 +395,34 @@ function getMobileBubbleMapDisplaySize(ad, viewportWidth) {
       Math.floor(fillTarget * 0.9)
     )
   );
+}
+
+/**
+ * Rendered footprint of one mobile bubble slot, measured from the DOM.
+ *
+ * `.bubble` is CSS-scaled (index.css, ≤480px) so the disc paints far smaller than its
+ * container box, while the vote strip is wider than the disc and overhangs it upward.
+ * Packing against the container box therefore leaves large gaps on every side; packing
+ * against these measured rects removes them without resizing anything.
+ */
+function measureMobileBubbleFootprint(containerEl) {
+  if (!containerEl) return null;
+  const disc = containerEl.querySelector('.bubble');
+  if (!disc) return null;
+
+  const containerRect = containerEl.getBoundingClientRect();
+  const discRect = disc.getBoundingClientRect();
+  if (!containerRect.width || !discRect.width) return null;
+
+  const strip = containerEl.querySelector('.vote-popup');
+  const stripRect = strip ? strip.getBoundingClientRect() : discRect;
+
+  return {
+    lane: Math.max(discRect.width, stripRect.width),
+    minGap: MOBILE_BUBBLEMAP_MIN_LANE_GAP_PX,
+    topOverhang: Math.max(0, containerRect.top - Math.min(discRect.top, stripRect.top)),
+    bottomExtent: Math.max(discRect.bottom, stripRect.bottom) - containerRect.top,
+  };
 }
 const MERCHANT_WALLET = {
     SOL: "J8ewxZwntodH8sT8LAXN5j6sAsDhtCh8sQA6GwRuLTSv",
@@ -2541,18 +2574,30 @@ function App() {
       return !!(linked && linked.isBumped);
     });
 
-    // Split lane references: bumped rows use the tallest bumped disc as lane width (~93px),
-    // pure-unbumped rows use the tallest unbumped disc as lane width (~65px). This lets
-    // unbumped rows pack 5-across at their smaller natural stride without ever affecting
-    // bumped disc size or their 4-across layout.
+    // Split lane references so bumped and unbumped rows keep their own stride. These box
+    // dimensions are only the fallback for the measured footprints resolved below.
     const bumpedSizes = sizesPx.filter((_, i) => isBumpedFlags[i]);
     const unbumpedSizes = sizesPx.filter((_, i) => !isBumpedFlags[i]);
     const maxBumpedDim = bumpedSizes.length ? Math.max(MIN_SIZE, ...bumpedSizes) : MIN_SIZE;
     const maxUnbumpedDim = unbumpedSizes.length ? Math.max(MIN_SIZE, ...unbumpedSizes) : MIN_SIZE;
-    const INTER_GAP = MOBILE_BUBBLEMAP_INTER_COLUMN_GAP_PX;
-    const rowGap = MOBILE_BUBBLEMAP_ROW_CLEARANCE_BELOW_TOP;
     const usableWidth = Math.max(0, screenWidth - horizontalMargin * 2);
-    const canFiveCol = screenWidth >= MOBILE_BUBBLEMAP_FIVE_COL_MIN_VIEWPORT;
+
+    // Pack against what the user actually sees. Falling back to the container box reproduces
+    // the pre-measurement spacing if the probe fails (e.g. bubbles not painted yet), so it
+    // keeps the old narrow gutter — a 6px minimum would cost that path a whole column.
+    const boxFootprint = (containerDim) => ({
+      lane: containerDim,
+      minGap: MOBILE_BUBBLEMAP_INTER_COLUMN_GAP_PX,
+      topOverhang: 0,
+      bottomExtent: containerDim,
+    });
+    const bumpedFootprint =
+      measureMobileBubbleFootprint(sortedBubbles[isBumpedFlags.indexOf(true)]) ||
+      boxFootprint(maxBumpedDim);
+    const unbumpedFootprint =
+      measureMobileBubbleFootprint(sortedBubbles[isBumpedFlags.indexOf(false)]) ||
+      boxFootprint(maxUnbumpedDim);
+    const footprintFor = (isBumped) => (isBumped ? bumpedFootprint : unbumpedFootprint);
 
     let cumulativeY = TOP_PADDING;
     let idx = 0;
@@ -2561,46 +2606,67 @@ function App() {
       // Row mode is determined by the first bubble: bumped-mode rows may fill trailing
       // slots with unbumped bubbles when the bumped run ends mid-row (matches pre-existing behavior).
       const rowIsBumped = isBumpedFlags[idx];
-      const rowColumns = (!rowIsBumped && canFiveCol) ? 5 : 4;
-      const rowLaneDim = rowIsBumped ? maxBumpedDim : maxUnbumpedDim;
-      const rowStride = rowLaneDim + INTER_GAP;
+      const footprint = footprintFor(rowIsBumped);
+      const laneDim = Math.max(1, footprint.lane);
+      const minGap = footprint.minGap;
+
+      const rowColumns = Math.max(
+        1,
+        Math.min(
+          MOBILE_BUBBLEMAP_MAX_COLUMNS,
+          Math.floor((usableWidth + minGap) / (laneDim + minGap))
+        )
+      );
+      const laneGap =
+        rowColumns > 1
+          ? Math.min(
+              MOBILE_BUBBLEMAP_MAX_LANE_GAP_PX,
+              Math.max(minGap, (usableWidth - rowColumns * laneDim) / (rowColumns - 1))
+            )
+          : 0;
+      const rowStride = laneDim + laneGap;
 
       const remaining = sortedBubbles.length - idx;
       const rowBubbleCount = Math.min(rowColumns, remaining);
 
-      let rowMaxDim = MIN_SIZE;
-      for (let j = 0; j < rowBubbleCount; j += 1) {
-        rowMaxDim = Math.max(rowMaxDim, sizesPx[idx + j] ?? rowLaneDim);
-      }
-
       const rowPackedWidth =
-        rowBubbleCount * rowLaneDim +
-        Math.max(0, rowBubbleCount - 1) * INTER_GAP;
+        rowBubbleCount * laneDim + Math.max(0, rowBubbleCount - 1) * laneGap;
       const rowClusterStart =
         horizontalMargin + Math.max(0, (usableWidth - rowPackedWidth) / 2);
 
       for (let col = 0; col < rowBubbleCount; col += 1) {
         const index = idx + col;
         const bubble = sortedBubbles[index];
-        const bubbleW = sizesPx[index] ?? rowLaneDim;
+        const bubbleW = sizesPx[index] ?? laneDim;
 
-        let x =
-          rowClusterStart +
-          col * rowStride +
-          (rowLaneDim - bubbleW) / 2;
-
-        let y = cumulativeY;
-
-        const maxX = screenWidth - horizontalMargin - bubbleW;
-        const minY = TOP_PADDING - 2;
-        x = Math.max(horizontalMargin, Math.min(x, maxX));
-        y = Math.max(minY, y);
+        // Clamp the lane (what is painted), then centre the oversized container box inside
+        // it — clamping the box itself would push the rendered discs out of alignment.
+        const laneLeft = Math.max(
+          0,
+          Math.min(rowClusterStart + col * rowStride, screenWidth - laneDim)
+        );
+        const x = laneLeft + (laneDim - bubbleW) / 2;
+        const y = Math.max(TOP_PADDING - 2, cumulativeY);
 
         bubble.style.transform = `translate(${x}px, ${y}px)`;
       }
 
-      cumulativeY += rowMaxDim + rowGap;
       idx += rowBubbleCount;
+      const nextFootprint = footprintFor(
+        idx < sortedBubbles.length ? isBumpedFlags[idx] : rowIsBumped
+      );
+      cumulativeY +=
+        footprint.bottomExtent +
+        nextFootprint.topOverhang +
+        MOBILE_BUBBLEMAP_ROW_CLEARANCE_PX;
+    }
+
+    // The map wrapper is `min-h-screen overflow-hidden`, so any row past one viewport height
+    // is silently cut off. Grow it to the packed height so every bubble on the page is shown.
+    const mapContainer = sortedBubbles[0].parentElement;
+    if (mapContainer) {
+      const packedHeight = Math.ceil(cumulativeY + MOBILE_BUBBLEMAP_BOTTOM_PADDING_PX);
+      mapContainer.style.minHeight = `${Math.max(window.innerHeight, packedHeight)}px`;
     }
   }
 
@@ -2823,6 +2889,13 @@ function App() {
     if (bubbles.length === 0) {
       window.isArrangingDesktopGrid = false;
       return;
+    }
+
+    // Drop any packed height left by the mobile layout (window widened past 480) so the
+    // desktop grid gets its min-h-screen back. No-op when the mobile path never ran.
+    const mapContainer = bubbles[0].parentElement;
+    if (mapContainer && mapContainer.style.minHeight) {
+      mapContainer.style.minHeight = '';
     }
     
     // Use smooth transition when coming from landing page, otherwise fast
