@@ -113,6 +113,13 @@ const MenuBar = ({ editor, onUploadInlineImage, inlineImageUploading }) => {
         Italic
       </button>
       <button
+        onClick={() => editor.chain().focus().toggleUnderline().run()}
+        className={`px-2 py-1 rounded text-white ${editor.isActive('underline') ? 'bg-gray-600' : 'bg-gray-800'}`}
+        type="button"
+      >
+        Underline
+      </button>
+      <button
         onClick={() => editor.chain().focus().toggleStrike().run()}
         className={`px-2 py-1 rounded text-white ${editor.isActive('strike') ? 'bg-gray-600' : 'bg-gray-800'}`}
         type="button"

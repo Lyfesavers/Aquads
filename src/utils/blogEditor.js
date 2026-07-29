@@ -1,4 +1,5 @@
 import StarterKit from '@tiptap/starter-kit';
+import Underline from '@tiptap/extension-underline';
 import Link from '@tiptap/extension-link';
 import Image from '@tiptap/extension-image';
 import Table from '@tiptap/extension-table';
@@ -28,7 +29,7 @@ export const BLOG_LINK_REL_NOFOLLOW = `${BLOG_LINK_REL_BASE} nofollow`;
 export const BLOG_LINK_REL_DOFOLLOW = BLOG_LINK_REL_BASE;
 
 const HTML_TAG_PATTERN =
-  /<\s*(p|h[1-6]|ul|ol|li|blockquote|pre|div|table|thead|tbody|tr|td|th|img|a|hr|strong|em|span|br)[\s>/]/i;
+  /<\s*(p|h[1-6]|ul|ol|li|blockquote|pre|div|table|thead|tbody|tr|td|th|img|a|hr|strong|em|u|span|br)[\s>/]/i;
 
 export const blogContentHasTable = (content) =>
   /<\s*table[\s>]/i.test(content || '');
@@ -119,6 +120,7 @@ const getBaseBlogExtensions = ({ linkOpenOnClick = false } = {}) => [
       },
     },
   }),
+  Underline,
   BlogLink.configure({
     openOnClick: linkOpenOnClick,
     autolink: true,
@@ -178,7 +180,7 @@ export const getBlogReaderExtensions = ({ linkOpenOnClick = false } = {}) =>
 export const sanitizeBlogHtml = (html) => {
   const clean = DOMPurify.sanitize(html || '', {
     ADD_ATTR: ['target', 'rel', 'class', 'data-follow', 'loading', 'decoding'],
-    ADD_TAGS: ['table', 'thead', 'tbody', 'tr', 'th', 'td', 'img'],
+    ADD_TAGS: ['table', 'thead', 'tbody', 'tr', 'th', 'td', 'img', 'u'],
   });
   return clean.replace(/<img(?![^>]*\bloading=)/gi, '<img loading="lazy" decoding="async"');
 };
