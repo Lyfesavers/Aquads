@@ -34,14 +34,6 @@
 # now handled by the broad 301 in public/_redirects which sends them straight
 # to the canonical /learn/ equivalent for both bots and humans.
 
-# Serve prerendered version for bots only - AquaSwap tokens
-[[redirects]]
-  from = "/aquaswap"
-  to = "/.netlify/functions/prerender-aquaswap"
-  status = 200
-  force = true
-  conditions = {User-Agent = "*bot*,*Bot*,*crawler*,*spider*,facebookexternalhit*,Twitterbot*,LinkedInBot*,Slackbot*,Discordbot*,WhatsApp*,TelegramBot*,Googlebot*"}
-
 # OG card image proxied on primary domain — Telegram/WhatsApp fetch this reliably
 # (same PNG as Railway generates; meta tags should point here, not *.railway.app)
 [[edge_functions]]
@@ -122,26 +114,86 @@
 # clients (no User-Agent gate) and injects blog-specific OG / Twitter /
 # canonical / JSON-LD tags into the SPA shell's <head>. Non-blog paths under
 # /learn (the Learn hub, /learn/courses/*, etc.) pass straight through.
-#
-# This replaces the old UA-gated redirect to functions/prerender-blog.js which
-# only fired for a narrow list of crawler UAs (facebookexternalhit, Googlebot,
-# Twitterbot, …) and so missed most third-party OG validators — opengraph.xyz,
-# Iframely, Embedly, LinkPreview, most Mastodon instances, etc. — which fetch
-# with generic Mozilla UAs and were getting the unrendered SPA shell back.
 [[edge_functions]]
   function = "learn-blog"
   path = "/learn/*"
+
+# Bot-only SEO prerender — humans skip these redirects and get the SPA instantly.
+# Crawlers only: lightweight HTML with meta tags (no API call on human page loads).
+[[redirects]]
+  from = "/aquafi"
+  to = "/.netlify/functions/prerender-seo-static"
+  status = 200
+  force = true
+  conditions = {User-Agent = "*bot*,*Bot*,*crawler*,*spider*,facebookexternalhit*,Twitterbot*,TelegramBot*,LinkedInBot*,Slackbot*,Discordbot*,WhatsApp*,Googlebot*"}
+
+[[redirects]]
+  from = "/freelancer-benefits"
+  to = "/.netlify/functions/prerender-seo-static"
+  status = 200
+  force = true
+  conditions = {User-Agent = "*bot*,*Bot*,*crawler*,*spider*,facebookexternalhit*,Twitterbot*,TelegramBot*,LinkedInBot*,Slackbot*,Discordbot*,WhatsApp*,Googlebot*"}
+
+[[redirects]]
+  from = "/verify-user"
+  to = "/.netlify/functions/prerender-seo-static"
+  status = 200
+  force = true
+  conditions = {User-Agent = "*bot*,*Bot*,*crawler*,*spider*,facebookexternalhit*,Twitterbot*,TelegramBot*,LinkedInBot*,Slackbot*,Discordbot*,WhatsApp*,Googlebot*"}
+
+[[redirects]]
+  from = "/games/dots-and-boxes"
+  to = "/.netlify/functions/prerender-seo-static"
+  status = 200
+  force = true
+  conditions = {User-Agent = "*bot*,*Bot*,*crawler*,*spider*,facebookexternalhit*,Twitterbot*,TelegramBot*,LinkedInBot*,Slackbot*,Discordbot*,WhatsApp*,Googlebot*"}
+
+[[redirects]]
+  from = "/games/checkers"
+  to = "/.netlify/functions/prerender-seo-static"
+  status = 200
+  force = true
+  conditions = {User-Agent = "*bot*,*Bot*,*crawler*,*spider*,facebookexternalhit*,Twitterbot*,TelegramBot*,LinkedInBot*,Slackbot*,Discordbot*,WhatsApp*,Googlebot*"}
+
+[[redirects]]
+  from = "/games/horse-racing"
+  to = "/.netlify/functions/prerender-seo-static"
+  status = 200
+  force = true
+  conditions = {User-Agent = "*bot*,*Bot*,*crawler*,*spider*,facebookexternalhit*,Twitterbot*,TelegramBot*,LinkedInBot*,Slackbot*,Discordbot*,WhatsApp*,Googlebot*"}
+
+[[redirects]]
+  from = "/games/beanstalks-and-chutes"
+  to = "/.netlify/functions/prerender-seo-static"
+  status = 200
+  force = true
+  conditions = {User-Agent = "*bot*,*Bot*,*crawler*,*spider*,facebookexternalhit*,Twitterbot*,TelegramBot*,LinkedInBot*,Slackbot*,Discordbot*,WhatsApp*,Googlebot*"}
+
+[[redirects]]
+  from = "/games/sludo"
+  to = "/.netlify/functions/prerender-seo-static"
+  status = 200
+  force = true
+  conditions = {User-Agent = "*bot*,*Bot*,*crawler*,*spider*,facebookexternalhit*,Twitterbot*,TelegramBot*,LinkedInBot*,Slackbot*,Discordbot*,WhatsApp*,Googlebot*"}
+
+[[redirects]]
+  from = "/service/*"
+  to = "/.netlify/functions/prerender-seo-service"
+  status = 200
+  force = true
+  conditions = {User-Agent = "*bot*,*Bot*,*crawler*,*spider*,facebookexternalhit*,Twitterbot*,TelegramBot*,LinkedInBot*,Slackbot*,Discordbot*,WhatsApp*,Googlebot*"}
+
+[[redirects]]
+  from = "/aquaswap"
+  to = "/.netlify/functions/prerender-aquaswap"
+  status = 200
+  force = true
+  conditions = {User-Agent = "*bot*,*Bot*,*crawler*,*spider*,facebookexternalhit*,Twitterbot*,LinkedInBot*,Slackbot*,Discordbot*,WhatsApp*,TelegramBot*,Googlebot*"}
 
 # Canonical bounty URLs (/bounties/{id}): inject OG metadata + wanted-poster image
 [[edge_functions]]
   function = "bounty-detail"
   path = "/bounties/*"
-
-# Handle service pages
-[[redirects]]
-  from = "/service/*"
-  to = "/service.html"
-  status = 200
 
 # Permanent redirect: legacy listing landing → keyword-aligned URL (SEO)
 [[redirects]]
