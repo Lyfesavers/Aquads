@@ -834,6 +834,9 @@ function App() {
   const [tokensSocketConnected, setTokensSocketConnected] = useState(false);
   const isFetchingTokensRef = useRef(false);
   const tokenDetailsRefreshPausedRef = useRef(false);
+  /** If socket updates land mid-fetch, do not let a stale HTTP response overwrite them. */
+  const lastTokensSocketAtRef = useRef(0);
+  const tokensFetchStartedAtRef = useRef(0);
   
   // Detect iOS for better touch handling
   useEffect(() => {
@@ -1268,6 +1271,7 @@ function App() {
         setTokensLoading(!hasTokens);
       }
       isFetchingTokensRef.current = true;
+      tokensFetchStartedAtRef.current = Date.now();
 
       const [tokensResponse, statsResponse] = await Promise.all([
         fetch(`${BACKEND_URL}/api/tokens`),
@@ -1283,9 +1287,12 @@ function App() {
         throw new Error('Invalid tokens response format');
       }
 
-      setTokenList(data);
-      persistTokensCache(data);
-      setTokensError(null);
+      // Socket sync can finish while this request was in-flight — prefer the live push.
+      if (lastTokensSocketAtRef.current <= tokensFetchStartedAtRef.current) {
+        setTokenList(data);
+        persistTokensCache(data);
+        setTokensError(null);
+      }
 
       if (statsResponse.ok) {
         const stats = await statsResponse.json();
@@ -1461,6 +1468,7 @@ function App() {
   useEffect(() => {
     const handleTokenUpdate = (data) => {
       if (data.type === 'update' && Array.isArray(data.tokens)) {
+        lastTokensSocketAtRef.current = Date.now();
         setTokenList(data.tokens);
         persistTokensCache(data.tokens);
         setTokensError(null);

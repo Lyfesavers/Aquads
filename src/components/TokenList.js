@@ -196,7 +196,9 @@ const TokenList = ({
   tokensSocketConnected = false,
   onTokenDetailsOpenChange,
 }) => {
-  const [filteredTokens, setFilteredTokens] = useState([]);
+  const [filteredTokens, setFilteredTokens] = useState(() =>
+    sortTokenList(Array.isArray(tokens) ? tokens : [], 'marketCapRank', 'asc')
+  );
   const [selectedToken, setSelectedToken] = useState(null);
   const [showReviews, setShowReviews] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
