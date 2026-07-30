@@ -189,6 +189,20 @@ const DESKTOP_GRID_CELL_WIDTH = 115;
 const DESKTOP_GRID_H_MARGIN = 10;
 const DESKTOP_GRID_V_MARGIN = 30;
 
+/** Grid slot from visible sort index — same math as arrangeDesktopGrid (instant, no DOM pass). */
+function computeDesktopGridPosition(index, bubbleSize, screenWidth) {
+  const cellWidth = DESKTOP_GRID_CELL_WIDTH;
+  const horizontalMargin = DESKTOP_GRID_H_MARGIN;
+  const verticalMargin = DESKTOP_GRID_V_MARGIN;
+  const availableWidth = screenWidth - horizontalMargin * 2;
+  const columns = Math.max(1, Math.floor(availableWidth / DESKTOP_GRID_CELL_WIDTH));
+  const row = Math.floor(index / columns);
+  const column = index % columns;
+  const x = horizontalMargin + column * cellWidth + cellWidth / 2 - bubbleSize / 2;
+  const y = TOP_PADDING + verticalMargin + row * (bubbleSize + verticalMargin);
+  return { x, y };
+}
+
 function getScreenLogicalDimensions() {
   return {
     w: Math.max(window.screen.width, window.screen.height),
@@ -668,45 +682,47 @@ const AuthModalQueryHandler = ({ setShowLoginModal, setShowCreateAccountModal, s
 const HomeLayoutHandler = ({ arrangeDesktopGrid, adjustBubblesForMobile }) => {
   const location = useLocation();
   const previousPath = useRef(null);
-  
+
   useEffect(() => {
-    // Check if we're navigating TO /home from another page (like landing page)
-    const isNavigatingToHome = location.pathname === '/home' && previousPath.current !== null && previousPath.current !== '/home';
-    
+    const isNavigatingToHome =
+      location.pathname === '/home' &&
+      previousPath.current !== null &&
+      previousPath.current !== '/home';
+
     if (isNavigatingToHome) {
-      // Reset the arrangement flag to allow re-layout
       window.isArrangingDesktopGrid = false;
-      
-      // Set flag to use smooth transitions for this layout
-      window.useSmoothLayoutTransition = true;
-      
-      // Wait for DOM to be ready and bubbles to render, then arrange
+      // Desktop grid positions are computed at render from vote sort — no delayed re-grid.
+      if (window.innerWidth <= 480 && typeof adjustBubblesForMobile === 'function') {
+        const timer = setTimeout(() => adjustBubblesForMobile(), 100);
+        previousPath.current = location.pathname;
+        return () => clearTimeout(timer);
+      }
+      previousPath.current = location.pathname;
+      return;
+    }
+
+    const isFromLanding =
+      location.pathname === '/home' &&
+      (previousPath.current === '/' || previousPath.current === null);
+
+    if (isFromLanding && location.pathname === '/home') {
+      window.isArrangingDesktopGrid = false;
+
       const timer = setTimeout(() => {
-        // Set smooth floating transition on all bubbles BEFORE arranging
-        const bubbles = document.querySelectorAll('.bubble-container');
-        bubbles.forEach(bubble => {
-          bubble.style.transition = 'transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
-        });
-        
-        if (window.innerWidth > 480 && typeof arrangeDesktopGrid === 'function') {
-          arrangeDesktopGrid();
-        } else if (window.innerWidth <= 480 && typeof adjustBubblesForMobile === 'function') {
+        if (window.innerWidth <= 480 && typeof adjustBubblesForMobile === 'function') {
           adjustBubblesForMobile();
+        } else if (typeof arrangeDesktopGrid === 'function') {
+          arrangeDesktopGrid();
         }
-        
-        // Reset flag after animation completes
-        setTimeout(() => {
-          window.useSmoothLayoutTransition = false;
-        }, 1000);
-      }, 500); // Slightly longer delay for mobile to ensure bubbles are rendered
-      
+      }, 100);
+
+      previousPath.current = location.pathname;
       return () => clearTimeout(timer);
     }
-    
-    // Track the current path for next comparison
+
     previousPath.current = location.pathname;
   }, [location.pathname, arrangeDesktopGrid, adjustBubblesForMobile]);
-  
+
   return null;
 };
 
@@ -728,8 +744,8 @@ const AdsFetchOnRoute = ({ loadAdsFromApi, hasLoadedAds }) => {
 
   useEffect(() => {
     if (!routeNeedsAdsFetch(location.pathname)) return;
-    // Returning to /home — bubbles already laid out; sockets handle live vote updates.
-    if (location.pathname === '/home' && hasLoadedAds) return;
+    // Fetch once when ads are first needed; route changes reuse in-memory state + sockets.
+    if (hasLoadedAds) return;
     loadAdsFromApi();
   }, [location.pathname, loadAdsFromApi, hasLoadedAds]);
 
@@ -1063,15 +1079,11 @@ function App() {
   // Function to handle page change
   const handlePageChange = (page) => {
     setCurrentPage(page);
-    
-    // Add a short delay to allow state update before arranging bubbles
-    setTimeout(() => {
-      if (window.innerWidth <= 480) {
-        adjustBubblesForMobile();
-      } else {
-        arrangeDesktopGrid();
-      }
-    }, 100);
+
+    if (window.innerWidth <= 480) {
+      setTimeout(() => adjustBubblesForMobile(), 100);
+    }
+    // Desktop: grid positions come from render index — no DOM arrange pass.
   };
 
   // Add this function to update ads with persistence
@@ -1413,15 +1425,9 @@ function App() {
       // If transitioning from mobile to desktop, restore original positions
       const isNowDesktop = window.innerWidth > 480;
       if (wasMobile && isNowDesktop) {
-        // Small delay to let React update the DOM
-        setTimeout(arrangeDesktopGrid, 100);
-      }
-      // Apply mobile-specific adjustments after short delay to let DOM update
-      else if (window.innerWidth <= 480) {
+        // Desktop positions are computed at render — no DOM grid pass.
+      } else if (window.innerWidth <= 480) {
         setTimeout(adjustBubblesForMobile, 100);
-      } else {
-        // On any desktop resize, re-arrange the grid
-        setTimeout(arrangeDesktopGrid, 100);
       }
     };
 
@@ -2804,71 +2810,48 @@ function App() {
 
   // Add an immediate fix to restore desktop layout 
   useEffect(() => {
-    // Only run on desktop to fix current layout issues
-    if (window.innerWidth > 480) {
-      // Set a flag to track whether we've already done the initial layout
-      if (!window.initialLayoutApplied) {
-        window.initialLayoutApplied = true;
-        // Wait for DOM to be ready
-        setTimeout(() => {
-          arrangeDesktopGrid();
-        }, 500);
-      }
+    // Desktop grid is computed at render time; only mobile needs an initial DOM layout pass.
+    if (window.innerWidth <= 480 && !window.initialLayoutApplied) {
+      window.initialLayoutApplied = true;
+      setTimeout(() => adjustBubblesForMobile(), 500);
     }
   }, []);
   
-  // Add effect to apply layout when ads update (with debouncing to prevent glitching)
+  // Re-layout on mobile when ad count changes; desktop re-sorts via render.
   useEffect(() => {
-    // Skip this effect if we just updated the model from DOM positions
     if (window.skipNextLayoutUpdate) {
       window.skipNextLayoutUpdate = false;
       return;
     }
-    
+
     const currentCount = Array.isArray(ads) ? ads.length : Object.keys(ads).length;
     const prevCount = prevAdsCountRef.current;
-    const countChanged = currentCount !== prevCount && prevCount > 0; // Don't trigger on initial load
-    
-    // Update the ref for next comparison
+    const countChanged = currentCount !== prevCount && prevCount > 0;
+
     prevAdsCountRef.current = currentCount;
-    
-    // If no ads, skip
-    if (currentCount === 0) return;
-    
-    // Function to run the appropriate layout
-    const runLayout = () => {
-      if (window.innerWidth <= 480) {
-        adjustBubblesForMobile();
-      } else {
-        arrangeDesktopGrid();
-      }
-    };
-    
-    // If bubble count changed (add/delete), run layout immediately
+
+    if (currentCount === 0 || window.innerWidth > 480) return;
+
+    const runMobileLayout = () => adjustBubblesForMobile();
+
     if (countChanged) {
-      // Clear any pending debounced layout
       if (layoutDebounceTimerRef.current) {
         clearTimeout(layoutDebounceTimerRef.current);
         layoutDebounceTimerRef.current = null;
       }
-      // Small delay for DOM to update, then layout
-      setTimeout(runLayout, 100);
+      setTimeout(runMobileLayout, 100);
       return;
     }
-    
-    // For data-only changes (votes, etc.), debounce the layout
-    // Clear any existing timer
+
     if (layoutDebounceTimerRef.current) {
       clearTimeout(layoutDebounceTimerRef.current);
     }
-    
-    // Set new debounced timer (3 seconds)
+
     layoutDebounceTimerRef.current = setTimeout(() => {
-      runLayout();
+      runMobileLayout();
       layoutDebounceTimerRef.current = null;
     }, 3000);
-    
-    // Cleanup on unmount
+
     return () => {
       if (layoutDebounceTimerRef.current) {
         clearTimeout(layoutDebounceTimerRef.current);
@@ -3588,18 +3571,23 @@ function App() {
                   {/* Bubbles section - keep it as is, remove fixed positioning */}
                   <div className="relative min-h-screen overflow-hidden pt-3">
                     {/* Ads */}
-                    {getVisibleAds().length > 0 ? (
-                      getVisibleAds().map(ad => {
+                    {(() => {
+                      const visibleAds = getVisibleAds();
+                      if (visibleAds.length === 0) return null;
+                      const isDesktop = windowSize.width > 480;
+                      return visibleAds.map((ad, visibleIndex) => {
                         const bubblePx = getMobileBubbleMapDisplaySize(ad, windowSize.width);
-                        const { x, y } = ensureInViewport(
-                          ad.x,
-                          ad.y,
-                          bubblePx,
-                          windowSize.width,
-                          windowSize.height,
-                          getVisibleAds(),
-                          ad.id
-                        );
+                        const { x, y } = isDesktop
+                          ? computeDesktopGridPosition(visibleIndex, bubblePx, windowSize.width)
+                          : ensureInViewport(
+                              ad.x,
+                              ad.y,
+                              bubblePx,
+                              windowSize.width,
+                              windowSize.height,
+                              visibleAds,
+                              ad.id
+                            );
 
                         return (
                           <div 
@@ -3611,7 +3599,7 @@ function App() {
                               transform: `translate(${x}px, ${y}px)`,
                               width: `${bubblePx}px`,
                               height: `${bubblePx}px`,
-                              transition: 'transform 0.1s ease-out', // Faster transition
+                              transition: isDesktop ? 'none' : 'transform 0.1s ease-out',
                               zIndex: ad.isBumped ? 2 : 1
                             }}
                           >
@@ -3786,8 +3774,9 @@ function App() {
                             </motion.div>
                           </div>
                         );
-                      })
-                    ) : (
+                      });
+                    })()}
+                    {getVisibleAds().length === 0 && (
                       <div className="flex items-center justify-center min-h-[50vh] flex-col">
                         {isLoading ? (
                           <div className="flex flex-col items-center">
