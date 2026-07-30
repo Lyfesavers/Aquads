@@ -447,6 +447,98 @@ function measureMobileBubbleFootprint(containerEl) {
     bottomExtent: Math.max(discRect.bottom, stripRect.bottom) - containerRect.top,
   };
 }
+
+/**
+ * Mobile grid positions from visible sort order — same packing rules as adjustBubblesForMobile()
+ * but without a DOM measurement pass (instant on render, like computeDesktopGridPosition).
+ */
+function computeMobileGridLayout(visibleAds, screenWidth) {
+  if (!Array.isArray(visibleAds) || visibleAds.length === 0 || screenWidth > 480) {
+    return { positions: [], packedHeight: 0 };
+  }
+
+  const horizontalMargin = MOBILE_BUBBLEMAP_GRID_MARGIN_H;
+  const usableWidth = Math.max(0, screenWidth - horizontalMargin * 2);
+
+  const sizesPx = visibleAds.map((ad) => getMobileBubbleMapDisplaySize(ad, screenWidth));
+  const isBumpedFlags = visibleAds.map((ad) => !!ad.isBumped);
+
+  const bumpedSizes = sizesPx.filter((_, i) => isBumpedFlags[i]);
+  const unbumpedSizes = sizesPx.filter((_, i) => !isBumpedFlags[i]);
+  const maxBumpedDim = bumpedSizes.length ? Math.max(MIN_SIZE, ...bumpedSizes) : MIN_SIZE;
+  const maxUnbumpedDim = unbumpedSizes.length ? Math.max(MIN_SIZE, ...unbumpedSizes) : MIN_SIZE;
+
+  const boxFootprint = (containerDim) => ({
+    lane: containerDim,
+    minGap: MOBILE_BUBBLEMAP_INTER_COLUMN_GAP_PX,
+    topOverhang: 0,
+    bottomExtent: containerDim,
+  });
+  const bumpedFootprint = boxFootprint(maxBumpedDim);
+  const unbumpedFootprint = boxFootprint(maxUnbumpedDim);
+  const footprintFor = (isBumped) => (isBumped ? bumpedFootprint : unbumpedFootprint);
+
+  const positions = [];
+  let cumulativeY = TOP_PADDING;
+  let idx = 0;
+
+  while (idx < visibleAds.length) {
+    const rowIsBumped = isBumpedFlags[idx];
+    const footprint = footprintFor(rowIsBumped);
+    const laneDim = Math.max(1, footprint.lane);
+    const minGap = footprint.minGap;
+
+    const rowColumns = Math.max(
+      1,
+      Math.min(
+        MOBILE_BUBBLEMAP_MAX_COLUMNS,
+        Math.floor((usableWidth + minGap) / (laneDim + minGap))
+      )
+    );
+    const laneGap =
+      rowColumns > 1
+        ? Math.min(
+            MOBILE_BUBBLEMAP_MAX_LANE_GAP_PX,
+            Math.max(minGap, (usableWidth - rowColumns * laneDim) / (rowColumns - 1))
+          )
+        : 0;
+    const rowStride = laneDim + laneGap;
+
+    const remaining = visibleAds.length - idx;
+    const rowBubbleCount = Math.min(rowColumns, remaining);
+
+    const rowPackedWidth =
+      rowBubbleCount * laneDim + Math.max(0, rowBubbleCount - 1) * laneGap;
+    const rowClusterStart =
+      horizontalMargin + Math.max(0, (usableWidth - rowPackedWidth) / 2);
+
+    for (let col = 0; col < rowBubbleCount; col += 1) {
+      const index = idx + col;
+      const bubbleW = sizesPx[index] ?? laneDim;
+
+      const laneLeft = Math.max(
+        0,
+        Math.min(rowClusterStart + col * rowStride, screenWidth - laneDim)
+      );
+      const x = laneLeft + (laneDim - bubbleW) / 2;
+      const y = Math.max(TOP_PADDING - 2, cumulativeY);
+
+      positions.push({ x, y });
+    }
+
+    idx += rowBubbleCount;
+    const nextFootprint = footprintFor(
+      idx < visibleAds.length ? isBumpedFlags[idx] : rowIsBumped
+    );
+    cumulativeY +=
+      footprint.bottomExtent +
+      nextFootprint.topOverhang +
+      MOBILE_BUBBLEMAP_ROW_CLEARANCE_PX;
+  }
+
+  const packedHeight = Math.ceil(cumulativeY + MOBILE_BUBBLEMAP_BOTTOM_PADDING_PX);
+  return { positions, packedHeight };
+}
 const MERCHANT_WALLET = {
     SOL: "J8ewxZwntodH8sT8LAXN5j6sAsDhtCh8sQA6GwRuLTSv",
     ETH: "0x98BC1BEC892d9f74B606D478E6b45089D2faAB05",
@@ -700,12 +792,7 @@ const HomeLayoutHandler = ({ arrangeDesktopGrid, adjustBubblesForMobile }) => {
 
     if (isNavigatingToHome) {
       window.isArrangingDesktopGrid = false;
-      // Desktop grid positions are computed at render from vote sort — no delayed re-grid.
-      if (window.innerWidth <= 480 && typeof adjustBubblesForMobile === 'function') {
-        const timer = setTimeout(() => adjustBubblesForMobile(), 100);
-        previousPath.current = location.pathname;
-        return () => clearTimeout(timer);
-      }
+      // Desktop + mobile grid positions are computed at render from vote sort — no delayed re-grid.
       previousPath.current = location.pathname;
       return;
     }
@@ -716,17 +803,9 @@ const HomeLayoutHandler = ({ arrangeDesktopGrid, adjustBubblesForMobile }) => {
 
     if (isFromLanding && location.pathname === '/home') {
       window.isArrangingDesktopGrid = false;
-
-      const timer = setTimeout(() => {
-        if (window.innerWidth <= 480 && typeof adjustBubblesForMobile === 'function') {
-          adjustBubblesForMobile();
-        } else if (typeof arrangeDesktopGrid === 'function') {
-          arrangeDesktopGrid();
-        }
-      }, 100);
-
+      // Grid positions computed at render; landing only needs smooth transition flag if desired.
       previousPath.current = location.pathname;
-      return () => clearTimeout(timer);
+      return;
     }
 
     previousPath.current = location.pathname;
@@ -1122,11 +1201,7 @@ function App() {
   // Function to handle page change
   const handlePageChange = (page) => {
     setCurrentPage(page);
-
-    if (window.innerWidth <= 480) {
-      setTimeout(() => adjustBubblesForMobile(), 100);
-    }
-    // Desktop: grid positions come from render index — no DOM arrange pass.
+    // Desktop + mobile: grid positions come from render index — no DOM arrange pass.
   };
 
   // Add this function to update ads with persistence
@@ -1582,9 +1657,8 @@ function App() {
       const isNowDesktop = window.innerWidth > 480;
       if (wasMobile && isNowDesktop) {
         // Desktop positions are computed at render — no DOM grid pass.
-      } else if (window.innerWidth <= 480) {
-        setTimeout(adjustBubblesForMobile, 100);
       }
+      // Mobile positions are also computed at render when windowSize updates.
     };
 
     window.addEventListener('resize', handleResize);
@@ -2691,170 +2765,28 @@ function App() {
     };
   }, [currentUser]);
 
-  // For mobile view only, adjust bubbles in viewport to prevent overlaps
+  // For mobile view only, sync DOM transforms to computed grid (optional refinement pass).
   function adjustBubblesForMobile() {
-    // CRITICAL: Only run on mobile devices, exit immediately on desktop
     if (window.innerWidth > 480) return;
-    
-    // Find all bubble containers
-    const bubbles = document.querySelectorAll('.bubble-container');
-    if (bubbles.length === 0) return;
-    
-    const screenWidth = window.innerWidth;
 
-    const horizontalMargin = MOBILE_BUBBLEMAP_GRID_MARGIN_H;
+    const visibleAds = getVisibleAds();
+    const { positions, packedHeight } = computeMobileGridLayout(visibleAds, window.innerWidth);
+    if (!positions.length) return;
 
-    // Store original positions to restore if needed (desktop restore path)
-    if (!window.originalBubblePositions) {
-      window.originalBubblePositions = Array.from(bubbles).map(bubble => ({
-        id: bubble.id,
-        transform: bubble.style.transform,
-      }));
-    }
-
-    const sortedBubbles = Array.from(bubbles).sort((a, b) => {
-      const adA = ads.find(ad => ad.id === a.id);
-      const adB = ads.find(ad => ad.id === b.id);
-      if (!adA) return 1;
-      if (!adB) return -1;
-      if (adA.isBumped && !adB.isBumped) return -1;
-      if (!adA.isBumped && adB.isBumped) return 1;
-      return (adB.bullishVotes || 0) - (adA.bullishVotes || 0);
-    });
-
-    // Per-bubble pixel size (already computed with 4-col reference math via getMobileBubbleMapDisplaySize,
-    // so disc sizes stay unchanged when a row is switched to 5-across).
-    const sizesPx = sortedBubbles.map(el => {
-      const fromDom = parseInt(el.style.width, 10);
-      if (!Number.isNaN(fromDom) && fromDom > 0) return fromDom;
-      const linked = ads.find(ad => ad.id === el.id);
-      return linked
-        ? getMobileBubbleMapDisplaySize(linked, screenWidth)
-        : getMaxSize();
-    });
-    const isBumpedFlags = sortedBubbles.map(el => {
-      const linked = ads.find(ad => ad.id === el.id);
-      return !!(linked && linked.isBumped);
-    });
-
-    // Split lane references so bumped and unbumped rows keep their own stride. These box
-    // dimensions are only the fallback for the measured footprints resolved below.
-    const bumpedSizes = sizesPx.filter((_, i) => isBumpedFlags[i]);
-    const unbumpedSizes = sizesPx.filter((_, i) => !isBumpedFlags[i]);
-    const maxBumpedDim = bumpedSizes.length ? Math.max(MIN_SIZE, ...bumpedSizes) : MIN_SIZE;
-    const maxUnbumpedDim = unbumpedSizes.length ? Math.max(MIN_SIZE, ...unbumpedSizes) : MIN_SIZE;
-    const usableWidth = Math.max(0, screenWidth - horizontalMargin * 2);
-
-    // Pack against what the user actually sees. Falling back to the container box reproduces
-    // the pre-measurement spacing if the probe fails (e.g. bubbles not painted yet), so it
-    // keeps the old narrow gutter — a 6px minimum would cost that path a whole column.
-    const boxFootprint = (containerDim) => ({
-      lane: containerDim,
-      minGap: MOBILE_BUBBLEMAP_INTER_COLUMN_GAP_PX,
-      topOverhang: 0,
-      bottomExtent: containerDim,
-    });
-    const bumpedFootprint =
-      measureMobileBubbleFootprint(sortedBubbles[isBumpedFlags.indexOf(true)]) ||
-      boxFootprint(maxBumpedDim);
-    const unbumpedFootprint =
-      measureMobileBubbleFootprint(sortedBubbles[isBumpedFlags.indexOf(false)]) ||
-      boxFootprint(maxUnbumpedDim);
-    const footprintFor = (isBumped) => (isBumped ? bumpedFootprint : unbumpedFootprint);
-
-    let cumulativeY = TOP_PADDING;
-    let idx = 0;
-
-    while (idx < sortedBubbles.length) {
-      // Row mode is determined by the first bubble: bumped-mode rows may fill trailing
-      // slots with unbumped bubbles when the bumped run ends mid-row (matches pre-existing behavior).
-      const rowIsBumped = isBumpedFlags[idx];
-      const footprint = footprintFor(rowIsBumped);
-      const laneDim = Math.max(1, footprint.lane);
-      const minGap = footprint.minGap;
-
-      const rowColumns = Math.max(
-        1,
-        Math.min(
-          MOBILE_BUBBLEMAP_MAX_COLUMNS,
-          Math.floor((usableWidth + minGap) / (laneDim + minGap))
-        )
-      );
-      const laneGap =
-        rowColumns > 1
-          ? Math.min(
-              MOBILE_BUBBLEMAP_MAX_LANE_GAP_PX,
-              Math.max(minGap, (usableWidth - rowColumns * laneDim) / (rowColumns - 1))
-            )
-          : 0;
-      const rowStride = laneDim + laneGap;
-
-      const remaining = sortedBubbles.length - idx;
-      const rowBubbleCount = Math.min(rowColumns, remaining);
-
-      const rowPackedWidth =
-        rowBubbleCount * laneDim + Math.max(0, rowBubbleCount - 1) * laneGap;
-      const rowClusterStart =
-        horizontalMargin + Math.max(0, (usableWidth - rowPackedWidth) / 2);
-
-      for (let col = 0; col < rowBubbleCount; col += 1) {
-        const index = idx + col;
-        const bubble = sortedBubbles[index];
-        const bubbleW = sizesPx[index] ?? laneDim;
-
-        // Clamp the lane (what is painted), then centre the oversized container box inside
-        // it — clamping the box itself would push the rendered discs out of alignment.
-        const laneLeft = Math.max(
-          0,
-          Math.min(rowClusterStart + col * rowStride, screenWidth - laneDim)
-        );
-        const x = laneLeft + (laneDim - bubbleW) / 2;
-        const y = Math.max(TOP_PADDING - 2, cumulativeY);
-
-        bubble.style.transform = `translate(${x}px, ${y}px)`;
+    visibleAds.forEach((ad, index) => {
+      const bubble = document.getElementById(ad.id);
+      const pos = positions[index];
+      if (bubble && pos) {
+        bubble.style.transform = `translate(${pos.x}px, ${pos.y}px)`;
       }
+    });
 
-      idx += rowBubbleCount;
-      const nextFootprint = footprintFor(
-        idx < sortedBubbles.length ? isBumpedFlags[idx] : rowIsBumped
-      );
-      cumulativeY +=
-        footprint.bottomExtent +
-        nextFootprint.topOverhang +
-        MOBILE_BUBBLEMAP_ROW_CLEARANCE_PX;
-    }
-
-    // The map wrapper is `min-h-screen overflow-hidden`, so any row past one viewport height
-    // is silently cut off. Grow it to the packed height so every bubble on the page is shown.
-    const mapContainer = sortedBubbles[0].parentElement;
-    if (mapContainer) {
-      const packedHeight = Math.ceil(cumulativeY + MOBILE_BUBBLEMAP_BOTTOM_PADDING_PX);
+    const firstBubble = document.querySelector('.bubble-container');
+    const mapContainer = firstBubble?.parentElement;
+    if (mapContainer && packedHeight > 0) {
       mapContainer.style.minHeight = `${Math.max(window.innerHeight, packedHeight)}px`;
     }
   }
-
-  // Refs for debounced layout updates
-  const layoutDebounceTimerRef = useRef(null);
-  const prevAdsCountRef = useRef(0);
-  
-  // Add effect to apply mobile layout on initial load
-  useEffect(() => {
-    if (window.innerWidth <= 480) {
-      // Check for bubbles and apply layout periodically until they exist
-      const checkInterval = setInterval(() => {
-        const bubbles = document.querySelectorAll('.bubble-container');
-        if (bubbles.length > 0) {
-          adjustBubblesForMobile();
-          clearInterval(checkInterval);
-        }
-      }, 500);
-      
-      // Clear interval after 10 seconds at most to prevent infinite checking
-      setTimeout(() => clearInterval(checkInterval), 10000);
-      
-      return () => clearInterval(checkInterval);
-    }
-  }, []);
 
   // Restore original bubble positions when going back to desktop
   function restoreOriginalPositions() {
@@ -2963,57 +2895,6 @@ function App() {
       window.isUpdatingModelFromDom = false;
     }
   }
-
-  // Add an immediate fix to restore desktop layout 
-  useEffect(() => {
-    // Desktop grid is computed at render time; only mobile needs an initial DOM layout pass.
-    if (window.innerWidth <= 480 && !window.initialLayoutApplied) {
-      window.initialLayoutApplied = true;
-      setTimeout(() => adjustBubblesForMobile(), 500);
-    }
-  }, []);
-  
-  // Re-layout on mobile when ad count changes; desktop re-sorts via render.
-  useEffect(() => {
-    if (window.skipNextLayoutUpdate) {
-      window.skipNextLayoutUpdate = false;
-      return;
-    }
-
-    const currentCount = Array.isArray(ads) ? ads.length : Object.keys(ads).length;
-    const prevCount = prevAdsCountRef.current;
-    const countChanged = currentCount !== prevCount && prevCount > 0;
-
-    prevAdsCountRef.current = currentCount;
-
-    if (currentCount === 0 || window.innerWidth > 480) return;
-
-    const runMobileLayout = () => adjustBubblesForMobile();
-
-    if (countChanged) {
-      if (layoutDebounceTimerRef.current) {
-        clearTimeout(layoutDebounceTimerRef.current);
-        layoutDebounceTimerRef.current = null;
-      }
-      setTimeout(runMobileLayout, 100);
-      return;
-    }
-
-    if (layoutDebounceTimerRef.current) {
-      clearTimeout(layoutDebounceTimerRef.current);
-    }
-
-    layoutDebounceTimerRef.current = setTimeout(() => {
-      runMobileLayout();
-      layoutDebounceTimerRef.current = null;
-    }, 3000);
-
-    return () => {
-      if (layoutDebounceTimerRef.current) {
-        clearTimeout(layoutDebounceTimerRef.current);
-      }
-    };
-  }, [ads]);
 
   // Arrange bubbles in a clean grid for desktop
   function arrangeDesktopGrid() {
@@ -3726,25 +3607,34 @@ function App() {
                   </div>
                   
                   {/* Bubbles section - keep it as is, remove fixed positioning */}
-                  <div className="relative min-h-screen overflow-hidden pt-3">
+                  {(() => {
+                    const visibleAds = getVisibleAds();
+                    const isDesktop = windowSize.width > 480;
+                    const mobileLayout = isDesktop
+                      ? null
+                      : computeMobileGridLayout(visibleAds, windowSize.width);
+                    const mapMinHeight =
+                      mobileLayout?.packedHeight > 0
+                        ? Math.max(windowSize.height, mobileLayout.packedHeight)
+                        : undefined;
+
+                    return (
+                  <div
+                    className="relative min-h-screen overflow-hidden pt-3"
+                    style={
+                      mapMinHeight
+                        ? { minHeight: `${mapMinHeight}px` }
+                        : undefined
+                    }
+                  >
                     {/* Ads */}
-                    {(() => {
-                      const visibleAds = getVisibleAds();
-                      if (visibleAds.length === 0) return null;
-                      const isDesktop = windowSize.width > 480;
-                      return visibleAds.map((ad, visibleIndex) => {
+                    {visibleAds.length === 0
+                      ? null
+                      : visibleAds.map((ad, visibleIndex) => {
                         const bubblePx = getMobileBubbleMapDisplaySize(ad, windowSize.width);
                         const { x, y } = isDesktop
                           ? computeDesktopGridPosition(visibleIndex, bubblePx, windowSize.width)
-                          : ensureInViewport(
-                              ad.x,
-                              ad.y,
-                              bubblePx,
-                              windowSize.width,
-                              windowSize.height,
-                              visibleAds,
-                              ad.id
-                            );
+                          : (mobileLayout.positions[visibleIndex] || { x: ad.x, y: ad.y });
 
                         return (
                           <div 
@@ -3756,7 +3646,7 @@ function App() {
                               transform: `translate(${x}px, ${y}px)`,
                               width: `${bubblePx}px`,
                               height: `${bubblePx}px`,
-                              transition: isDesktop ? 'none' : 'transform 0.1s ease-out',
+                              transition: 'none',
                               zIndex: ad.isBumped ? 2 : 1
                             }}
                           >
@@ -3931,9 +3821,8 @@ function App() {
                             </motion.div>
                           </div>
                         );
-                      });
-                    })()}
-                    {getVisibleAds().length === 0 && (
+                      })}
+                    {visibleAds.length === 0 && (
                       <div className="flex items-center justify-center min-h-[50vh] flex-col">
                         {isLoading ? (
                           <div className="flex flex-col items-center">
@@ -3964,6 +3853,8 @@ function App() {
                       </div>
                     )}
                   </div>
+                    );
+                  })()}
 
                   {/* Token list section - add z-index and proper background */}
                   <div className="relative z-10 bg-transparent">
