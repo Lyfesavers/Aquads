@@ -78,6 +78,12 @@ export function readAdsCache() {
   return [];
 }
 
+/** True when the ad has client-side grid positions (dex-feed rows from API are usually 0,0). */
+export function isBubbleLayoutPlaced(ad) {
+  if (!ad || typeof ad.x !== 'number' || typeof ad.y !== 'number') return false;
+  return ad.x !== 0 && ad.y !== 0;
+}
+
 /** Prefer fresher in-memory vote fields when a refetch returns stale counts. */
 export function mergeIncomingAdsWithCurrent(incomingAds, currentAds, mergeRecentVoteFields) {
   if (!Array.isArray(incomingAds)) return [];
@@ -96,6 +102,18 @@ export function mergeIncomingAdsWithCurrent(incomingAds, currentAds, mergeRecent
 
     const current = currentById[ad.id];
     if (!current) return merged;
+
+    // API refetch (esp. dex-feed) returns x:0,y:0 — keep the grid the user already saw.
+    if (!isBubbleLayoutPlaced(merged) && isBubbleLayoutPlaced(current)) {
+      merged = {
+        ...merged,
+        x: current.x,
+        y: current.y,
+        ...(current.originalSize !== undefined && { originalSize: current.originalSize }),
+        ...(current.originalMaxSize !== undefined && { originalMaxSize: current.originalMaxSize }),
+        ...(current.currentMaxSize !== undefined && { currentMaxSize: current.currentMaxSize }),
+      };
+    }
 
     const inBull = merged.bullishVotes || 0;
     const inBear = merged.bearishVotes || 0;

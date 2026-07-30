@@ -723,14 +723,15 @@ function routeNeedsAdsFetch(pathname) {
   return false;
 }
 
-const AdsFetchOnRoute = ({ loadAdsFromApi }) => {
+const AdsFetchOnRoute = ({ loadAdsFromApi, hasLoadedAds }) => {
   const location = useLocation();
 
   useEffect(() => {
-    if (routeNeedsAdsFetch(location.pathname)) {
-      loadAdsFromApi();
-    }
-  }, [location.pathname, loadAdsFromApi]);
+    if (!routeNeedsAdsFetch(location.pathname)) return;
+    // Returning to /home — bubbles already laid out; sockets handle live vote updates.
+    if (location.pathname === '/home' && hasLoadedAds) return;
+    loadAdsFromApi();
+  }, [location.pathname, loadAdsFromApi, hasLoadedAds]);
 
   return null;
 };
@@ -3052,7 +3053,7 @@ function App() {
           currentUser={currentUser}
         />
         <HomeLayoutHandler arrangeDesktopGrid={arrangeDesktopGrid} adjustBubblesForMobile={adjustBubblesForMobile} />
-        <AdsFetchOnRoute loadAdsFromApi={loadAdsFromApi} />
+        <AdsFetchOnRoute loadAdsFromApi={loadAdsFromApi} hasLoadedAds={ads.length > 0} />
         <DesktopInstallPrompt />
         {currentUser?.token && (
           <Suspense fallback={null}>
