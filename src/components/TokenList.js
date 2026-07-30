@@ -8,7 +8,7 @@ import TokenReviews from './TokenReviews';
 import SocialMediaRaids from './SocialMediaRaids';
 import FacebookRaids from './FacebookRaids';
 import logger from '../utils/logger';
-import { socket } from '../services/api';
+import { BACKEND_URL } from '../services/api';
 
 /** Stable sort for token table — fixes duplicate/out-of-order # when using CoinGecko rank on a differently sorted list. */
 const sortTokenList = (items, key, direction) => {
@@ -41,7 +41,7 @@ const sortTokenList = (items, key, direction) => {
   });
 };
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const BACKEND_API = BACKEND_URL;
 
 const DEX_OPTIONS = [
   {
@@ -186,27 +186,28 @@ const VolumeTrendBadge = ({ volumeChange }) => {
   );
 };
 
-const TokenList = ({ currentUser, showNotification }) => {
-  const [tokens, setTokens] = useState([]);
+const TokenList = ({
+  currentUser,
+  showNotification,
+  tokens = [],
+  globalStats = null,
+  tokensLoading = false,
+  tokensError = null,
+  tokensSocketConnected = false,
+  onTokenDetailsOpenChange,
+}) => {
   const [filteredTokens, setFilteredTokens] = useState([]);
   const [selectedToken, setSelectedToken] = useState(null);
   const [showReviews, setShowReviews] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isSearchLoading, setIsSearchLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState({ key: 'marketCapRank', direction: 'asc' });
   const [showDexFrame, setShowDexFrame] = useState(true);
   const [selectedDex, setSelectedDex] = useState(null);
-  const [error, setError] = useState(null);
   const [viewMode, setViewMode] = useState('tokens');
   const [displayCount, setDisplayCount] = useState(20);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [isSocketConnected, setIsSocketConnected] = useState(false);
-  const [fallbackInterval, setFallbackInterval] = useState(null);
-  const [globalStats, setGlobalStats] = useState(null);
-  // Prevents request stacking: if a fetch is already in-flight, don't fire another one.
-  // Without this, slow server responses cause multiple concurrent requests to pile up.
-  const isFetchingTokens = useRef(false);
   const sortConfigRef = useRef({ key: 'marketCapRank', direction: 'asc' });
   sortConfigRef.current = sortConfig;
 
@@ -239,66 +240,20 @@ const TokenList = ({ currentUser, showNotification }) => {
     setFilteredTokens((prev) => sortTokenList(prev, key, direction));
   };
 
-  const fetchInitialTokens = async (isBackgroundUpdate = false) => {
-    // Skip if a fetch is already in-flight to prevent request stacking when the server is slow
-    if (isFetchingTokens.current) {
-      return;
-    }
-    try {
-      // If we're doing a background refresh while details are open, skip to avoid UI flicker
-      if (isBackgroundUpdate && showDetails) {
-        return;
-      }
-      if (!isBackgroundUpdate) {
-        setIsLoading(true);
-      }
-
-      isFetchingTokens.current = true;
-      const response = await fetch(`${API_URL}/api/tokens`);
-      
-      if (!response.ok) {
-        throw new Error(`Failed to fetch tokens: ${response.status}`);
-      }
-      
-        const data = await response.json();
-      
-      if (!Array.isArray(data)) {
-        throw new Error('Invalid response format');
-      }
-
-      setTokens(data);
-      const cfg = sortConfigRef.current;
-      setFilteredTokens(sortTokenList(data, cfg.key, cfg.direction));
-      setError(null);
-
-    } catch (error) {
-      logger.error('Error fetching tokens:', error);
-      // Only show error if we have no tokens to display and this isn't a background update
-      if (tokens.length === 0 && !isBackgroundUpdate) {
-        setError('Failed to load tokens. Please try again in a few minutes.');
-      }
-    } finally {
-      isFetchingTokens.current = false;
-      if (!isBackgroundUpdate) {
-        setIsLoading(false);
-      }
-    }
-  };
-
   const handleSearch = async (searchTerm) => {
     try {
-      setIsLoading(true);
+      setIsSearchLoading(true);
     setSearchTerm(searchTerm);
     setDisplayCount(20); // Reset pagination when searching
     
       if (!searchTerm.trim()) {
         const cfg = sortConfigRef.current;
         setFilteredTokens(sortTokenList(tokens, cfg.key, cfg.direction));
-        setIsLoading(false);
+        setIsSearchLoading(false);
       return;
     }
 
-      const response = await fetch(`${API_URL}/api/tokens?search=${encodeURIComponent(searchTerm)}`);
+      const response = await fetch(`${BACKEND_API}/api/tokens?search=${encodeURIComponent(searchTerm)}`);
       if (!response.ok) {
         throw new Error('Search failed');
       }
@@ -307,7 +262,6 @@ const TokenList = ({ currentUser, showNotification }) => {
       if (Array.isArray(data)) {
         const cfg = sortConfigRef.current;
         setFilteredTokens(sortTokenList(data, cfg.key, cfg.direction));
-        setError(null);
       } else {
         // Fallback to client-side filtering
         const filtered = tokens.filter(token => 
@@ -327,88 +281,20 @@ const TokenList = ({ currentUser, showNotification }) => {
       const cfg = sortConfigRef.current;
       setFilteredTokens(sortTokenList(filtered, cfg.key, cfg.direction));
     } finally {
-      setIsLoading(false);
+      setIsSearchLoading(false);
     }
   };
 
-  // WebSocket token updates with fallback
+  // Keep table rows in sync when parent token list updates (socket / background refresh).
   useEffect(() => {
-    // Initial token fetch
-    fetchInitialTokens();
+    if (searchTerm.trim()) return;
+    const cfg = sortConfigRef.current;
+    setFilteredTokens(sortTokenList(tokens, cfg.key, cfg.direction));
+  }, [tokens, searchTerm]);
 
-    const fetchGlobalStats = async () => {
-      try {
-        const response = await fetch(`${API_URL}/api/tokens/global/stats`);
-        if (response.ok) {
-          const data = await response.json();
-          setGlobalStats(data);
-        }
-      } catch (error) {
-        logger.error('Error fetching global market stats:', error);
-      }
-    };
-    fetchGlobalStats();
-
-    // WebSocket event handlers
-    const handleTokenUpdate = (data) => {
-      if (data.type === 'update' && Array.isArray(data.tokens)) {
-        const cfg = sortConfigRef.current;
-        setTokens(data.tokens);
-        setFilteredTokens(sortTokenList(data.tokens, cfg.key, cfg.direction));
-        setError(null);
-      }
-    };
-
-    const handleSocketConnect = () => {
-      setIsSocketConnected(true);
-      // Clear fallback interval when socket connects
-      if (fallbackInterval) {
-        clearInterval(fallbackInterval);
-        setFallbackInterval(null);
-      }
-    };
-
-    const handleSocketDisconnect = () => {
-      setIsSocketConnected(false);
-      // Start fallback interval when socket disconnects
-      if (!fallbackInterval) {
-        const interval = setInterval(() => {
-          if (!document.hidden && !showDetails) {
-            fetchInitialTokens(true);
-          }
-        }, 60000); // 60-second fallback
-        setFallbackInterval(interval);
-      }
-    };
-
-    // Set up socket event listeners
-    socket.on('tokensUpdated', handleTokenUpdate);
-    socket.on('connect', handleSocketConnect);
-    socket.on('disconnect', handleSocketDisconnect);
-
-    // Check initial socket connection status
-    if (socket.connected) {
-      setIsSocketConnected(true);
-    } else {
-      // Start fallback immediately if socket is not connected
-      const interval = setInterval(() => {
-        if (!document.hidden && !showDetails) {
-          fetchInitialTokens(true);
-        }
-      }, 60000);
-      setFallbackInterval(interval);
-    }
-
-    // Cleanup function
-    return () => {
-      socket.off('tokensUpdated', handleTokenUpdate);
-      socket.off('connect', handleSocketConnect);
-      socket.off('disconnect', handleSocketDisconnect);
-      if (fallbackInterval) {
-        clearInterval(fallbackInterval);
-      }
-    };
-  }, [showDetails]); // Removed fallbackInterval from dependencies to prevent infinite re-renders
+  useEffect(() => {
+    onTokenDetailsOpenChange?.(showDetails);
+  }, [showDetails, onTokenDetailsOpenChange]);
 
   // DEX integration
   const handleDexClick = (dex) => {
@@ -455,7 +341,7 @@ const TokenList = ({ currentUser, showNotification }) => {
 
 
   // Render loading state
-  if (isLoading && tokens.length === 0) {
+  if (tokensLoading && tokens.length === 0) {
     return (
       <div className="container mx-auto p-4">
         <div className="flex justify-center items-center h-64">
@@ -466,11 +352,11 @@ const TokenList = ({ currentUser, showNotification }) => {
   }
 
   // Render error state
-  if (error && tokens.length === 0) {
+  if (tokensError && tokens.length === 0) {
     return (
       <div className="container mx-auto p-4">
         <div className="flex justify-center items-center h-64">
-          <div className="text-red-500">Error: {error}</div>
+          <div className="text-red-500">Error: {tokensError}</div>
         </div>
       </div>
     );
@@ -517,9 +403,9 @@ const TokenList = ({ currentUser, showNotification }) => {
                 />
                 {/* Connection status indicator */}
                 <div className="flex items-center gap-2 text-xs">
-                  <div className={`w-2 h-2 rounded-full ${isSocketConnected ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
+                  <div className={`w-2 h-2 rounded-full ${tokensSocketConnected ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
                   <span className="text-gray-300">
-                    {isSocketConnected ? 'Live updates' : 'Fallback mode'}
+                    {tokensSocketConnected ? 'Live updates' : 'Fallback mode'}
                   </span>
                 </div>
               </div>
@@ -912,7 +798,7 @@ const TokenList = ({ currentUser, showNotification }) => {
               </>
             ) : filteredTokens.length === 0 ? (
               <div className="text-center text-gray-400 py-8">
-                {isLoading ? 'Loading tokens...' : 'No tokens found'}
+                {isSearchLoading ? 'Loading tokens...' : 'No tokens found'}
               </div>
             ) : null}
           </>
@@ -937,7 +823,7 @@ const TokenList = ({ currentUser, showNotification }) => {
           />
         )}
 
-        {isLoading && viewMode === 'tokens' ? (
+        {tokensLoading && viewMode === 'tokens' ? (
           <div className="fixed bottom-4 right-4 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg">
             Loading tokens...
           </div>

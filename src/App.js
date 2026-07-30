@@ -12,6 +12,7 @@ import {
   verifyToken,
   pingServer,
   API_URL,
+  BACKEND_URL,
   reconnectSocket,
   trackClick,
   trackBubbleClick,
@@ -84,6 +85,14 @@ import {
   mergeIncomingAdsWithCurrent,
   mergeAdVotesSnapshot,
 } from './utils/adsCache';
+import {
+  readTokensCache,
+  persistTokensCache,
+  readGlobalStatsCache,
+  persistGlobalStatsCache,
+  getTokensCacheAgeMs,
+  TOKENS_CACHE_STALE_MS,
+} from './utils/tokensCache';
 import './App.css';
 import FilterControls from './components/FilterControls';
 import {
@@ -752,6 +761,24 @@ const AdsFetchOnRoute = ({ loadAdsFromApi, hasLoadedAds }) => {
   return null;
 };
 
+const TokensFetchOnRoute = ({ loadTokensFromApi, hasLoadedTokens }) => {
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.pathname !== '/home') return;
+    if (!hasLoadedTokens) {
+      loadTokensFromApi();
+      return;
+    }
+    // Stale in-memory list: refresh quietly when user returns to home (same cadence as server sync).
+    if (getTokensCacheAgeMs() >= TOKENS_CACHE_STALE_MS) {
+      loadTokensFromApi({ background: true });
+    }
+  }, [location.pathname, loadTokensFromApi, hasLoadedTokens]);
+
+  return null;
+};
+
 /** Link-in-bio fields that must not be overwritten by a stale /verify-token during/after save */
 const LINK_IN_BIO_STATE_KEYS = [
   'bioLinks',
@@ -798,6 +825,15 @@ function App() {
     return [];
   });
   const adsRef = useRef(ads);
+
+  const [tokenList, setTokenList] = useState(() => readTokensCache());
+  const tokenListRef = useRef(tokenList);
+  const [tokenGlobalStats, setTokenGlobalStats] = useState(() => readGlobalStatsCache());
+  const [tokensLoading, setTokensLoading] = useState(() => readTokensCache().length === 0);
+  const [tokensError, setTokensError] = useState(null);
+  const [tokensSocketConnected, setTokensSocketConnected] = useState(false);
+  const isFetchingTokensRef = useRef(false);
+  const tokenDetailsRefreshPausedRef = useRef(false);
   
   // Detect iOS for better touch handling
   useEffect(() => {
@@ -942,6 +978,10 @@ function App() {
   useEffect(() => {
     adsRef.current = ads;
   }, [ads]);
+
+  useEffect(() => {
+    tokenListRef.current = tokenList;
+  }, [tokenList]);
 
   // Initialize user presence tracking across all pages
   useUserPresence(currentUser);
@@ -1216,6 +1256,59 @@ function App() {
     }
   }, [currentUser?.userId, currentUser?.isAdmin, mergeRecentVoteFields]);
 
+  const loadTokensFromApi = useCallback(async (options = {}) => {
+    const background = options.background === true;
+    if (isFetchingTokensRef.current) return;
+    if (background && tokenDetailsRefreshPausedRef.current) return;
+
+    const hasTokens = tokenListRef.current.length > 0;
+
+    try {
+      if (!background) {
+        setTokensLoading(!hasTokens);
+      }
+      isFetchingTokensRef.current = true;
+
+      const [tokensResponse, statsResponse] = await Promise.all([
+        fetch(`${BACKEND_URL}/api/tokens`),
+        fetch(`${BACKEND_URL}/api/tokens/global/stats`),
+      ]);
+
+      if (!tokensResponse.ok) {
+        throw new Error(`Failed to fetch tokens: ${tokensResponse.status}`);
+      }
+
+      const data = await tokensResponse.json();
+      if (!Array.isArray(data)) {
+        throw new Error('Invalid tokens response format');
+      }
+
+      setTokenList(data);
+      persistTokensCache(data);
+      setTokensError(null);
+
+      if (statsResponse.ok) {
+        const stats = await statsResponse.json();
+        setTokenGlobalStats(stats);
+        persistGlobalStatsCache(stats);
+      }
+    } catch (error) {
+      logger.error('Error loading tokens:', error);
+      if (tokenListRef.current.length === 0 && !background) {
+        setTokensError('Failed to load tokens. Please try again in a few minutes.');
+      }
+    } finally {
+      isFetchingTokensRef.current = false;
+      if (!background) {
+        setTokensLoading(false);
+      }
+    }
+  }, []);
+
+  const handleTokenDetailsOpenChange = useCallback((open) => {
+    tokenDetailsRefreshPausedRef.current = !!open;
+  }, []);
+
   // Update socket connection handling
   useEffect(() => {
     // Replace the current socket event listeners with a single 'adsUpdated' listener
@@ -1364,6 +1457,61 @@ function App() {
       socket.off('adCreated');
     };
   }, []);
+
+  useEffect(() => {
+    const handleTokenUpdate = (data) => {
+      if (data.type === 'update' && Array.isArray(data.tokens)) {
+        setTokenList(data.tokens);
+        persistTokensCache(data.tokens);
+        setTokensError(null);
+      }
+    };
+
+    let fallbackInterval = null;
+
+    const startFallback = () => {
+      if (fallbackInterval) return;
+      fallbackInterval = setInterval(() => {
+        if (!document.hidden && !tokenDetailsRefreshPausedRef.current) {
+          loadTokensFromApi({ background: true });
+        }
+      }, 60000);
+    };
+
+    const stopFallback = () => {
+      if (fallbackInterval) {
+        clearInterval(fallbackInterval);
+        fallbackInterval = null;
+      }
+    };
+
+    const onConnect = () => {
+      setTokensSocketConnected(true);
+      stopFallback();
+    };
+
+    const onDisconnect = () => {
+      setTokensSocketConnected(false);
+      startFallback();
+    };
+
+    socket.on('tokensUpdated', handleTokenUpdate);
+    socket.on('connect', onConnect);
+    socket.on('disconnect', onDisconnect);
+
+    if (socket.connected) {
+      setTokensSocketConnected(true);
+    } else {
+      startFallback();
+    }
+
+    return () => {
+      socket.off('tokensUpdated', handleTokenUpdate);
+      socket.off('connect', onConnect);
+      socket.off('disconnect', onDisconnect);
+      stopFallback();
+    };
+  }, [loadTokensFromApi]);
 
   // Debug ads state changes
   useEffect(() => {
@@ -3037,6 +3185,7 @@ function App() {
         />
         <HomeLayoutHandler arrangeDesktopGrid={arrangeDesktopGrid} adjustBubblesForMobile={adjustBubblesForMobile} />
         <AdsFetchOnRoute loadAdsFromApi={loadAdsFromApi} hasLoadedAds={ads.length > 0} />
+        <TokensFetchOnRoute loadTokensFromApi={loadTokensFromApi} hasLoadedTokens={tokenList.length > 0} />
         <DesktopInstallPrompt />
         {currentUser?.token && (
           <Suspense fallback={null}>
@@ -3950,6 +4099,12 @@ function App() {
                     <TokenList 
                       currentUser={currentUser}
                       showNotification={showNotification}
+                      tokens={tokenList}
+                      globalStats={tokenGlobalStats}
+                      tokensLoading={tokensLoading}
+                      tokensError={tokensError}
+                      tokensSocketConnected={tokensSocketConnected}
+                      onTokenDetailsOpenChange={handleTokenDetailsOpenChange}
                     />
                   </div>
                 </div>

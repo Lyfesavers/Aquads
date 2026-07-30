@@ -3,7 +3,7 @@ import axios from 'axios';
 import logger from '../utils/logger';
 import { readAdsCache } from '../utils/adsCache';
 
-const BACKEND_URL = process.env.REACT_APP_API_URL ||
+export const BACKEND_URL = process.env.REACT_APP_API_URL ||
   (process.env.NODE_ENV === 'production' ? 'https://aquads-production.up.railway.app' : 'http://localhost:5000');
 
 export const API_URL = `${BACKEND_URL}/api`;
