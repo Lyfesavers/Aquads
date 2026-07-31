@@ -189,16 +189,12 @@ function parseRaidMessageIdsCompositeKey(compositeKey) {
 
 /** Keep web clients and ads list cache in sync after Telegram/Discord bubble votes. */
 async function emitBubbleVoteSync(projectDoc) {
-  const { getBumpSyncUpdate } = require('./bumpFromVotes');
+  const { syncAdBumpState } = require('./bumpFromVotes');
   const socket = require('../socket');
 
-  let finalAd = projectDoc;
-  const bumpSync = getBumpSyncUpdate(projectDoc, projectDoc.bullishVotes);
-  if (bumpSync.changed) {
-    finalAd = await Ad.findByIdAndUpdate(projectDoc._id, { $set: bumpSync.$set }, { new: true });
-    if (finalAd) {
-      socket.emitAdUpdate('update', finalAd);
-    }
+  const finalAd = await syncAdBumpState(projectDoc);
+  if (finalAd !== projectDoc) {
+    socket.emitAdUpdate('update', finalAd);
   }
 
   const { invalidatePublicAdsCache } = require('../routes/ads');

@@ -4259,6 +4259,7 @@ function App() {
                 <ProjectInfo
                   currentUser={currentUser}
                   ads={ads}
+                  onAdPatched={handleAdPatched}
                   onLogin={() => setShowLoginModal(true)}
                   onCreateAccount={() => setShowCreateAccountModal(true)}
                 />

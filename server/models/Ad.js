@@ -48,6 +48,19 @@ const adSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  /** Dex liquidity gate for bump (default ≥ $10k). Refreshed on vote/boost events and enforcement cron. */
+  meetsLiquidityRequirement: {
+    type: Boolean,
+    default: true
+  },
+  liquidityCheckedAt: {
+    type: Date,
+    default: null
+  },
+  liquidityUsdSnapshot: {
+    type: Number,
+    default: null
+  },
   owner: {
     type: String,
     required: true

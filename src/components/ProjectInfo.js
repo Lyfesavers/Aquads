@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { requestOwnerBump } from '../services/api';
 import { Helmet } from 'react-helmet';
 import { FaRocket, FaUsers, FaChartLine, FaGlobe, FaShieldAlt, FaCog, FaCheckCircle, FaArrowRight, FaBullhorn, FaGamepad, FaHandshake, FaTrophy, FaArrowLeft, FaCreditCard, FaExchangeAlt, FaUsersCog, FaVideo, FaMicrophone, FaNewspaper, FaStar, FaFire, FaGem, FaCrown, FaGift, FaTwitter, FaLightbulb, FaCrosshairs, FaNetworkWired, FaTelegram, FaDiscord } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
@@ -200,10 +201,11 @@ const ADDON_PACKAGES = [
   }
 ];
 
-const ProjectInfo = ({ currentUser, ads = [] }) => {
+const ProjectInfo = ({ currentUser, ads = [], onAdPatched }) => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showBannerModal, setShowBannerModal] = useState(false);
   const [preSelectedPackage, setPreSelectedPackage] = useState(null);
+  const [bumpLoading, setBumpLoading] = useState(false);
 
   // Check if user has any projects listed
   const userHasProjects = ads.some(ad => ad.owner === currentUser?.username);
@@ -252,19 +254,40 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
     }
   };
 
-  const handleBumpClick = () => {
-    const userAd = ads.find(ad => ad.owner === currentUser?.username);
-    const bullish = userAd ? (userAd.bullishVotes || 0) : 0;
-    const need = Math.max(0, 100 - bullish);
+  const handleBumpClick = async () => {
+    const userAd = ads.find(
+      (ad) =>
+        ad.owner === currentUser?.username &&
+        ['active', 'approved'].includes(ad.status)
+    );
     if (!userAd) {
-      alert('List a project first, then grow bullish votes to bump.');
+      alert('List a project first, then grow bullish votes and maintain $10k+ liquidity to bump.');
       return;
     }
-    alert(
-      need === 0
-        ? 'Your bubble already has 100+ bullish votes and is bumped.'
-        : `Bumps are free: reach 100 bullish votes (${bullish} now, ${need} to go). Organic votes and vote boosts both count.`
-    );
+    if (bumpLoading) return;
+
+    setBumpLoading(true);
+    try {
+      const result = await requestOwnerBump(userAd.id);
+      if (result.ad && onAdPatched) {
+        onAdPatched(result.ad);
+      }
+      const notify = window.showNotification;
+      if (notify) {
+        notify(result.message, result.notificationType || (result.success ? 'success' : 'info'));
+      } else {
+        alert(result.message);
+      }
+    } catch (error) {
+      const message = error.message || 'Failed to check bump eligibility';
+      if (window.showNotification) {
+        window.showNotification(message, 'error');
+      } else {
+        alert(message);
+      }
+    } finally {
+      setBumpLoading(false);
+    }
   };
 
   // Authentication check functions
@@ -811,14 +834,14 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
           <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-8 border border-blue-500 min-w-0">
             <div className="text-center mb-6">
               <h3 className="text-2xl font-bold text-white mb-2">Bubble bump</h3>
-              <div className="text-4xl font-bold text-green-400 mb-2">100 votes</div>
-              <div className="text-gray-400">Bullish threshold (free)</div>
+              <div className="text-4xl font-bold text-green-400 mb-2">100 votes + $10k liq</div>
+              <div className="text-gray-400">Free when both requirements are met</div>
             </div>
             <ul className="space-y-3 text-gray-300 text-sm">
               <li className="flex items-start gap-3">
                 <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
                 <span className="min-w-0 flex-1 leading-relaxed">
-                  <strong className="text-white">100+</strong> bullish votes = bumped bubble (max size, main row)
+                  <strong className="text-white">100+</strong> bullish votes and <strong className="text-white">$10k+</strong> pool liquidity = bumped bubble (max size, main row)
                 </span>
               </li>
               <li className="flex items-start gap-3">
@@ -827,7 +850,11 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
               </li>
               <li className="flex items-start gap-3">
                 <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
-                <span className="min-w-0 flex-1 leading-relaxed">Below 100 = unbumped (size shrinks over time)</span>
+                <span className="min-w-0 flex-1 leading-relaxed">Liquidity is re-checked every 2 days; restore pool liquidity and tap Bump in your dashboard to re-bump</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
+                <span className="min-w-0 flex-1 leading-relaxed">Below 100 votes or under $10k liquidity = unbumped (size shrinks over time)</span>
               </li>
               <li className="flex items-start gap-3">
                 <FaTrophy className="text-yellow-400 mt-0.5 shrink-0" />
@@ -849,10 +876,11 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
             {userHasProjects && (
               <button
                 onClick={handleBumpOptionsClick}
-                className="mt-6 w-full inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-semibold rounded-lg transition-all duration-300 transform hover:scale-[1.02] shadow-lg"
+                disabled={bumpLoading}
+                className="mt-6 w-full inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 disabled:opacity-60 disabled:cursor-wait text-white font-semibold rounded-lg transition-all duration-300 transform hover:scale-[1.02] shadow-lg"
               >
                 <FaRocket className="mr-2" />
-                How bumping works
+                {bumpLoading ? 'Checking bump…' : 'Check bump status'}
                 <FaArrowRight className="ml-2" />
               </button>
             )}

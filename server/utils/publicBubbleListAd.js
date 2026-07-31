@@ -94,7 +94,7 @@ const PUBLIC_BUBBLE_LIST_SELECT =
 
 /** Minimal Mongo projection for unclaimed dex-feed rows (963+ listings). */
 const DEX_FEED_BUBBLE_MONGO_SELECT =
-  'id title logo url size x y owner status pairAddress contractAddress blockchain bullishVotes bearishVotes listingSource claimStatus listingTier clicks createdAt customBrandingImageSize customBrandingVideoUrl isBumped';
+  'id title logo url size x y owner status pairAddress contractAddress blockchain bullishVotes bearishVotes listingSource claimStatus listingTier clicks createdAt customBrandingImageSize customBrandingVideoUrl isBumped meetsLiquidityRequirement';
 
 module.exports = {
   toPublicBubbleListAd,

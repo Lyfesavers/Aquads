@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { API_URL, fetchPendingAds, approveAd, rejectAd, fetchPendingServices, approveService, rejectService, getClickStats, getClickTrends, getRecentClicks, upgradePremiumListing, fetchMyBubbleAnalytics, fetchRaiderAnalytics, transferDexFeedOwnership, approveListingClaim, rejectListingClaim } from '../services/api';
+import { API_URL, fetchPendingAds, approveAd, rejectAd, fetchPendingServices, approveService, rejectService, getClickStats, getClickTrends, getRecentClicks, upgradePremiumListing, fetchMyBubbleAnalytics, fetchRaiderAnalytics, transferDexFeedOwnership, approveListingClaim, rejectListingClaim, requestOwnerBump } from '../services/api';
 import BookingManagement from './BookingManagement';
 import ServiceReviews from './ServiceReviews';
 import JobList from './JobList';
@@ -186,6 +186,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onAdPatche
   const [showProjectDeepDiveModal, setShowProjectDeepDiveModal] = useState(false);
   const [selectedProjectForDeepDive, setSelectedProjectForDeepDive] = useState(null);
   const [showEditAdModal, setShowEditAdModal] = useState(false);
+  const [bumpLoadingAdId, setBumpLoadingAdId] = useState(null);
   const [selectedAdForEdit, setSelectedAdForEdit] = useState(null);
   const [pendingTwitterRaids, setPendingTwitterRaids] = useState([]);
   const [loadingTwitterRaids, setLoadingTwitterRaids] = useState(false);
@@ -2216,16 +2217,23 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onAdPatche
     loadInitialBooking();
   }, [initialBookingId, currentUser, bookings, API_URL]);
 
-  const handleBumpClick = (adId) => {
-    const ad = ads.find(a => a.id === adId);
-    const bullish = ad ? (ad.bullishVotes || 0) : 0;
-    const need = Math.max(0, 100 - bullish);
-    showNotification(
-      need === 0
-        ? 'Your bubble is already bumped (100+ bullish votes).'
-        : `Bumps are free: reach 100 bullish votes to bump your bubble (${bullish} now — ${need} to go). Vote boosts count too.`,
-      'info'
-    );
+  const handleBumpClick = async (adId) => {
+    if (bumpLoadingAdId) return;
+    setBumpLoadingAdId(adId);
+    try {
+      const result = await requestOwnerBump(adId);
+      if (result.ad && onAdPatched) {
+        onAdPatched(result.ad);
+      }
+      showNotification(
+        result.message,
+        result.notificationType || (result.success ? 'success' : 'info')
+      );
+    } catch (error) {
+      showNotification(error.message || 'Failed to check bump eligibility', 'error');
+    } finally {
+      setBumpLoadingAdId(null);
+    }
   };
 
   const handleOpenProjectDeepDive = (ad) => {
@@ -4029,6 +4037,11 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onAdPatche
                                   {!isBumped && ad.status !== 'pending' && votesToBump > 0 && (
                                     <p className="text-gray-500 text-xs mt-1">{votesToBump} bullish votes to bump</p>
                                   )}
+                                  {!isBumped && ad.status !== 'pending' && votesToBump === 0 && (
+                                    <p className="text-amber-400/90 text-xs mt-1">
+                                      100+ votes — liquidity below $10k. Restore pool liquidity, then tap Bump to re-check.
+                                    </p>
+                                  )}
                                 </div>
                               </div>
                             </div>
@@ -4113,9 +4126,10 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onAdPatche
                               <>
                                 <button
                                   onClick={() => handleBumpClick(ad.id)}
-                                  className="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
+                                  disabled={bumpLoadingAdId === ad.id}
+                                  className="bg-blue-600 hover:bg-blue-500 disabled:opacity-60 disabled:cursor-wait text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
                                 >
-                                  Bump
+                                  {bumpLoadingAdId === ad.id ? 'Checking…' : 'Bump'}
                                 </button>
                                 {ad.listingTier !== 'starter' && (
                                 <a
@@ -6409,8 +6423,13 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onAdPatche
                               <div className="flex space-x-2">
                                 {!ad.status || ad.status !== 'pending' ? (
                                   <>
-                                    <button onClick={() => handleBumpClick(ad.id)} className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded" title="Bump this ad">
-                                      Bump
+                                    <button
+                                      onClick={() => handleBumpClick(ad.id)}
+                                      disabled={bumpLoadingAdId === ad.id}
+                                      className="bg-blue-500 hover:bg-blue-600 disabled:opacity-60 disabled:cursor-wait text-white px-3 py-1 rounded"
+                                      title="Check votes and liquidity to bump"
+                                    >
+                                      {bumpLoadingAdId === ad.id ? 'Checking…' : 'Bump'}
                                     </button>
                                     <a
                                       href="https://t.me/+6rJbDLqdMxA3ZTUx"

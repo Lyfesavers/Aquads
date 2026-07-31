@@ -26,7 +26,10 @@ const {
 const { isValidProjectUrl, normalizeProjectUrl } = require('../utils/listingValidation');
 const {
   isVoteBumped,
+  isBumpEligible,
   getBumpSyncUpdate,
+  syncAdBumpState,
+  requestOwnerBump,
   computeShrunkSize,
   BUMP_VOTE_THRESHOLD
 } = require('../utils/bumpFromVotes');
@@ -53,6 +56,15 @@ const liquidityLockVerifyLimiter = rateLimit({
   legacyHeaders: false,
   message: { message: 'Too many lock verification attempts. Please try again in a few minutes.' },
   keyGenerator: (req) => req.user?.username || req.ip,
+});
+
+const ownerBumpLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many bump checks. Please wait a minute and try again.' },
+  keyGenerator: (req) => `${req.user?.username || req.ip}:${req.body?.adId || req.params?.id || ''}`,
 });
 
 const LAUNCH_CHECKLIST_STEPS = [
@@ -163,11 +175,10 @@ const sizeOptsForBump = (now = Date.now()) => ({
 });
 
 const finalizeAdBumpAfterVote = async (adDoc) => {
-  const bumpSync = getBumpSyncUpdate(adDoc, adDoc.bullishVotes, sizeOptsForBump());
-  if (!bumpSync.changed) {
+  const synced = await syncAdBumpState(adDoc, sizeOptsForBump());
+  if (synced === adDoc) {
     return adDoc;
   }
-  const synced = await Ad.findByIdAndUpdate(adDoc._id, { $set: bumpSync.$set }, { new: true });
   socket.emitAdUpdate('update', synced);
   return synced;
 };
@@ -193,7 +204,7 @@ const updateAdSize = async (ad) => {
       return;
     }
 
-    if (isVoteBumped(ad.bullishVotes)) {
+    if (isBumpEligible(ad, ad.bullishVotes)) {
       if (ad.size !== MAX_SIZE) {
         const result = await Ad.findByIdAndUpdate(
           ad._id,
@@ -234,7 +245,7 @@ const updateAdSize = async (ad) => {
 setInterval(async () => {
   try {
     const ads = await Ad.find({ status: { $in: ['active', 'approved'] } })
-      .select('_id id size bullishVotes createdAt status')
+      .select('_id id size bullishVotes createdAt status meetsLiquidityRequirement isBumped bumpedAt bumpExpiresAt bumpDuration')
       .lean();
 
     for (const ad of ads) {
@@ -282,11 +293,11 @@ const fetchAndCacheAds = async () => {
   const ads = [...otherAds, ...dexAds];
   const currentTime = Date.now();
   const processedAds = ads.map((ad) => {
-    const voteBumped = isVoteBumped(ad.bullishVotes);
+    const bumpEligible = isBumpEligible(ad, ad.bullishVotes);
     const adObject = { ...ad };
     adObject.hasCustomBrandingImage = (ad.customBrandingImageSize || 0) > 0;
-    adObject.isBumped = voteBumped;
-    if (!voteBumped) {
+    adObject.isBumped = bumpEligible;
+    if (!bumpEligible) {
       const calculatedSize = computeShrunkSize(ad.createdAt, currentTime, {
         shrinkInterval: SHRINK_INTERVAL,
         maxSize: MAX_SIZE,
@@ -946,12 +957,78 @@ router.put('/:id', auth, requireEmailVerification, emitAdEvent('update'), async 
   }
 });
 
-// POST route for bumping an ad (legacy — paid bumps removed; bumps come from bullish votes)
-router.post('/bump', auth, async (req, res) => {
-  res.status(410).json({
-    error: 'Paid bumps are no longer available.',
-    message: `Bubbles bump automatically at ${BUMP_VOTE_THRESHOLD}+ bullish votes (organic votes and vote boosts both count).`
-  });
+// POST owner bump check — 100+ votes and ≥ bump liquidity minimum (live DexScreener verify)
+router.post('/bump', auth, ownerBumpLimiter, async (req, res) => {
+  try {
+    const adId = String(req.body?.adId || '').trim();
+    if (!adId) {
+      return res.status(400).json({ error: 'adId is required' });
+    }
+
+    const ad = await Ad.findOne({ id: adId });
+    if (!ad) {
+      return res.status(404).json({ error: 'Ad not found' });
+    }
+
+    if (ad.owner !== req.user.username && !req.user.isAdmin) {
+      return res.status(403).json({ error: 'You can only bump your own listings' });
+    }
+
+    if (!['active', 'approved'].includes(ad.status)) {
+      return res.status(400).json({
+        error: 'Listing must be approved before it can be bumped',
+        code: 'not_active'
+      });
+    }
+
+    const result = await requestOwnerBump(ad, sizeOptsForBump());
+
+    if (result.ad && result.ad._id) {
+      invalidateAdsCache();
+      socket.emitAdUpdate('update', result.ad);
+      socket.getIO().emit('adVoteUpdated', {
+        adId: result.ad.id,
+        bullishVotes: result.ad.bullishVotes,
+        bearishVotes: result.ad.bearishVotes,
+        isBumped: result.ad.isBumped,
+        size: result.ad.size
+      });
+    }
+
+    const typeByCode = {
+      bumped: 'success',
+      already_bumped: 'success',
+      needs_votes: 'info',
+      liquidity_low: 'warning',
+      check_failed: 'error'
+    };
+
+    return res.json({
+      success: result.code === 'bumped' || result.code === 'already_bumped',
+      code: result.code,
+      isBumped: result.isBumped,
+      bullishVotes: result.bullishVotes,
+      votesNeeded: result.votesNeeded,
+      liquidityUsd: result.liquidityUsd,
+      minLiquidityUsd: result.minLiquidityUsd,
+      message: result.message,
+      notificationType: typeByCode[result.code] || 'info',
+      ad: result.ad
+        ? {
+            id: result.ad.id,
+            isBumped: result.ad.isBumped,
+            size: result.ad.size,
+            bullishVotes: result.ad.bullishVotes,
+            bearishVotes: result.ad.bearishVotes,
+            meetsLiquidityRequirement: result.ad.meetsLiquidityRequirement,
+            liquidityUsdSnapshot: result.ad.liquidityUsdSnapshot
+          }
+        : null
+    });
+  } catch (error) {
+    console.error('[Owner Bump] Error:', error);
+    res.status(500).json({ error: 'Failed to check bump eligibility' });
+  }
 });
 
 // Track bubble click (public — opens AquaSwap from bubble map)
@@ -1053,8 +1130,8 @@ router.post('/:id/vote', auth, async (req, res) => {
           bullishVotes: ad.bullishVotes,
           bearishVotes: ad.bearishVotes,
           userVote: voteType,
-          isBumped: isVoteBumped(ad.bullishVotes),
-          size: isVoteBumped(ad.bullishVotes) ? MAX_SIZE : ad.size
+          isBumped: isBumpEligible(ad, ad.bullishVotes),
+          size: isBumpEligible(ad, ad.bullishVotes) ? MAX_SIZE : ad.size
         });
       }
       
@@ -1230,7 +1307,7 @@ router.get('/:id/votes', async (req, res) => {
       adId: ad.id,
       bullishVotes: ad.bullishVotes,
       bearishVotes: ad.bearishVotes,
-      isBumped: isVoteBumped(ad.bullishVotes),
+      isBumped: isBumpEligible(ad, ad.bullishVotes),
       // Calculate sentiment percentage
       sentiment: ad.bullishVotes + ad.bearishVotes > 0 
         ? Math.round((ad.bullishVotes / (ad.bullishVotes + ad.bearishVotes)) * 100) 

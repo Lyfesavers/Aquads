@@ -216,7 +216,7 @@ After your token goes live on Pump.fun, Raydium, Uniswap, or elsewhere, you need
 
 Your **project storefront** is the interactive bubble map—a dynamic visualization where listed tokens appear as colorful bubbles:
 
-- **Size** driven by community engagement; **100+ bullish votes** bumps your bubble (max size, main row)
+- **Size** driven by community engagement; **100+ bullish votes** and **$10k+ liquidity** bump your bubble (max size, main row)
 - **Color** indicating the blockchain network (Ethereum = Blue, Solana = Purple, BSC = Yellow, etc.)
 - **Position** optimized for visibility based on activity
 
@@ -721,7 +721,7 @@ In **Agent** mode, you can submit a **free Starter** listing without filling the
 3. Optionally add a **website URL** (or skip if you do not have a site yet — you can add it later from your dashboard)
 4. Skipper submits the listing → status **pending admin approval** → bubble goes live after approval
 
-Same rules apply as the normal List Project flow: accurate pair data, professional logo, honest project info, and Aquads' **global listing requirements** ($50k market cap, $15k liquidity, 12+ hour pair age, valid logo).
+Same rules apply as the normal List Project flow: accurate pair data, professional logo, honest project info, and Aquads' **global listing requirements** (12+ hour pair age, valid logo).
 
 ### Wallet, credits & top-ups
 
@@ -798,10 +798,10 @@ Fill in the required fields (website is optional):
 
 All projects on Aquads must meet these **global listing requirements** — whether you submit via **List Project**, **Skipper Agent**, or appear through **automatic DEX discovery**. Projects that fall short may be declined or removed:
 
-- **Market cap:** at least **$50,000** USD (higher of market cap or fully diluted valuation from public DEX data)
-- **Liquidity:** at least **$15,000** USD in the primary trading pair
 - **Pair age:** trading pair live for at least **12 hours** on a public DEX
 - **Logo:** valid direct HTTPS image (PNG, JPG, GIF, or WebP) that loads correctly
+
+**Bubble bump** (max size, main row, higher raid caps) is separate: **100+ bullish votes** and at least **$10,000** USD liquidity in the primary trading pair. See [Bumping Your Token](/docs#bumping-tokens).
 
 Thresholds may change over time at Aquads' discretion.
 
@@ -842,7 +842,7 @@ You can pay via:
 **Starter ($0 base)** and **Premium (USDC — see listing modal)** include the same core trading + discovery surface:
 
 - **AquaSwap** + **BexTools**-style routing from your bubble (live chart & swap handoff)
-- Homepage bubble map + vote rankings + bump at **100+ bullish** (organic votes and vote boosts both count)
+- Homepage bubble map + vote rankings + bump at **100+ bullish** and **$10k+ liquidity** (organic votes and vote boosts both count toward votes)
 - **Complimentary homepage banner** after approval: **24 hours** on **Starter**, **7 days** on **Premium** (rotating placement—see List Project flow)
 - Raids, vote boosts, Bump Bot — **custom \`/setbranding\` media on notifications is paid Premium when bumped** (Starter keeps default Aquads styling). **Vote bump (100+ bullish) does not upgrade listing tier.**
 
@@ -885,7 +885,7 @@ Already have a listing? You can:
 - Use a high-quality, transparent PNG or animated GIF logo
 - Add a website when you have one (optional at listing time)
 - Have your pair address ready
-- Confirm your project meets Aquads' **global listing requirements** ($50k market cap, $15k liquidity, 12+ hour pair age) before submitting
+- Confirm your project meets Aquads' **global listing requirements** (12+ hour pair age, valid logo) before submitting
 - Engage with voters to grow your bubble
     `,
     prevPage: { id: 'skipper-overview', title: 'Skipper Agent' },
@@ -909,10 +909,10 @@ Qualifying crypto projects may appear on the Aquads bubble map **automatically**
 
 Aquads applies the same **global listing requirements** to every project on the bubble map — including those discovered automatically from public DEX data. See [Listing Your Token](/docs#listing-token) for the full list:
 
-- **Market cap:** at least **$50,000** USD (higher of market cap or FDV)
-- **Liquidity:** at least **$15,000** USD in the primary trading pair
 - **Pair age:** at least **12 hours** live on a public DEX
 - **Required data:** token name, pair address, blockchain, contract address, and a valid logo URL (website optional)
+
+**Bump eligibility** (100+ bullish votes and **$10k+** liquidity) is enforced separately — see [Bumping Your Token](/docs#bumping-tokens).
 
 Thresholds may change over time and are applied at Aquads' discretion.
 
@@ -982,7 +982,7 @@ We aim to review and action valid removal or correction requests within **5 busi
 ### Frequently asked questions
 
 **Why is my project listed on Aquads?**  
-Your token met Aquads' **global listing requirements** on public DEX data (e.g. **$50k+ market cap**, **$15k+ liquidity**, **12+ hour** pair age, valid logo). Many indexers and discovery platforms work the same way.
+Your token appeared on Aquads from public DEX data with the required listing metadata (pair info, logo, and related fields). Many indexers and discovery platforms work the same way.
 
 **I didn't ask to be listed. Can you remove it?**  
 Yes. Email [info@aquads.xyz](mailto:info@aquads.xyz) with the details above. We target a response within **5 business days**.
@@ -1017,9 +1017,9 @@ The bubble map is Aquads' unique way of displaying crypto projects. Understandin
 Each listed project appears as a bubble on the interactive map. Bubbles have several properties:
 
 **Size**
-- **Bumped** bubbles (100+ bullish votes) use max size; others **shrink over time** from their last max-size baseline
+- **Bumped** bubbles (**100+ bullish votes** and **$10k+ liquidity**) use max size; others **shrink over time** from their last max-size baseline
 - Larger bubbles get more visibility on the map
-- Growing **bullish votes** (including boosts) is how you earn bump status
+- Growing **bullish votes** (including boosts) plus maintaining **$10k+ liquidity** is how you earn and keep bump status
 
 **Position**
 - New bubbles appear in available space
@@ -1045,12 +1045,12 @@ Opens the project modal with:
 
 **Voting**
 - Vote bullish or bearish on any project (when logged in)
-- Bullish votes contribute to rankings and to the **100-vote bump** threshold
+- Bullish votes contribute to rankings and to the **100-vote** part of the bump threshold (liquidity must stay **≥ $10k**)
 - One vote record per account per project (you can **change** bullish ↔ bearish)
 
 ### Bubble Growth Strategies
 
-1. **Bullish votes**: Aim for **100+** to keep bump status (community + boosts)
+1. **Bullish votes + liquidity**: Aim for **100+** votes and **$10k+** pool liquidity to stay bumped (community + boosts for votes)
 2. **Community engagement**: Encourage daily voting and sharing your Aquads link
 3. **Quality presentation**: Professional logos attract more clicks
 4. **Social proof**: Active social links increase trust
@@ -1104,7 +1104,7 @@ Projects are ranked based on multiple factors:
 |--------|--------|-------------|
 | Vote Ratio | 35% | Bullish vs bearish sentiment |
 | Total Votes | 25% | Overall engagement |
-| Bump (100+ bullish) | 20% | Whether the bubble is in bumped / max-visibility tier |
+| Bump (100+ bullish, $10k+ liq) | 20% | Whether the bubble is in bumped / max-visibility tier |
 | Profile Completion | 10% | Quality of listing |
 | Social Activity | 10% | Linked social engagement |
 
@@ -1119,7 +1119,7 @@ View top projects on the leaderboard:
 ### Improving Your Ranking
 
 1. Encourage your community to vote bullish
-2. Keep **bullish votes at or above 100** to stay bumped
+2. Keep **100+ bullish votes** and **$10k+ liquidity** to stay bumped (tap **Bump** in the dashboard after restoring liquidity)
 3. Maintain active social presence
 4. Respond to community questions
 5. Add all relevant project information
@@ -1200,20 +1200,26 @@ Users can leave detailed reviews:
   
   bumpingTokens: {
     title: 'Bumping Your Token',
-    description: 'How your bubble earns bump status from community votes.',
+    description: 'How your bubble earns bump status from community votes and liquidity.',
     content: `
 ## Bumping Your Token
 
-A **bumped** bubble is larger, appears on the **main bump row** first, and gets maximum visibility. On Aquads this is **earned with votes**, not bought as a separate bump product.
+A **bumped** bubble is larger, appears on the **main bump row** first, and gets maximum visibility. On Aquads this is **earned**, not bought as a separate bump product.
 
 ### What counts as bumped?
 
-Your listing is **bumped** when it reaches **100 or more bullish votes** (👍).
+Your listing is **bumped** when **both** are true:
 
-- **Organic votes** from logged-in users count.
-- **Vote boost** packages (paid add-on that adds bullish votes over time) **also count** toward the same total.
+1. **100 or more bullish votes** (👍) — organic votes and **vote boost** packages both count.
+2. **At least $10,000 USD liquidity** in the primary trading pair (verified from public DEX data).
 
-If bullish votes drop **below 100**, the bubble is **no longer bumped** (it behaves like other listings again, including size shrinking over time).
+If **either** requirement fails, the bubble is **no longer bumped** (size shrinks over time and pre-bump raid caps apply). Your votes are kept — you do not lose bullish vote count when liquidity drops.
+
+### Liquidity enforcement
+
+- Aquads re-checks liquidity for bumped and vote-qualified bubbles **every 2 days**.
+- If liquidity falls **below $10k**, bump status is removed automatically.
+- After you restore pool liquidity, open your **Dashboard** and tap **Bump** to run a live vote + liquidity check and re-bump.
 
 ### How to get there
 
@@ -1224,22 +1230,23 @@ If bullish votes drop **below 100**, the bubble is **no longer bumped** (it beha
 - Post on X, Telegram, Discord—anywhere your community can open the listing and vote **bullish**.
 
 **Step 3: Optional — vote boosts**
-- From the dashboard, you can still purchase **vote + member boost** packages; they increase **bullish votes** and help cross the bump threshold.
+- From the dashboard, purchase **vote + member boost** packages to add bullish votes faster.
 
-**Step 4: Use the Dashboard “Bump” hint**
-- The Bump control in the dashboard **explains** progress toward 100 votes (no checkout for a paid “bubble bump”).
+**Step 4: Tap Bump in the Dashboard**
+- The **Bump** button runs a live check for **100+ votes** and **$10k+ liquidity** (no paid checkout for map bumping).
 
 ### Strategy
 
 - Coordinate votes with announcements and launches.
+- Maintain healthy pool liquidity so bump status is not lost on the periodic check.
 - Remind holders they can switch to bullish if they had voted bearish earlier.
 - Combine community voting with boosts if you want faster visibility.
 
-> 💡 **Pro Tip**: A coordinated vote push when traffic is high can push you over 100 bullish in one session.
+> 💡 **Pro Tip**: A coordinated vote push when traffic is high can push you over 100 bullish in one session — make sure liquidity stays at or above $10k when you do.
 
 ### What we removed
 
-There is **no paid “lifetime bump” or Bump Store checkout** for map bumping anymore—visibility for bumps follows **bullish sentiment** on your bubble.
+There is **no paid “lifetime bump” or Bump Store checkout** for map bumping anymore—visibility follows **bullish sentiment plus liquidity** on your bubble.
     `,
     prevPage: { id: 'token-sentiment', title: 'Sentiment & Reviews' },
     nextPage: { id: 'banner-advertising', title: 'Banner Advertising' },
@@ -4007,11 +4014,11 @@ For Facebook raid participation:
 - ✅ Vote on projects (earn 1 pt per first vote)
 - ✅ View top 10 bubble rankings
 - ✅ Create extra raids (2000 pts each after your free daily quota)
-- **Starter vs Premium bots:** Starter gets the **same bot commands** (raids, votes, boosts, bumps). **Only Premium** unlocked **custom** logo/video on notifications via \`/setbranding\` once bumped (**100+ bullish**).
+- **Starter vs Premium bots:** Starter gets the **same bot commands** (raids, votes, boosts, bumps). **Only Premium** unlocked **custom** logo/video on notifications via \`/setbranding\` once bumped (**100+ bullish**, **$10k+ liquidity**).
 
 ### Premium Features (listed project + bump tier required)
 
-When you list your project as **Premium** and it reaches **bumped** status (**100+ bullish votes**):
+When you list your project as **Premium** and it reaches **bumped** status (**100+ bullish votes**, **$10k+ liquidity**):
 - 🔥 Trending across Aquads homepage
 - 🔥 BexTools trending section visibility
 - 🔥 Bubble ranking boost
@@ -4065,7 +4072,7 @@ Full reference of all 16 commands available in @aquadsbumpbot.
 | Command | Description |
 |---------|-------------|
 | \`/raids\` | View all available Twitter & Facebook raids |
-| \`/createraid URL\` | Create a Twitter raid (**Starter**: 1 free/day until bumped, then up to **20/day** · **Premium**: up to **5/day** until bumped, then up to **20/day** · threshold **100+ bullish**, then 2000 pts) |
+| \`/createraid URL\` | Create a Twitter raid (**Starter**: 1 free/day until bumped, then up to **20/day** · **Premium**: up to **5/day** until bumped, then up to **20/day** · bump = **100+ bullish** + **$10k+ liq**) |
 | \`/cancelraid URL\` | Cancel a raid you created |
 
 ### Bubble & Voting Commands
@@ -4142,7 +4149,7 @@ The Aquads Bump Bot is built specifically for meme coin projects to grow their c
 4. Participants earn 20 points per completion
 
 **Raid Details:**
-- FREE raid posts per day: **Starter** **1** until bumped, then up to **20** · **Premium** up to **5** until bumped, then up to **20** (same **100+ bullish** bump threshold)
+- FREE raid posts per day: **Starter** **1** until bumped, then up to **20** · **Premium** up to **5** until bumped, then up to **20** (bump = **100+ bullish** + **$10k+ liquidity**)
 - Additional raids cost 2000 points each
 - Raids auto-expire after 48 hours
 - Support both Twitter and Facebook
@@ -4158,7 +4165,7 @@ The Aquads Bump Bot is built specifically for meme coin projects to grow their c
 ### Bubble Rankings & Trending
 
 **Multi-Platform Visibility:**
-- **Aquads Homepage**: **Bumped** (100+ bullish) projects get trending-style visibility
+- **Aquads Homepage**: **Bumped** (**100+ bullish**, **$10k+ liq**) projects get trending-style visibility
 - **BexTools Trending Section**: Featured visibility
 - **Bubble Leaderboards**: Ranked by bullish votes
 - **Trending Channel**: Vote notifications on our trending channel
@@ -4183,7 +4190,7 @@ Purchase boosts via \`/boostvote\`:
 
 ### Custom Branding
 
-**Premium bumped projects only** (100+ bullish votes):
+**Premium bumped projects only** (**100+ bullish votes**, **$10k+ liquidity**):
 
 - Starter listings use the bot for everything **except** custom notification media—they keep **default Aquads** styling on pings until upgraded.
 - Upload your logo/image (max 500KB, JPG/PNG)
@@ -4223,7 +4230,7 @@ Purchase boosts via \`/boostvote\`:
 | Create extra raid | -2000 pts |
 | Redeem for cash | 10,000 pts = $100 CAD |
 
-> 💡 **Tip**: **Starter** gets the **full Bump Bot** (raids/votes/boosts)—**not** \`/setbranding\`; that’s **Premium** once bumped (**100+ bullish**). Premium also scales coordinated free raids from **up to 5**/day before bump to **up to 20**/day once bumped. Starter: **1**/day before bump, then **20**/day once bumped.
+> 💡 **Tip**: **Starter** gets the **full Bump Bot** (raids/votes/boosts)—**not** \`/setbranding\`; that’s **Premium** once bumped (**100+ bullish**, **$10k+ liq**). Premium also scales coordinated free raids from **up to 5**/day before bump to **up to 20**/day once bumped. Starter: **1**/day before bump, then **20**/day once bumped.
     `,
     prevPage: { id: 'bot-commands', title: 'Bot Commands' },
     nextPage: { id: 'browser-extension', title: 'Browser Extension' },
@@ -4561,7 +4568,7 @@ Aquads is one **growth hub** with four integrated pillars that form a **growth f
 ### 4.1. Growth hub (core)
 
 **Get listed — Dynamic bubble map & ads:**
-- **Features:** Bubble listings, vote-based bumps (100+ bullish), premium banners, BexTools sync, DexScreener auto-fill, swap routing from ads.
+- **Features:** Bubble listings, vote + liquidity bumps (100+ bullish, $10k+ liq), premium banners, BexTools sync, DexScreener auto-fill, swap routing from ads.
 - **Benefits:** A project storefront and discovery layer built for post-launch teams—not a generic market-cap directory.
 
 **Grow — Community & distribution:**

@@ -493,6 +493,23 @@ export const upgradePremiumListing = async ({ adId, txSignature, paymentChain, c
   return response.json();
 };
 
+/** Owner bump: live vote + liquidity check (100+ bullish, ≥ $10k liq). */
+export const requestOwnerBump = async (adId) => {
+  const response = await fetch(`${API_URL}/ads/bump`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeader()
+    },
+    body: JSON.stringify({ adId })
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(data.error || data.message || 'Failed to check bump eligibility');
+  }
+  return data;
+};
+
 // Update ad
 export const updateAd = async (id, adData) => {
   const response = await fetch(`${API_URL}/ads/${id}`, {

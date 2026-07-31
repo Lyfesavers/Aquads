@@ -49,6 +49,7 @@ const { syncMarketNews } = require('./services/marketNewsSync');
 const { syncFreeCourses } = require('./services/freeCoursesSync');
 const { runSuspiciousAffiliatesScan } = require('./services/suspiciousAffiliatesScan');
 const { syncDexFeedListings } = require('./services/dexFeedSync');
+const { enforceBumpedLiquidityRequirements } = require('./services/bumpedLiquidityEnforcement');
 const { ensureDexFeedUser } = require('./utils/ensureDexFeedUser');
 const { DEX_FEED_ENABLED } = require('./constants/dexFeed');
 const { sanitizeForRegex } = require('./utils/security');
@@ -97,7 +98,7 @@ setInterval(async () => {
 // Vote Boost Background Service - Add votes every 30 seconds for active boosts
 setInterval(async () => {
   try {
-    const { getBumpSyncUpdate } = require('./utils/bumpFromVotes');
+    const { syncAdBumpState } = require('./utils/bumpFromVotes');
     const adsRoutesForCache = require('./routes/ads');
 
     // Find all active boosts that haven't completed yet
@@ -139,9 +140,8 @@ setInterval(async () => {
             await boost.save();
 
             let finalAd = ad;
-            const bumpSync = getBumpSyncUpdate(ad, ad.bullishVotes);
-            if (bumpSync.changed) {
-              finalAd = await Ad.findByIdAndUpdate(ad._id, { $set: bumpSync.$set }, { new: true });
+            finalAd = await syncAdBumpState(ad);
+            if (finalAd !== ad) {
               socketModule.emitAdUpdate('update', finalAd);
             }
 
@@ -505,6 +505,16 @@ if (DEX_FEED_ENABLED) {
 } else {
   console.log('[DexFeed] Disabled (set DEX_FEED_ENABLED=true to enable)');
 }
+
+// Bumped bubble liquidity enforcement — every 2 days UTC (all vote-qualified + bumped bubbles)
+cron.schedule('0 7 */2 * *', async () => {
+  try {
+    console.log('[BumpLiquidity] Starting scheduled enforcement...');
+    await enforceBumpedLiquidityRequirements();
+  } catch (error) {
+    console.error('[BumpLiquidity] Cron error:', error);
+  }
+}, { timezone: 'UTC' });
 
 // Middleware
 const corsOptions = {
