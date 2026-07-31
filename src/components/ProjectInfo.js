@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { requestOwnerBump } from '../services/api';
 import { Helmet } from 'react-helmet';
-import { FaRocket, FaUsers, FaChartLine, FaGlobe, FaShieldAlt, FaCog, FaCheckCircle, FaArrowRight, FaBullhorn, FaGamepad, FaHandshake, FaTrophy, FaArrowLeft, FaCreditCard, FaExchangeAlt, FaUsersCog, FaVideo, FaMicrophone, FaNewspaper, FaStar, FaFire, FaGem, FaCrown, FaGift, FaTwitter, FaLightbulb, FaCrosshairs, FaNetworkWired, FaTelegram, FaDiscord, FaRobot, FaClipboardList } from 'react-icons/fa';
+import { FaRocket, FaUsers, FaChartLine, FaGlobe, FaShieldAlt, FaCog, FaCheckCircle, FaArrowRight, FaBullhorn, FaGamepad, FaHandshake, FaTrophy, FaArrowLeft, FaCreditCard, FaExchangeAlt, FaUsersCog, FaVideo, FaMicrophone, FaNewspaper, FaStar, FaFire, FaGem, FaCrown, FaGift, FaTwitter, FaLightbulb, FaCrosshairs, FaNetworkWired, FaTelegram, FaDiscord, FaRobot } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import CreateAdModal from './CreateAdModal';
 import CreateBannerModal from './CreateBannerModal';
@@ -450,137 +450,6 @@ const ProjectInfo = ({ currentUser, ads = [], onAdPatched }) => {
         </Link>
       </div>
 
-      {/* How to List — first section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-8">
-        <div className="rounded-2xl border border-cyan-500/40 bg-gray-900/70 backdrop-blur-sm p-6 sm:p-8 shadow-xl shadow-cyan-500/5">
-          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-8">
-            <div>
-              <div className="inline-flex items-center gap-2 text-cyan-300 text-sm font-semibold uppercase tracking-wide mb-2">
-                <FaClipboardList />
-                How to list your token
-              </div>
-              <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">
-                Four steps — form or Skipper, then verify on X or Telegram
-              </h2>
-              <p className="text-gray-300 max-w-3xl">
-                After you submit, prove ownership via your project&apos;s <strong className="text-white">official X account</strong> or by having a team rep announce the listing in our <strong className="text-white">Telegram community</strong>. We review verified submissions and approve your bubble on the map.
-              </p>
-            </div>
-          </div>
-
-          <ol className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
-            <li className="relative rounded-xl border border-gray-700 bg-gray-800/60 p-5 flex flex-col">
-              <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-sm font-bold mb-3">
-                1
-              </span>
-              <h3 className="text-lg font-semibold text-white mb-2">Submit your listing</h3>
-              <p className="text-gray-300 text-sm flex-1 mb-4">
-                Use the <strong className="text-white">List Project</strong> form (pair address + logo) or ask <strong className="text-white">Skipper Agent</strong> in ~10 seconds — contract address, logo URL, optional website.
-              </p>
-              <div className="flex flex-col gap-2">
-                <button
-                  type="button"
-                  onClick={handleListProjectClick}
-                  className="inline-flex items-center justify-center px-4 py-2.5 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white text-sm font-semibold rounded-lg transition-all duration-300"
-                >
-                  <FaRocket className="mr-2 shrink-0" />
-                  Open listing form
-                </button>
-                <Link
-                  to="/project-agent"
-                  className="inline-flex items-center justify-center px-4 py-2.5 bg-gray-700 hover:bg-gray-600 text-white text-sm font-semibold rounded-lg border border-gray-600 transition-all duration-300"
-                >
-                  <FaRobot className="mr-2 shrink-0" />
-                  List with Skipper
-                </Link>
-              </div>
-            </li>
-
-            <li className="relative rounded-xl border border-gray-700 bg-gray-800/60 p-5 flex flex-col">
-              <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-sm font-bold mb-3">
-                2
-              </span>
-              <h3 className="text-lg font-semibold text-white mb-2">Verify ownership</h3>
-              <p className="text-gray-300 text-sm mb-4">
-                Pick <strong className="text-white">X</strong> or <strong className="text-white">Telegram</strong> — include your project name and contract / pair address either way.
-              </p>
-
-              <div className="space-y-3 flex-1">
-                <div className="rounded-lg border border-gray-600/80 bg-gray-900/50 p-3">
-                  <p className="text-white text-sm font-medium mb-1 flex items-center gap-2">
-                    <FaTwitter className="text-sky-400 shrink-0" />
-                    Option A — X
-                  </p>
-                  <p className="text-gray-300 text-xs mb-3">
-                    From your project&apos;s official X account, DM <strong className="text-white">{AQUADS_X_HANDLE}</strong> with your project name and CA/PA.
-                  </p>
-                  <a
-                    href={AQUADS_X_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center w-full px-3 py-2 bg-gray-700 hover:bg-gray-600 text-white text-xs font-semibold rounded-lg border border-gray-600 transition-all duration-300"
-                  >
-                    Open {AQUADS_X_HANDLE}
-                  </a>
-                </div>
-
-                <div className="rounded-lg border border-gray-600/80 bg-gray-900/50 p-3">
-                  <p className="text-white text-sm font-medium mb-1 flex items-center gap-2">
-                    <FaTelegram className="text-sky-400 shrink-0" />
-                    Option B — Telegram
-                  </p>
-                  <p className="text-gray-300 text-xs mb-3">
-                    Join our community and have a team rep post that you&apos;ve submitted a listing for verification — name your project and include the CA/PA.
-                  </p>
-                  <a
-                    href={AQUADS_TELEGRAM_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center w-full px-3 py-2 bg-gray-700 hover:bg-gray-600 text-white text-xs font-semibold rounded-lg border border-gray-600 transition-all duration-300"
-                  >
-                    Join Aquads on Telegram
-                  </a>
-                </div>
-              </div>
-            </li>
-
-            <li className="relative rounded-xl border border-gray-700 bg-gray-800/60 p-5 flex flex-col">
-              <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-sm font-bold mb-3">
-                3
-              </span>
-              <h3 className="text-lg font-semibold text-white mb-2">Make it easy to find you</h3>
-              <p className="text-gray-300 text-sm flex-1 mb-4">
-                <strong className="text-white">Verified on X?</strong> Tag <strong className="text-white">{AQUADS_X_HANDLE}</strong> in a public post so we can prioritize your review.{' '}
-                <strong className="text-white">Verified on Telegram?</strong> Your group post in step 2 is enough — optional to cross-post on X too.
-              </p>
-              <a
-                href={LISTING_TWEET_INTENT}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center px-4 py-2.5 bg-gray-700 hover:bg-gray-600 text-white text-sm font-semibold rounded-lg border border-gray-600 transition-all duration-300 mt-auto"
-              >
-                <FaTwitter className="mr-2 shrink-0" />
-                Draft X announcement
-              </a>
-            </li>
-
-            <li className="relative rounded-xl border border-green-500/40 bg-gray-800/60 p-5 flex flex-col ring-1 ring-green-500/20">
-              <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 text-white text-sm font-bold mb-3">
-                4
-              </span>
-              <h3 className="text-lg font-semibold text-white mb-2">We review &amp; go live</h3>
-              <p className="text-gray-300 text-sm flex-1">
-                Once ownership is verified, we review your listing against our requirements. <strong className="text-white">Starter:</strong> typically 24–48 hours.{' '}
-                <strong className="text-white">Premium:</strong> ~1 hour fast-track after payment. Your bubble goes live on the map after approval.
-              </p>
-              <p className="text-gray-400 text-xs mt-4 pt-4 border-t border-gray-700">
-                Pair must be 12+ hours old with a valid logo URL. Verify via official X or your team in our Telegram community — we cannot approve without ownership proof.
-              </p>
-            </li>
-          </ol>
-        </div>
-      </div>
-
       {/* Hero Section */}
       <div className="relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-16">
@@ -609,6 +478,145 @@ const ProjectInfo = ({ currentUser, ads = [], onAdPatched }) => {
               </Link>
             </div>
 
+          </div>
+        </div>
+      </div>
+
+      {/* How to List */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-4">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+            How to List Your Token
+          </h2>
+          <p className="text-xl text-gray-300 max-w-2xl mx-auto">
+            Submit, verify ownership, and go live on the bubble map — takes a few minutes.
+          </p>
+        </div>
+
+        <div className="max-w-4xl mx-auto space-y-4">
+          {/* Step 1 */}
+          <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 sm:p-8 border border-gray-700 hover:border-blue-500/50 transition-all duration-300">
+            <div className="flex gap-5 sm:gap-6">
+              <div className="shrink-0">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500 flex items-center justify-center text-white font-bold text-lg">
+                  1
+                </div>
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-xl font-semibold text-white mb-2">Submit your listing</h3>
+                <p className="text-gray-300 mb-5 leading-relaxed">
+                  Fill out the <strong className="text-white">List Project</strong> form, or use <strong className="text-white">Skipper Agent</strong> (~10 seconds) with your contract address, logo URL, and optional website.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <button
+                    type="button"
+                    onClick={handleListProjectClick}
+                    className="inline-flex items-center justify-center px-5 py-2.5 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white text-sm font-semibold rounded-lg transition-all duration-300"
+                  >
+                    <FaRocket className="mr-2 shrink-0" />
+                    Open listing form
+                  </button>
+                  <Link
+                    to="/project-agent"
+                    className="inline-flex items-center justify-center px-5 py-2.5 bg-gray-700/80 hover:bg-gray-600 text-white text-sm font-semibold rounded-lg border border-gray-600 transition-all duration-300"
+                  >
+                    <FaRobot className="mr-2 shrink-0" />
+                    List with Skipper
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Step 2 */}
+          <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 sm:p-8 border border-gray-700 hover:border-blue-500/50 transition-all duration-300">
+            <div className="flex gap-5 sm:gap-6 mb-6">
+              <div className="shrink-0">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500 flex items-center justify-center text-white font-bold text-lg">
+                  2
+                </div>
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-xl font-semibold text-white mb-2">Verify ownership</h3>
+                <p className="text-gray-300 leading-relaxed">
+                  Choose <strong className="text-white">one</strong> method below. Include your <strong className="text-white">project name</strong> and <strong className="text-white">contract / pair address</strong> so we can match your submission.
+                </p>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 ml-0 sm:ml-[4.5rem]">
+              <div className="rounded-xl border border-gray-600 bg-gray-900/40 p-5 flex flex-col">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="bg-sky-500/20 p-2.5 rounded-lg">
+                    <FaTwitter className="text-sky-400 text-lg" />
+                  </div>
+                  <h4 className="text-white font-semibold">Via X</h4>
+                </div>
+                <p className="text-gray-300 text-sm leading-relaxed flex-1 mb-4">
+                  From your project&apos;s official X account, DM <strong className="text-white">{AQUADS_X_HANDLE}</strong>, then tag us in a public post.
+                </p>
+                <div className="flex flex-col gap-2">
+                  <a
+                    href={AQUADS_X_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center px-4 py-2.5 bg-gray-700 hover:bg-gray-600 text-white text-sm font-medium rounded-lg border border-gray-600 transition-all duration-300"
+                  >
+                    Message {AQUADS_X_HANDLE}
+                  </a>
+                  <a
+                    href={LISTING_TWEET_INTENT}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center px-4 py-2 text-gray-300 hover:text-white text-sm transition-colors duration-300"
+                  >
+                    Draft public post →
+                  </a>
+                </div>
+              </div>
+              <div className="rounded-xl border border-gray-600 bg-gray-900/40 p-5 flex flex-col">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="bg-sky-500/20 p-2.5 rounded-lg">
+                    <FaTelegram className="text-sky-400 text-lg" />
+                  </div>
+                  <h4 className="text-white font-semibold">Via Telegram</h4>
+                </div>
+                <p className="text-gray-300 text-sm leading-relaxed flex-1 mb-4">
+                  Join our community. Have a team rep post that you&apos;ve submitted a listing for verification — include project name and CA/PA.
+                </p>
+                <a
+                  href={AQUADS_TELEGRAM_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center px-4 py-2.5 bg-gray-700 hover:bg-gray-600 text-white text-sm font-medium rounded-lg border border-gray-600 transition-all duration-300 mt-auto"
+                >
+                  Join Aquads Telegram
+                </a>
+              </div>
+            </div>
+          </div>
+
+          {/* Step 3 */}
+          <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 sm:p-8 border border-green-500/40 hover:border-green-500/60 transition-all duration-300">
+            <div className="flex gap-5 sm:gap-6">
+              <div className="shrink-0">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-r from-green-500 to-emerald-500 flex items-center justify-center text-white font-bold text-lg">
+                  3
+                </div>
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-start gap-3 mb-2">
+                  <FaCheckCircle className="text-green-400 text-xl shrink-0 mt-0.5" />
+                  <h3 className="text-xl font-semibold text-white">We review &amp; go live</h3>
+                </div>
+                <p className="text-gray-300 leading-relaxed mb-4">
+                  After ownership is verified, we review your listing. <strong className="text-white">Starter:</strong> typically 24–48 hours.{' '}
+                  <strong className="text-white">Premium:</strong> ~1 hour fast-track after payment. Your bubble appears on the map once approved.
+                </p>
+                <p className="text-gray-400 text-sm border-t border-gray-700 pt-4">
+                  Requirements: pair live 12+ hours, valid logo URL, and ownership proof via X or Telegram.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
