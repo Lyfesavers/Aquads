@@ -113,7 +113,7 @@ function getGameHtml(game, description, seoUrl, redirectUrl) {
 
   <!-- Twitter Card meta tags -->
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:site" content="@AquadsXYZ">
+  <meta name="twitter:site" content="@_Aquads_">
   <meta name="twitter:title" content="${escapedTitle} | Aquads Game Hub">
   <meta name="twitter:description" content="${escapedDescription}">
   <meta name="twitter:image" content="${escapedImageUrl}">
@@ -159,7 +159,7 @@ function getDefaultHtml() {
 
   <!-- Twitter Card meta tags -->
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:site" content="@AquadsXYZ">
+  <meta name="twitter:site" content="@_Aquads_">
   <meta name="twitter:title" content="Aquads Game Hub - Play Web3 Games">
   <meta name="twitter:description" content="Play exciting Web3 games on Aquads Game Hub!">
   <meta name="twitter:image" content="https://www.aquads.xyz/metalogo.png">

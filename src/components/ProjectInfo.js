@@ -1,11 +1,16 @@
 import React, { useState } from 'react';
 import { requestOwnerBump } from '../services/api';
 import { Helmet } from 'react-helmet';
-import { FaRocket, FaUsers, FaChartLine, FaGlobe, FaShieldAlt, FaCog, FaCheckCircle, FaArrowRight, FaBullhorn, FaGamepad, FaHandshake, FaTrophy, FaArrowLeft, FaCreditCard, FaExchangeAlt, FaUsersCog, FaVideo, FaMicrophone, FaNewspaper, FaStar, FaFire, FaGem, FaCrown, FaGift, FaTwitter, FaLightbulb, FaCrosshairs, FaNetworkWired, FaTelegram, FaDiscord } from 'react-icons/fa';
+import { FaRocket, FaUsers, FaChartLine, FaGlobe, FaShieldAlt, FaCog, FaCheckCircle, FaArrowRight, FaBullhorn, FaGamepad, FaHandshake, FaTrophy, FaArrowLeft, FaCreditCard, FaExchangeAlt, FaUsersCog, FaVideo, FaMicrophone, FaNewspaper, FaStar, FaFire, FaGem, FaCrown, FaGift, FaTwitter, FaLightbulb, FaCrosshairs, FaNetworkWired, FaTelegram, FaDiscord, FaRobot, FaClipboardList } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import CreateAdModal from './CreateAdModal';
 import CreateBannerModal from './CreateBannerModal';
 import { LISTING_GUIDE_POSTS, blogPath } from '../utils/blogRelatedPosts';
+
+const AQUADS_X_HANDLE = '@_Aquads_';
+const AQUADS_X_URL = 'https://x.com/_Aquads_';
+const AQUADS_TELEGRAM_URL = 'https://t.me/+6rJbDLqdMxA3ZTUx';
+const LISTING_TWEET_INTENT = `https://twitter.com/intent/tweet?text=${encodeURIComponent('Listing our project on @_Aquads_ — excited to join the bubble map! 🚀')}`;
 
 // Aquads-branded marketing add-on packages - Powered by Mintfunnel (Coinbound)
 // All information sourced directly from https://mintfunnel.co/crypto-press-release-distribution/
@@ -443,6 +448,137 @@ const ProjectInfo = ({ currentUser, ads = [], onAdPatched }) => {
           <FaArrowLeft className="mr-2" />
           Back to Home
         </Link>
+      </div>
+
+      {/* How to List — first section */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-8">
+        <div className="rounded-2xl border border-cyan-500/40 bg-gray-900/70 backdrop-blur-sm p-6 sm:p-8 shadow-xl shadow-cyan-500/5">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-8">
+            <div>
+              <div className="inline-flex items-center gap-2 text-cyan-300 text-sm font-semibold uppercase tracking-wide mb-2">
+                <FaClipboardList />
+                How to list your token
+              </div>
+              <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">
+                Four steps — form or Skipper, then verify on X or Telegram
+              </h2>
+              <p className="text-gray-300 max-w-3xl">
+                After you submit, prove ownership via your project&apos;s <strong className="text-white">official X account</strong> or by having a team rep announce the listing in our <strong className="text-white">Telegram community</strong>. We review verified submissions and approve your bubble on the map.
+              </p>
+            </div>
+          </div>
+
+          <ol className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
+            <li className="relative rounded-xl border border-gray-700 bg-gray-800/60 p-5 flex flex-col">
+              <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-sm font-bold mb-3">
+                1
+              </span>
+              <h3 className="text-lg font-semibold text-white mb-2">Submit your listing</h3>
+              <p className="text-gray-300 text-sm flex-1 mb-4">
+                Use the <strong className="text-white">List Project</strong> form (pair address + logo) or ask <strong className="text-white">Skipper Agent</strong> in ~10 seconds — contract address, logo URL, optional website.
+              </p>
+              <div className="flex flex-col gap-2">
+                <button
+                  type="button"
+                  onClick={handleListProjectClick}
+                  className="inline-flex items-center justify-center px-4 py-2.5 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white text-sm font-semibold rounded-lg transition-all duration-300"
+                >
+                  <FaRocket className="mr-2 shrink-0" />
+                  Open listing form
+                </button>
+                <Link
+                  to="/project-agent"
+                  className="inline-flex items-center justify-center px-4 py-2.5 bg-gray-700 hover:bg-gray-600 text-white text-sm font-semibold rounded-lg border border-gray-600 transition-all duration-300"
+                >
+                  <FaRobot className="mr-2 shrink-0" />
+                  List with Skipper
+                </Link>
+              </div>
+            </li>
+
+            <li className="relative rounded-xl border border-gray-700 bg-gray-800/60 p-5 flex flex-col">
+              <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-sm font-bold mb-3">
+                2
+              </span>
+              <h3 className="text-lg font-semibold text-white mb-2">Verify ownership</h3>
+              <p className="text-gray-300 text-sm mb-4">
+                Pick <strong className="text-white">X</strong> or <strong className="text-white">Telegram</strong> — include your project name and contract / pair address either way.
+              </p>
+
+              <div className="space-y-3 flex-1">
+                <div className="rounded-lg border border-gray-600/80 bg-gray-900/50 p-3">
+                  <p className="text-white text-sm font-medium mb-1 flex items-center gap-2">
+                    <FaTwitter className="text-sky-400 shrink-0" />
+                    Option A — X
+                  </p>
+                  <p className="text-gray-300 text-xs mb-3">
+                    From your project&apos;s official X account, DM <strong className="text-white">{AQUADS_X_HANDLE}</strong> with your project name and CA/PA.
+                  </p>
+                  <a
+                    href={AQUADS_X_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center w-full px-3 py-2 bg-gray-700 hover:bg-gray-600 text-white text-xs font-semibold rounded-lg border border-gray-600 transition-all duration-300"
+                  >
+                    Open {AQUADS_X_HANDLE}
+                  </a>
+                </div>
+
+                <div className="rounded-lg border border-gray-600/80 bg-gray-900/50 p-3">
+                  <p className="text-white text-sm font-medium mb-1 flex items-center gap-2">
+                    <FaTelegram className="text-sky-400 shrink-0" />
+                    Option B — Telegram
+                  </p>
+                  <p className="text-gray-300 text-xs mb-3">
+                    Join our community and have a team rep post that you&apos;ve submitted a listing for verification — name your project and include the CA/PA.
+                  </p>
+                  <a
+                    href={AQUADS_TELEGRAM_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center w-full px-3 py-2 bg-gray-700 hover:bg-gray-600 text-white text-xs font-semibold rounded-lg border border-gray-600 transition-all duration-300"
+                  >
+                    Join Aquads on Telegram
+                  </a>
+                </div>
+              </div>
+            </li>
+
+            <li className="relative rounded-xl border border-gray-700 bg-gray-800/60 p-5 flex flex-col">
+              <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-sm font-bold mb-3">
+                3
+              </span>
+              <h3 className="text-lg font-semibold text-white mb-2">Make it easy to find you</h3>
+              <p className="text-gray-300 text-sm flex-1 mb-4">
+                <strong className="text-white">Verified on X?</strong> Tag <strong className="text-white">{AQUADS_X_HANDLE}</strong> in a public post so we can prioritize your review.{' '}
+                <strong className="text-white">Verified on Telegram?</strong> Your group post in step 2 is enough — optional to cross-post on X too.
+              </p>
+              <a
+                href={LISTING_TWEET_INTENT}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center px-4 py-2.5 bg-gray-700 hover:bg-gray-600 text-white text-sm font-semibold rounded-lg border border-gray-600 transition-all duration-300 mt-auto"
+              >
+                <FaTwitter className="mr-2 shrink-0" />
+                Draft X announcement
+              </a>
+            </li>
+
+            <li className="relative rounded-xl border border-green-500/40 bg-gray-800/60 p-5 flex flex-col ring-1 ring-green-500/20">
+              <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 text-white text-sm font-bold mb-3">
+                4
+              </span>
+              <h3 className="text-lg font-semibold text-white mb-2">We review &amp; go live</h3>
+              <p className="text-gray-300 text-sm flex-1">
+                Once ownership is verified, we review your listing against our requirements. <strong className="text-white">Starter:</strong> typically 24–48 hours.{' '}
+                <strong className="text-white">Premium:</strong> ~1 hour fast-track after payment. Your bubble goes live on the map after approval.
+              </p>
+              <p className="text-gray-400 text-xs mt-4 pt-4 border-t border-gray-700">
+                Pair must be 12+ hours old with a valid logo URL. Verify via official X or your team in our Telegram community — we cannot approve without ownership proof.
+              </p>
+            </li>
+          </ol>
+        </div>
       </div>
 
       {/* Hero Section */}

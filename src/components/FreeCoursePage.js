@@ -336,7 +336,7 @@ const FreeCoursePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openM
         <meta property="og:url" content={courseUrl} />
         <meta property="og:type" content="article" />
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:site" content="@AquadsXYZ" />
+        <meta name="twitter:site" content="@_Aquads_" />
         <meta name="twitter:title" content={titleWithSuffix} />
         <meta name="twitter:description" content={ogDescription} />
         <meta name="twitter:image" content={ogImageUrl} />

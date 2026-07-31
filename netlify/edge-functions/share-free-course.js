@@ -65,7 +65,7 @@ export default async (request, context) => {
 
   <!-- Twitter Card meta tags -->
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:site" content="@AquadsXYZ">
+  <meta name="twitter:site" content="@_Aquads_">
   <meta name="twitter:title" content="${escapeHtml(titleWithSuffix)}">
   <meta name="twitter:description" content="${escapeHtml(description)}">
   <meta name="twitter:image" content="${escapeHtml(ogImageUrl)}">

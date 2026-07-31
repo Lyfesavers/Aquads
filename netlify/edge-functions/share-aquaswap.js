@@ -184,8 +184,8 @@ export default async (request, context) => {
   
   <!-- Twitter Card meta tags -->
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:site" content="@AquadsXYZ">
-  <meta name="twitter:creator" content="@AquadsXYZ">
+  <meta name="twitter:site" content="@_Aquads_">
+  <meta name="twitter:creator" content="@_Aquads_">
   <meta name="twitter:title" content="${escapeHtml(title)}">
   <meta name="twitter:description" content="${escapeHtml(description)}">
   <meta name="twitter:image" content="${escapeHtml(ogImageUrl)}">
@@ -577,7 +577,7 @@ function getDefaultResponse(isSocialPreviewCrawler = false) {
   <meta name="description" content="Trade tokens on Aquads DEX with live charts, real-time prices, and instant swaps">
   
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:site" content="@AquadsXYZ">
+  <meta name="twitter:site" content="@_Aquads_">
   <meta name="twitter:title" content="AquaSwap - Aquads DEX 🌊">
   <meta name="twitter:description" content="Trade tokens on Aquads DEX with live charts, real-time prices, and instant swaps">
   <meta name="twitter:image" content="https://www.aquads.xyz/metalogo.png">

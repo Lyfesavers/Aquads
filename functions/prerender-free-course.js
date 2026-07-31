@@ -106,7 +106,7 @@ function getCourseHtml(course) {
 
     <!-- Twitter Card meta tags -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:site" content="@AquadsXYZ">
+    <meta name="twitter:site" content="@_Aquads_">
     <meta name="twitter:image" content="${escapeHtml(ogImageUrl)}">
     <meta name="twitter:image:alt" content="${escapeHtml(course.title)} — Free Course on Aquads">
     <meta name="twitter:title" content="${escapeHtml(titleWithSuffix)}">

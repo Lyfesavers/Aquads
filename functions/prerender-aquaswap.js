@@ -138,7 +138,7 @@ function getTokenHtml(symbol, name, title, description, image, url, token, block
   ${TOKEN_DEEP_LINK_NOINDEX_HEAD}
   
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:site" content="@_Aquads">
+  <meta name="twitter:site" content="@_Aquads_">
   <meta name="twitter:title" content="${title}">
   <meta name="twitter:description" content="${description}">
   <meta name="twitter:image" content="${img}">
@@ -172,7 +172,7 @@ function getDefaultHtml({ noindex = false } = {}) {
   <meta name="description" content="Trade tokens on Aquads DEX with live charts">${noindexBlock}
   
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:site" content="@_Aquads">
+  <meta name="twitter:site" content="@_Aquads_">
   <meta name="twitter:title" content="AquaSwap - Aquads DEX">
   <meta name="twitter:description" content="Trade tokens on Aquads DEX with live charts">
   <meta name="twitter:image" content="https://www.aquads.xyz/metalogo.png">

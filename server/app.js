@@ -199,7 +199,7 @@ app.get('/marketplace', async (req, res, next) => {
           
           <!-- Twitter Card meta tags -->
           <meta name="twitter:card" content="summary_large_image">
-          <meta name="twitter:site" content="@Aquads">
+          <meta name="twitter:site" content="@_Aquads_">
           <meta name="twitter:title" content="${service.title} - Aquads Marketplace">
           <meta name="twitter:description" content="${service.description.slice(0, 160)}...">
           <meta name="twitter:image" content="${service.image}">
@@ -337,7 +337,7 @@ app.get('/aquaswap', async (req, res, next) => {
         const injectedMeta = `
 <!-- START: Dynamic Meta Tags for AquaSwap Token: ${symbol} -->
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:site" content="@_Aquads">
+<meta name="twitter:site" content="@_Aquads_">
 <meta name="twitter:title" content="${escapeHtml(ogTitle)}">
 <meta name="twitter:description" content="${escapeHtml(ogDescription)}">
 <meta name="twitter:image" content="${escapeHtml(tokenImage)}">
@@ -414,7 +414,7 @@ app.get('/learn', async (req, res, next) => {
           const injectedMeta = `
 <!-- START: Dynamic Meta Tags for Blog ID: ${blogId} -->
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:site" content="@Aquads">
+<meta name="twitter:site" content="@_Aquads_">
 <meta name="twitter:title" content="${escapeHtml(blog.title)} - Aquads Blog">
 <meta name="twitter:description" content="${escapeHtml(shortDescription)}">
 <meta name="twitter:image" content="${escapeHtml(imageUrl)}">
@@ -664,7 +664,7 @@ app.get('/learn/:slug', async (req, res, next) => {
           const injectedMeta = `
 <!-- START: Dynamic Meta Tags for Blog SEO URL: ${canonicalUrl} -->
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:site" content="@Aquads">
+<meta name="twitter:site" content="@_Aquads_">
 <meta name="twitter:title" content="${escapeHtml(blog.title)} - Aquads Blog">
 <meta name="twitter:description" content="${escapeHtml(shortDescription)}">
 <meta name="twitter:image" content="${escapeHtml(imageUrl)}">
@@ -773,7 +773,7 @@ app.get('/games/:id', async (req, res, next) => {
       const injectedMeta = `
 <!-- START: Dynamic Meta Tags for Game: ${game._id} -->
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:site" content="@AquadsXYZ">
+<meta name="twitter:site" content="@_Aquads_">
 <meta name="twitter:title" content="${escapeHtml(game.title)} | Aquads Game Hub">
 <meta name="twitter:description" content="${escapeHtml(shortDescription)}">
 <meta name="twitter:image" content="${escapeHtml(imageUrl)}">

@@ -57,7 +57,7 @@ function buildMetaBlock(bounty, canonicalUrl) {
     <meta property="og:url" content="${escapeHtml(canonicalUrl)}">
 
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:site" content="@AquadsXYZ">
+    <meta name="twitter:site" content="@_Aquads_">
     <meta name="twitter:title" content="${escapeHtml(title)}">
     <meta name="twitter:description" content="${escapeHtml(description)}">
     <meta name="twitter:image" content="${escapeHtml(imageUrl)}">

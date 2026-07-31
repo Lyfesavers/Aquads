@@ -146,7 +146,7 @@ function buildMetaBlock(blog, canonicalUrl) {
     <meta property="article:author" content="${escapeHtml(author)}">
 
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:site" content="@AquadsXYZ">
+    <meta name="twitter:site" content="@_Aquads_">
     <meta name="twitter:title" content="${escapeHtml(title)}">
     <meta name="twitter:description" content="${escapeHtml(description)}">
     <meta name="twitter:image" content="${escapeHtml(imageUrl)}">

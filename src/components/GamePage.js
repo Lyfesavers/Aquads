@@ -249,7 +249,7 @@ const GamePage = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
         <meta property="og:site_name" content="Aquads Game Hub" />
 
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:site" content="@AquadsXYZ" />
+        <meta name="twitter:site" content="@_Aquads_" />
         <meta name="twitter:title" content={`${game.title} | Aquads Game Hub`} />
         <meta name="twitter:description" content={ogDescription} />
         <meta name="twitter:image" content={ogImage} />

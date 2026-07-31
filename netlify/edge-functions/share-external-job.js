@@ -47,7 +47,7 @@ export default async (request) => {
   <meta name="description" content="${escapeHtml(meta.descriptionSocial)}">
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:site" content="@AquadsXYZ">
+  <meta name="twitter:site" content="@_Aquads_">
   <meta name="twitter:title" content="${escapeHtml(meta.titlePage)}">
   <meta name="twitter:description" content="${escapeHtml(meta.descriptionSocial)}">
   ${imageUrl ? `<meta name="twitter:image" content="${escapeHtml(imageUrl)}">` : ''}

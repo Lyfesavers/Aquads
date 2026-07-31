@@ -168,7 +168,7 @@ router.post('/prepare', auth, requireEmailVerification, async (req, res) => {
     res.json({
       verificationCode: claim.verificationCode,
       codeExpiresAt: claim.codeExpiresAt,
-      tweetTemplate: `Claiming our project bubble on @Aquads — verify ${claim.verificationCode}`,
+      tweetTemplate: `Claiming our project bubble on @_Aquads_ — verify ${claim.verificationCode}`,
       ad: {
         id: ad.id,
         title: ad.title,

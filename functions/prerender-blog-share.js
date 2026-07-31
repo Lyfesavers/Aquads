@@ -151,7 +151,7 @@ function getBlogHtml(blog, description, seoUrl, redirectUrl) {
   
   <!-- Twitter Card meta tags -->
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:site" content="@_Aquads">
+  <meta name="twitter:site" content="@_Aquads_">
   <meta name="twitter:title" content="${escapedTitle} - Aquads Blog">
   <meta name="twitter:description" content="${escapedDescription}">
   <meta name="twitter:image" content="${escapedImageUrl}">
@@ -206,7 +206,7 @@ function getDefaultHtml() {
   
   <!-- Twitter Card meta tags -->
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:site" content="@_Aquads">
+  <meta name="twitter:site" content="@_Aquads_">
   <meta name="twitter:title" content="Aquads — The launch stack for new crypto projects">
   <meta name="twitter:description" content="After your token launches: list, grow, hire, and get paid in one place. Bubble map, raids, marketplace, AquaPay.">
   <meta name="twitter:image" content="https://www.aquads.xyz/metalogo.png">
