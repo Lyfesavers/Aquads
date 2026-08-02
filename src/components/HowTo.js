@@ -723,7 +723,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
               "url": "https://www.aquads.xyz",
               "logo": {
                 "@type": "ImageObject",
-                "url": "https://www.aquads.xyz/logo192.png"
+                "url": "https://www.aquads.xyz/icon192.png"
               }
             }
           })}
@@ -748,7 +748,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
                 "url": "https://www.aquads.xyz",
                 "logo": {
                   "@type": "ImageObject",
-                  "url": "https://www.aquads.xyz/logo192.png"
+                  "url": "https://www.aquads.xyz/icon192.png"
                 }
               },
               "blogPost": blogs.slice(0, 10).map((blog) => ({

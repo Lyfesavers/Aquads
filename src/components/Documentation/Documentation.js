@@ -5458,7 +5458,7 @@ const Documentation = () => {
               "url": "https://www.aquads.xyz",
               "logo": {
                 "@type": "ImageObject",
-                "url": "https://www.aquads.xyz/logo192.png"
+                "url": "https://www.aquads.xyz/icon192.png"
               }
             }
           })}

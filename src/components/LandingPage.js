@@ -4348,7 +4348,7 @@ const LandingPage = () => {
             "@type": "Organization",
             "name": "Aquads",
             "url": "https://www.aquads.xyz",
-            "logo": "https://www.aquads.xyz/logo192.png",
+            "logo": "https://www.aquads.xyz/icon192.png",
             "description":
               "Aquads is the launch stack for new crypto projects: bubble listings, growth tools, freelancer marketplace, and AquaPay payments.",
             "sameAs": [
@@ -4445,7 +4445,7 @@ const LandingPage = () => {
               "url": "https://www.aquads.xyz",
               "logo": {
                 "@type": "ImageObject",
-                "url": "https://www.aquads.xyz/logo192.png"
+                "url": "https://www.aquads.xyz/icon192.png"
               }
             }
           })}

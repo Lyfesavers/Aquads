@@ -700,7 +700,7 @@ app.get('/learn/:slug', async (req, res, next) => {
     "name": "Aquads",
     "logo": {
       "@type": "ImageObject",
-      "url": "${req.protocol}://${req.get('host')}/logo192.png"
+      "url": "${req.protocol}://${req.get('host')}/icon192.png"
     }
   },
   "description": "${escapeHtml(shortDescription)}",
