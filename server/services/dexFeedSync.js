@@ -16,7 +16,6 @@ const {
   CLAIM_STATUS_UNCLAIMED,
   DEX_FEED_OWNER_USERNAME,
   DEX_FEED_ENABLED,
-  DEX_FEED_MIN_MARKET_CAP_USD,
   DEX_FEED_MIN_LIQUIDITY_USD,
   DEX_FEED_SOURCES,
   DEX_TOKEN_PAIRS_URL
@@ -63,7 +62,6 @@ function extractWebsiteFromProfile(profile, pair) {
 
 function evaluateMetrics(pair, feedConfig = {}) {
   const minAgeHours = Number(feedConfig.minPairAgeHours) || 24;
-  const minMarketCapUsd = Number(feedConfig.minMarketCapUsd) || DEX_FEED_MIN_MARKET_CAP_USD;
   const minLiquidityUsd = Number(feedConfig.minLiquidityUsd) || DEX_FEED_MIN_LIQUIDITY_USD;
   const minAgeMs = minAgeHours * 60 * 60 * 1000;
 
@@ -77,10 +75,6 @@ function evaluateMetrics(pair, feedConfig = {}) {
   }
 
   const mc = marketCapUsd(pair);
-  if (mc < minMarketCapUsd) {
-    failures.push(`market cap below $${minMarketCapUsd}`);
-  }
-
   const liq = liquidityUsd(pair);
   if (liq < minLiquidityUsd) {
     failures.push(`liquidity below $${minLiquidityUsd}`);
@@ -386,7 +380,7 @@ async function syncDexFeedListings() {
       }
 
       console.log(
-        `[DexFeed] ${source.id} — profiles: ${sourceSummary.profiles}, listed: ${sourceSummary.created}, skipped: ${sourceSummary.skipped}, errors: ${sourceSummary.errors} (≥${source.minPairAgeHours}h, MC≥$${DEX_FEED_MIN_MARKET_CAP_USD}, liq≥$${DEX_FEED_MIN_LIQUIDITY_USD})`
+        `[DexFeed] ${source.id} — profiles: ${sourceSummary.profiles}, listed: ${sourceSummary.created}, skipped: ${sourceSummary.skipped}, errors: ${sourceSummary.errors} (≥${source.minPairAgeHours}h, liq≥$${DEX_FEED_MIN_LIQUIDITY_USD})`
       );
       summary.sources.push(sourceSummary);
     }

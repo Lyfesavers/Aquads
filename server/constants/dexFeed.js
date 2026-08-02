@@ -11,12 +11,11 @@ const DEX_FEED_OWNER_USERNAME = (
 
 const DEX_FEED_ENABLED = String(process.env.DEX_FEED_ENABLED || '').toLowerCase() === 'true';
 
-const DEX_FEED_MIN_MARKET_CAP_USD = Number(process.env.DEX_FEED_MIN_MARKET_CAP_USD) || 50_000;
 const DEX_FEED_MIN_LIQUIDITY_USD = Number(process.env.DEX_FEED_MIN_LIQUIDITY_USD) || 15_000;
 
 const DEX_TOKEN_PAIRS_URL = 'https://api.dexscreener.com/token-pairs/v1';
 
-/** DexScreener feeds — shared MC/liq gates ($50k / $15k), per-source min pair age */
+/** DexScreener feeds — shared liq gate ($15k default), per-source min pair age */
 const DEX_FEED_SOURCES = [
   {
     id: 'profiles-latest',
@@ -43,7 +42,6 @@ module.exports = {
   CLAIM_STATUS_CLAIMED,
   DEX_FEED_OWNER_USERNAME,
   DEX_FEED_ENABLED,
-  DEX_FEED_MIN_MARKET_CAP_USD,
   DEX_FEED_MIN_LIQUIDITY_USD,
   DEX_FEED_SOURCES,
   DEX_TOKEN_PAIRS_URL
