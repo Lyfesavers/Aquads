@@ -180,6 +180,24 @@ const MOBILE_BUBBLEMAP_MIN_LANE_GAP_PX = 6;
 const MOBILE_BUBBLEMAP_MAX_LANE_GAP_PX = 14;
 /** Upper bound on packed columns; phones resolve to 4–5 from the measured lane width. */
 const MOBILE_BUBBLEMAP_MAX_COLUMNS = 6;
+/** Columns the mobile bubble map aims for (rows read as a 5-up grid). */
+const MOBILE_BUBBLEMAP_PREFERRED_COLUMNS = 5;
+/**
+ * Lane count used *only* to pick disc diameters. Row packing is resolved separately from
+ * painted width, so raising the columns-per-row no longer shrinks the discs.
+ */
+const MOBILE_BUBBLEMAP_SIZING_COLUMNS = 4;
+/**
+ * Painted-vs-box geometry for the mobile map. `.bubble` is CSS-scaled at ≤480px, so a
+ * container box paints far smaller than its width — packing the box wasted ~30px per lane
+ * and ~19px per row. These let the grid pack what is actually drawn.
+ * Keep in sync with index.css (.bubble scale) and index2.css (.vote-popup top/max-width).
+ */
+const MOBILE_BUBBLE_PAINT_SCALE = 0.6;
+/** `.vote-popup` layout width at ≤480px (max-width 118px; ~114px rendered) — it is wider than the disc. */
+const MOBILE_VOTE_STRIP_LAYOUT_WIDTH_PX = 114;
+/** `.vote-popup` top offset inside the bubble box before scaling. */
+const MOBILE_VOTE_STRIP_TOP_OFFSET_PX = -48;
 /** Slack under the last row so the map container never clips the final discs. */
 const MOBILE_BUBBLEMAP_BOTTOM_PADDING_PX = 24;
 const BANNER_HEIGHT = 0; // Height of the banner area including nav and token banner
@@ -397,13 +415,13 @@ function calculateBubbleMapItemsPerPage(viewportWidth, viewportHeight) {
 function mobileBubbleMapMaxFeasibleColumns(
   innerUsablePx,
   gapPx,
-  maxPrefer = 4,
+  maxPrefer = MOBILE_BUBBLEMAP_SIZING_COLUMNS,
   minBubblePx = MIN_SIZE
 ) {
   const g = Math.max(0, gapPx);
   const b = Math.max(MIN_SIZE, minBubblePx);
   if (innerUsablePx <= 0) return 1;
-  let cMax = Math.min(maxPrefer, 4);
+  let cMax = Math.min(maxPrefer, MOBILE_BUBBLEMAP_MAX_COLUMNS);
   for (let c = cMax; c >= 1; c -= 1) {
     const packed = c * b + Math.max(0, c - 1) * g;
     if (packed <= innerUsablePx + 1) return c;
@@ -411,7 +429,9 @@ function mobileBubbleMapMaxFeasibleColumns(
   return 1;
 }
 
-/** Resolved column count + usable inner width — prefer 4 columns on mobile whenever min-size lanes fit. */
+/**
+ * Lane count + usable inner width used to derive disc diameters (not the packed row length).
+ */
 function resolveMobileBubbleMapColumns(viewportWidth, _maxDimGuessPx) {
   if (viewportWidth > 480) {
     return { columns: 5, usableWidth: Math.max(0, viewportWidth - BUBBLE_PADDING * 2) };
@@ -420,8 +440,7 @@ function resolveMobileBubbleMapColumns(viewportWidth, _maxDimGuessPx) {
   const cols = mobileBubbleMapMaxFeasibleColumns(
     uw,
     MOBILE_BUBBLEMAP_INTER_COLUMN_GAP_PX,
-    4,
-    MIN_SIZE
+    MOBILE_BUBBLEMAP_SIZING_COLUMNS
   );
   return { columns: cols, usableWidth: uw };
 }
@@ -507,6 +526,30 @@ function measureMobileBubbleFootprint(containerEl) {
 }
 
 /**
+ * Same footprint as measureMobileBubbleFootprint, derived from the CSS constants instead of
+ * the DOM so the render path can use it with no measurement pass.
+ *
+ * A 99px container paints a 59px disc under a 68px vote strip, so packing container boxes
+ * wasted ~30px of every lane. Lanes are the painted width; container boxes may overlap
+ * their neighbours (nothing drawn or clickable lives in that overflow).
+ */
+function mobileBubblePaintedFootprint(containerPx) {
+  const box = Math.max(1, containerPx);
+  const center = box / 2;
+  const discHalf = (box * MOBILE_BUBBLE_PAINT_SCALE) / 2;
+  const stripTop =
+    center + (MOBILE_VOTE_STRIP_TOP_OFFSET_PX - center) * MOBILE_BUBBLE_PAINT_SCALE;
+
+  return {
+    lane: Math.max(box * MOBILE_BUBBLE_PAINT_SCALE, MOBILE_VOTE_STRIP_LAYOUT_WIDTH_PX * MOBILE_BUBBLE_PAINT_SCALE),
+    minGap: MOBILE_BUBBLEMAP_INTER_COLUMN_GAP_PX,
+    /** Container top → painted top. Negative: the vote strip paints above the box. */
+    paintedTop: Math.min(center - discHalf, stripTop),
+    bottomExtent: center + discHalf,
+  };
+}
+
+/**
  * Mobile grid positions from visible sort order — same packing rules as adjustBubblesForMobile()
  * but without a DOM measurement pass (instant on render, like computeDesktopGridLayout).
  */
@@ -526,18 +569,14 @@ function computeMobileGridLayout(visibleAds, screenWidth) {
   const maxBumpedDim = bumpedSizes.length ? Math.max(MIN_SIZE, ...bumpedSizes) : MIN_SIZE;
   const maxUnbumpedDim = unbumpedSizes.length ? Math.max(MIN_SIZE, ...unbumpedSizes) : MIN_SIZE;
 
-  const boxFootprint = (containerDim) => ({
-    lane: containerDim,
-    minGap: MOBILE_BUBBLEMAP_INTER_COLUMN_GAP_PX,
-    topOverhang: 0,
-    bottomExtent: containerDim,
-  });
-  const bumpedFootprint = boxFootprint(maxBumpedDim);
-  const unbumpedFootprint = boxFootprint(maxUnbumpedDim);
+  const bumpedFootprint = mobileBubblePaintedFootprint(maxBumpedDim);
+  const unbumpedFootprint = mobileBubblePaintedFootprint(maxUnbumpedDim);
   const footprintFor = (isBumped) => (isBumped ? bumpedFootprint : unbumpedFootprint);
 
   const positions = [];
-  let cumulativeY = TOP_PADDING;
+  /** Top of the current row's painted band (not of its container box). */
+  let rowPaintedTop = TOP_PADDING;
+  let lastPaintedBottom = TOP_PADDING;
   let idx = 0;
 
   while (idx < visibleAds.length) {
@@ -549,6 +588,7 @@ function computeMobileGridLayout(visibleAds, screenWidth) {
     const rowColumns = Math.max(
       1,
       Math.min(
+        MOBILE_BUBBLEMAP_PREFERRED_COLUMNS,
         MOBILE_BUBBLEMAP_MAX_COLUMNS,
         Math.floor((usableWidth + minGap) / (laneDim + minGap))
       )
@@ -578,23 +618,20 @@ function computeMobileGridLayout(visibleAds, screenWidth) {
         0,
         Math.min(rowClusterStart + col * rowStride, screenWidth - laneDim)
       );
+      // Centre the container on its lane: the box is wider than the lane, so it overhangs
+      // into the neighbouring lanes while the drawn disc/strip stays inside.
       const x = laneLeft + (laneDim - bubbleW) / 2;
-      const y = Math.max(TOP_PADDING - 2, cumulativeY);
+      const y = rowPaintedTop - footprint.paintedTop;
 
       positions.push({ x, y });
     }
 
     idx += rowBubbleCount;
-    const nextFootprint = footprintFor(
-      idx < visibleAds.length ? isBumpedFlags[idx] : rowIsBumped
-    );
-    cumulativeY +=
-      footprint.bottomExtent +
-      nextFootprint.topOverhang +
-      MOBILE_BUBBLEMAP_ROW_CLEARANCE_PX;
+    lastPaintedBottom = rowPaintedTop + (footprint.bottomExtent - footprint.paintedTop);
+    rowPaintedTop = lastPaintedBottom + MOBILE_BUBBLEMAP_ROW_CLEARANCE_PX;
   }
 
-  const packedHeight = Math.ceil(cumulativeY + MOBILE_BUBBLEMAP_BOTTOM_PADDING_PX);
+  const packedHeight = Math.ceil(lastPaintedBottom + MOBILE_BUBBLEMAP_BOTTOM_PADDING_PX);
   return { positions, packedHeight };
 }
 const MERCHANT_WALLET = {
