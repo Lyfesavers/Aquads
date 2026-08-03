@@ -198,18 +198,40 @@ const DESKTOP_GRID_CELL_WIDTH = 115;
 const DESKTOP_GRID_H_MARGIN = 10;
 const DESKTOP_GRID_V_MARGIN = 30;
 
-/** Grid slot from visible sort index — same math as arrangeDesktopGrid (instant, no DOM pass). */
-function computeDesktopGridPosition(index, bubbleSize, screenWidth) {
+/**
+ * Desktop grid positions for a whole page, from the visible sort order.
+ *
+ * Row stride is the tallest bubble in that row. Deriving it from each bubble's own
+ * size (old behaviour) made shrunk unbumped bubbles use a shorter stride than the
+ * bumped bubbles above them, so on the bumped→unbumped page they collapsed upward
+ * and overlapped the bumped rows. Uniform-size pages keep the exact same geometry.
+ */
+function computeDesktopGridLayout(sizesPx, screenWidth) {
   const cellWidth = DESKTOP_GRID_CELL_WIDTH;
   const horizontalMargin = DESKTOP_GRID_H_MARGIN;
   const verticalMargin = DESKTOP_GRID_V_MARGIN;
   const availableWidth = screenWidth - horizontalMargin * 2;
-  const columns = Math.max(1, Math.floor(availableWidth / DESKTOP_GRID_CELL_WIDTH));
-  const row = Math.floor(index / columns);
-  const column = index % columns;
-  const x = horizontalMargin + column * cellWidth + cellWidth / 2 - bubbleSize / 2;
-  const y = TOP_PADDING + verticalMargin + row * (bubbleSize + verticalMargin);
-  return { x, y };
+  const columns = Math.max(1, Math.floor(availableWidth / cellWidth));
+
+  const positions = [];
+  let rowTop = TOP_PADDING + verticalMargin;
+
+  for (let start = 0; start < sizesPx.length; start += columns) {
+    const rowSizes = sizesPx.slice(start, start + columns);
+    const rowHeight = rowSizes.reduce((tallest, size) => Math.max(tallest, size), 1);
+
+    rowSizes.forEach((size, column) => {
+      positions.push({
+        x: horizontalMargin + column * cellWidth + cellWidth / 2 - size / 2,
+        // Center in the row band so a mixed bumped/unbumped row reads as one row.
+        y: rowTop + (rowHeight - size) / 2,
+      });
+    });
+
+    rowTop += rowHeight + verticalMargin;
+  }
+
+  return { positions, packedHeight: Math.ceil(rowTop + verticalMargin) };
 }
 
 function getScreenLogicalDimensions() {
@@ -288,6 +310,42 @@ function is1080pDesktopMonitor() {
   if (w >= 1720 && w <= 1780 && h >= 960 && h <= 1020) return true;  // ~110% scale
   if (w >= 1520 && w <= 1560 && h >= 820 && h <= 900) return true;  // 125% scale
   return false;
+}
+
+/**
+ * Page 1 is the bumped showcase; every later page walks one combined list of
+ * (bumped overflow → unbumped) so a single offset can never drift.
+ *
+ * The previous math subtracted one page of bumped overflow from the page offset, which
+ * only held while bumped ads fit on two pages. With small mobile page sizes bumped ads
+ * span three or more pages, the offset went negative, and pages came back blank or with
+ * the wrong slice — leaving bumped projects unreachable.
+ */
+function paginateBubbleMapAds(bumpedAds, nonBumpedAds, itemsPerPage, currentPage) {
+  const perPage = Math.max(1, itemsPerPage);
+  const page = Math.max(1, currentPage);
+
+  // No bumped ads at all (e.g. liquidity enforcement cleared them): don't strand page 1 empty.
+  if (bumpedAds.length === 0) {
+    const start = (page - 1) * perPage;
+    return {
+      visibleAds: nonBumpedAds.slice(start, start + perPage),
+      totalPages: Math.max(1, Math.ceil(nonBumpedAds.length / perPage))
+    };
+  }
+
+  const overflowThenUnbumped = [...bumpedAds.slice(perPage), ...nonBumpedAds];
+  const totalPages = 1 + Math.ceil(overflowThenUnbumped.length / perPage);
+
+  if (page === 1) {
+    return { visibleAds: bumpedAds.slice(0, perPage), totalPages };
+  }
+
+  const start = (page - 2) * perPage;
+  return {
+    visibleAds: overflowThenUnbumped.slice(start, start + perPage),
+    totalPages
+  };
 }
 
 /** How many bubbles fit per pagination page for this viewport / monitor. */
@@ -450,7 +508,7 @@ function measureMobileBubbleFootprint(containerEl) {
 
 /**
  * Mobile grid positions from visible sort order — same packing rules as adjustBubblesForMobile()
- * but without a DOM measurement pass (instant on render, like computeDesktopGridPosition).
+ * but without a DOM measurement pass (instant on render, like computeDesktopGridLayout).
  */
 function computeMobileGridLayout(visibleAds, screenWidth) {
   if (!Array.isArray(visibleAds) || visibleAds.length === 0 || screenWidth > 480) {
@@ -1127,26 +1185,18 @@ function App() {
     // Separate bumped and non-bumped ads to calculate pages
     const bumpedAds = filteredAds.filter(ad => ad.isBumped);
     const nonBumpedAds = filteredAds.filter(ad => !ad.isBumped);
-    
-    // Calculate pages needed for bumped ads (minimum 1 page)
-    const bumpedPages = Math.max(1, Math.ceil(bumpedAds.length / itemsPerPage));
-    
-    // Calculate pages needed for non-bumped ads
-    const nonBumpedPages = nonBumpedAds.length > 0 
-      ? Math.ceil(nonBumpedAds.length / itemsPerPage) 
-      : 0;
-    
-    // Total pages is bumped pages + non-bumped pages
-    // If bumped ads need more than 1 page, we reduce non-bumped pages by 1
-    // since some non-bumped ads will share page with overflow bumped ads
-    const adjustedNonBumpedPages = bumpedPages > 1 
-      ? Math.max(0, nonBumpedPages - 1) 
-      : nonBumpedPages;
-    
-    setTotalPages(Math.max(1, bumpedPages + adjustedNonBumpedPages));
-    
+
+    const { totalPages: pageCount } = paginateBubbleMapAds(
+      bumpedAds,
+      nonBumpedAds,
+      itemsPerPage,
+      currentPage
+    );
+
+    setTotalPages(Math.max(1, pageCount));
+
     // Reset to page 1 when filter changes
-    if (currentPage > (bumpedPages + adjustedNonBumpedPages)) {
+    if (currentPage > pageCount) {
       setCurrentPage(1);
     }
   }, [ads, blockchainFilter, itemsPerPage, currentPage]);
@@ -1170,41 +1220,9 @@ function App() {
     // Separate bumped and non-bumped ads
     const bumpedAds = sortedAds.filter(ad => ad.isBumped);
     const nonBumpedAds = sortedAds.filter(ad => !ad.isBumped);
-    
-    // If we're on the first page, only show bumped ads
-    if (currentPage === 1) {
-      // Only return bumped ads for the first page, limited to itemsPerPage
-      return bumpedAds.slice(0, itemsPerPage);
-    } else {
-      // For subsequent pages, calculate the proper slice of non-bumped ads
-      // Start from first page of non-bumped ads
-      const startIndex = (currentPage - 2) * itemsPerPage;
-      const endIndex = startIndex + itemsPerPage;
-      
-      // If there are more bumped ads than fit on the first page, show overflow on second page
-      if (currentPage === 2 && bumpedAds.length > itemsPerPage) {
-        const bumpedOverflow = bumpedAds.slice(itemsPerPage);
-        const remainingSlots = itemsPerPage - bumpedOverflow.length;
-        
-        if (remainingSlots > 0) {
-          // Fill remaining slots with non-bumped ads
-          return [...bumpedOverflow, ...nonBumpedAds.slice(0, remainingSlots)];
-        } else {
-          // If no space left, just show the bumped overflow
-          return bumpedOverflow.slice(0, itemsPerPage);
-        }
-      }
-      
-      // For pages beyond 2, or if no bumped overflow, show non-bumped ads
-      // Adjust startIndex to account for any bumped overflow on page 2
-      const adjustedStartIndex = currentPage === 2 
-        ? 0 
-        : startIndex - Math.max(0, bumpedAds.length - itemsPerPage);
-      
-      const adjustedEndIndex = adjustedStartIndex + itemsPerPage;
-      
-      return nonBumpedAds.slice(adjustedStartIndex, adjustedEndIndex);
-    }
+
+    return paginateBubbleMapAds(bumpedAds, nonBumpedAds, itemsPerPage, currentPage)
+      .visibleAds;
   };
 
   // Function to handle blockchain filter change
@@ -2964,23 +2982,14 @@ function App() {
       return (adB.bullishVotes || 0) - (adA.bullishVotes || 0);
     });
     
-    // Get first bubble size to use as reference
-    const firstBubble = sortedBubbles[0];
-    const bubbleSize = parseInt(firstBubble.style.width) || 100;
-    
-    // Calculate optimal columns based on screen width and height
     const screenWidth = window.innerWidth;
-    const screenHeight = window.innerHeight;
-    
-    // FIXED CELL WIDTH for consistent spacing across ALL screen sizes!
-    // 115px matches our grid system = tight consistent packing everywhere
-    const FIXED_CELL_WIDTH = DESKTOP_GRID_CELL_WIDTH;
-    const cellWidth = FIXED_CELL_WIDTH;
 
-    const horizontalMargin = DESKTOP_GRID_H_MARGIN;
-    const verticalMargin = DESKTOP_GRID_V_MARGIN;
-    const availableWidth = screenWidth - (horizontalMargin * 2);
-    const columns = Math.floor(availableWidth / DESKTOP_GRID_CELL_WIDTH);
+    // Per-bubble sizes: bumped and shrunk bubbles share a page on the bumped→unbumped
+    // boundary, so one reference size would overlap rows.
+    const bubbleSizes = sortedBubbles.map(
+      (bubble) => parseInt(bubble.style.width, 10) || 100
+    );
+    const { positions: gridPositions } = computeDesktopGridLayout(bubbleSizes, screenWidth);
     
     // Store current positions to check if we need to update the model
     const originalPositions = {};
@@ -3000,15 +3009,9 @@ function App() {
     
     // Now place each bubble in its grid cell (immediately)
     sortedBubbles.forEach((bubble, index) => {
-      const row = Math.floor(index / columns);
-      const column = index % columns;
-      
-      // Center bubble in its grid cell
-      const x = horizontalMargin + (column * cellWidth) + (cellWidth / 2) - (bubbleSize / 2);
-      const y = TOP_PADDING + verticalMargin + (row * (bubbleSize + verticalMargin));
-      
-      // Set position
-      bubble.style.transform = `translate(${x}px, ${y}px)`;
+      const position = gridPositions[index];
+      if (!position) return;
+      bubble.style.transform = `translate(${position.x}px, ${position.y}px)`;
     });
     
     // Check if positions actually changed
@@ -3625,12 +3628,20 @@ function App() {
                   {(() => {
                     const visibleAds = getVisibleAds();
                     const isDesktop = windowSize.width > 480;
+                    const bubbleSizesPx = visibleAds.map((ad) =>
+                      getMobileBubbleMapDisplaySize(ad, windowSize.width)
+                    );
                     const mobileLayout = isDesktop
                       ? null
                       : computeMobileGridLayout(visibleAds, windowSize.width);
+                    const desktopLayout = isDesktop
+                      ? computeDesktopGridLayout(bubbleSizesPx, windowSize.width)
+                      : null;
+                    const packedHeight =
+                      mobileLayout?.packedHeight || desktopLayout?.packedHeight || 0;
                     const mapMinHeight =
-                      mobileLayout?.packedHeight > 0
-                        ? Math.max(windowSize.height, mobileLayout.packedHeight)
+                      packedHeight > 0
+                        ? Math.max(windowSize.height, packedHeight)
                         : undefined;
 
                     return (
@@ -3646,10 +3657,10 @@ function App() {
                     {visibleAds.length === 0
                       ? null
                       : visibleAds.map((ad, visibleIndex) => {
-                        const bubblePx = getMobileBubbleMapDisplaySize(ad, windowSize.width);
-                        const { x, y } = isDesktop
-                          ? computeDesktopGridPosition(visibleIndex, bubblePx, windowSize.width)
-                          : (mobileLayout.positions[visibleIndex] || { x: ad.x, y: ad.y });
+                        const bubblePx = bubbleSizesPx[visibleIndex];
+                        const { x, y } = (isDesktop
+                          ? desktopLayout.positions[visibleIndex]
+                          : mobileLayout.positions[visibleIndex]) || { x: ad.x, y: ad.y };
 
                         return (
                           <div 
