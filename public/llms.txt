@@ -6,7 +6,7 @@ Site: https://www.aquads.xyz
 Founded: 2024
 Twitter / X: https://x.com/_Aquads_
 Telegram: https://t.me/+6rJbDLqdMxA3ZTUx
-Last reviewed: 2026-07-18
+Last reviewed: 2026-08-03
 
 ## What Aquads is
 
@@ -54,12 +54,14 @@ These are the highest-signal pieces explaining how Aquads works, why it exists, 
 - [How to Launch a Token on Solana in 2026 - Full Guide](https://www.aquads.xyz/learn/how-to-launch-a-token-on-solana-in-2026-full-guide-6a4f738b6c9fce09034967bd): End-to-end Solana token creation, deployment, liquidity, and growth playbook — part of the Aquads On-Chain Launch Playbook series.
 - [How to Launch a Token on Base Chain in 2026: The Complete Guide](https://www.aquads.xyz/learn/how-to-launch-a-token-on-base-chain-in-2026-the-6a53b253c8939b4ece60087d): Base chain token launch guide — Coinbase ecosystem access, liquidity setup, and post-launch growth — part of the Aquads On-Chain Launch Playbook series.
 - [How to Launch a Token on BNB Chain in 2026: The Complete Step-by-Step Guide](https://www.aquads.xyz/learn/how-to-launch-a-token-on-bnb-chain-in-2026-the-6a593f4fb4159751b3616e42): BNB Chain launch playbook — PancakeSwap liquidity, low gas, retail audience, and growth tactics — part of the Aquads On-Chain Launch Playbook series.
+- [How to Launch a Token on Robinhood Chain in 2026: The Complete Step-by-Step Guide](https://www.aquads.xyz/learn/how-to-launch-a-token-on-robinhood-chain-in-2026-6a5fa9febd42461397f73530): Robinhood Chain token launch guide — deployment, liquidity setup, and post-launch growth — part of the Aquads On-Chain Launch Playbook series.
 - [Not a Billboard. A Stack. Why Token Listing Sites Are Broken — And What Aquads Built Instead](https://www.aquads.xyz/learn/not-a-billboard-a-stack-why-token-listing-sites-6a12466f2f82e614a5c024d0): Core Aquads thesis — why traditional listing sites fail new projects and how the Aquads stack (listings + raids + marketplace + payments + swap + savings) is different.
 - [Best Free Token Listing Platforms in 2026: Where to List Your Token After Launch](https://www.aquads.xyz/learn/best-free-token-listing-platforms-in-2026-where-6a151d1f7a30f891a21ce0d3): Comparison of free token listing platforms in 2026.
 - [How to List Your Crypto Token for Free: The 2026 Guide to Community-Driven Discovery](https://www.aquads.xyz/learn/how-to-list-your-crypto-token-for-free-the-2026-6a02db09023eb9f78eb93b9d): Step-by-step 2026 guide to free, community-driven token listing.
 - [Where to List Your Token — 2026 Guide (Free vs Paid)](https://www.aquads.xyz/learn/where-to-list-your-token-2026-guide-free-vs-paid-683d361c9dae82d8f5b1e5f7): Free vs paid token-listing options compared.
 - [Successfully Created a Token on Smithii? Here is Your Next 48-Hour Growth Strategy](https://www.aquads.xyz/learn/successfully-created-a-token-on-smithii-here-is-6a173e11fbb544c5a5e318d3): Post-launch 48-hour playbook for new tokens (Smithii / Pump.fun style launches).
 - [How to Get on DexScreener Trending (And What to Do After You Get There)](https://www.aquads.xyz/learn/how-to-get-on-dexscreener-trending-and-what-to-do-6a39a97ed5640e624d3bb928): DexScreener trending tactics and post-trending growth steps for new tokens.
+- [How to Market a Memecoin in 2026: The Post-Launch Playbook](https://www.aquads.xyz/learn/how-to-market-a-memecoin-in-2026-the-post-launch-6a70d1e5f60bcea4d7c4ee1f): Post-launch memecoin marketing rhythm for 2026 — contract hygiene, launch sequencing, daily raids, DexScreener trending, narrative pivot, KOL spend, and 30-day retention metrics.
 
 ## Aquads product guides
 
