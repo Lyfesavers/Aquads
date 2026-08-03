@@ -1102,7 +1102,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
           isSidebarCollapsed ? 'lg:pl-16' : 'lg:pl-64'
         }`}
       >
-        <div className="px-3 sm:px-4 lg:px-8 py-6 sm:py-8 pt-12 sm:pt-10 max-w-6xl mx-auto">
+        <div className="px-3 sm:px-4 lg:px-8 pt-10 pb-6 sm:pb-8 lg:pt-4 lg:pb-6 max-w-6xl mx-auto">
           {/* Per-tab header — replaces the old generic page intro */}
           <header className="mb-6 sm:mb-8 flex items-start gap-3 sm:gap-4">
             <span
