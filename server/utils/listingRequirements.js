@@ -15,6 +15,8 @@ const BUMP_LIQUIDITY_CHECK_TTL_MS =
 
 const BUMP_VOTE_THRESHOLD = 100;
 
+const DEX_PAIRS_URL = 'https://api.dexscreener.com/latest/dex/pairs';
+
 const isVoteBumped = (bullishVotes) => (bullishVotes || 0) >= BUMP_VOTE_THRESHOLD;
 
 function liquidityUsdFromPair(pair) {
@@ -31,30 +33,72 @@ function isBumpEligible(ad, bullishVotes) {
   return isVoteBumped(bullishVotes) && meetsLiquidityRequirement(ad);
 }
 
+/**
+ * Liquidity for the **listed** trading pair (not another pool for the same token).
+ */
 async function fetchPairLiquidityUsd(ad) {
+  const pairAddress = String(ad?.pairAddress || '').trim();
+  const contractAddress = String(ad?.contractAddress || '').trim();
   const chainId = normalizeBlockchainSlug(ad?.blockchain || 'ethereum');
-  const tokenOrPair = String(ad?.contractAddress || ad?.pairAddress || '').trim();
-  if (!tokenOrPair) return null;
+
+  // 1) Listed pair via DexScreener pairs endpoint (rate-limited)
+  if (pairAddress) {
+    try {
+      const data = await dexScreenerGetJson(
+        `${DEX_PAIRS_URL}/${encodeURIComponent(chainId)}/${encodeURIComponent(pairAddress)}`
+      );
+      const pair =
+        data?.pair ||
+        (Array.isArray(data?.pairs) && data.pairs.length
+          ? data.pairs.find(
+              (p) =>
+                String(p?.pairAddress || '').toLowerCase() === pairAddress.toLowerCase()
+            ) || data.pairs[0]
+          : null);
+      if (pair) return liquidityUsdFromPair(pair);
+    } catch (_) {
+      // fall through
+    }
+
+    // 2) Legacy helper (pairs → tokens) as backup for odd chain slugs
+    try {
+      const pair = await fetchBestDexPair(pairAddress, ad.blockchain);
+      if (pair) {
+        const returned = String(pair.pairAddress || '').toLowerCase();
+        const wanted = pairAddress.toLowerCase();
+        // Only accept if it matches the listed pair — avoid token best-pair inflation
+        if (!returned || returned === wanted) {
+          return liquidityUsdFromPair(pair);
+        }
+      }
+    } catch (_) {
+      // fall through
+    }
+  }
+
+  // 3) Token pairs: match listed pairAddress when possible
+  if (!contractAddress) return null;
 
   try {
     const pairs = await dexScreenerGetJson(
-      `${DEX_TOKEN_PAIRS_URL}/${encodeURIComponent(chainId)}/${encodeURIComponent(tokenOrPair)}`
+      `${DEX_TOKEN_PAIRS_URL}/${encodeURIComponent(chainId)}/${encodeURIComponent(contractAddress)}`
     );
-    if (Array.isArray(pairs) && pairs.length) {
-      return liquidityUsdFromPair(pickBestPair(pairs));
-    }
-  } catch (_) {
-    // fall through to pair lookup
-  }
+    if (!Array.isArray(pairs) || !pairs.length) return null;
 
-  try {
-    const pair = await fetchBestDexPair(ad.pairAddress, ad.blockchain);
-    if (pair) return liquidityUsdFromPair(pair);
+    if (pairAddress) {
+      const wanted = pairAddress.toLowerCase();
+      const exact = pairs.find(
+        (p) => String(p?.pairAddress || '').toLowerCase() === wanted
+      );
+      if (exact) return liquidityUsdFromPair(exact);
+      // Listed pair not in token results — do not use a different pool's liquidity
+      return null;
+    }
+
+    return liquidityUsdFromPair(pickBestPair(pairs));
   } catch (_) {
     return null;
   }
-
-  return null;
 }
 
 /**

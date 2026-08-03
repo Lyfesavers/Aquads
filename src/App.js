@@ -1038,12 +1038,24 @@ function App() {
   const mergeRecentVoteFields = useCallback((ad) => {
     const recent = recentVoteUpdatesRef.current[ad.id];
     if (!recent || Date.now() - recent.ts > RECENT_VOTE_TTL_MS) return ad;
+
+    // Server may clear bump (liquidity gate) after a vote socket said bumped —
+    // do not let the short vote TTL resurrect isBumped over a fresh API false.
+    const serverClearedBump =
+      ad.isBumped === false &&
+      recent.isBumped === true &&
+      (ad.meetsLiquidityRequirement === false ||
+        (ad.liquidityCheckedAt &&
+          new Date(ad.liquidityCheckedAt).getTime() > recent.ts) ||
+        // Dex-feed payloads omit liquidity fields; 100+ votes on both sides + API not bumped = liq gate
+        ((ad.bullishVotes || 0) >= 100 && (recent.bullishVotes || 0) >= 100));
+
     return {
       ...ad,
       bullishVotes: recent.bullishVotes,
       bearishVotes: recent.bearishVotes,
-      ...(recent.isBumped !== undefined && { isBumped: recent.isBumped }),
-      ...(recent.size !== undefined && { size: recent.size }),
+      ...(!serverClearedBump && recent.isBumped !== undefined && { isBumped: recent.isBumped }),
+      ...(!serverClearedBump && recent.size !== undefined && { size: recent.size }),
       ...(recent.userVote !== undefined && { userVote: recent.userVote }),
     };
   }, []);

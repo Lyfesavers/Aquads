@@ -21,6 +21,7 @@ async function enforceBumpedLiquidityRequirements() {
     unbumped: 0,
     rebumped: 0,
     unchanged: 0,
+    checkFailed: 0,
     errors: 0
   };
 
@@ -30,7 +31,7 @@ async function enforceBumpedLiquidityRequirements() {
       $or: [{ isBumped: true }, { bullishVotes: { $gte: BUMP_VOTE_THRESHOLD } }]
     })
       .select(
-        '_id id bullishVotes isBumped pairAddress contractAddress blockchain meetsLiquidityRequirement liquidityCheckedAt liquidityUsdSnapshot size bumpedAt bumpExpiresAt bumpDuration createdAt'
+        '_id id title bullishVotes isBumped pairAddress contractAddress blockchain meetsLiquidityRequirement liquidityCheckedAt liquidityUsdSnapshot size bumpedAt bumpExpiresAt bumpDuration createdAt'
       )
       .lean();
 
@@ -39,20 +40,41 @@ async function enforceBumpedLiquidityRequirements() {
     for (const ad of ads) {
       try {
         const wasBumped = !!ad.isBumped;
+        const prevCheckedAt = ad.liquidityCheckedAt
+          ? new Date(ad.liquidityCheckedAt).getTime()
+          : 0;
         const updated = await syncAdBumpState(ad, {}, { forceRefresh: true });
         summary.checked += 1;
 
-        if (wasBumped && !updated.isBumped) {
+        const nextCheckedAt = updated?.liquidityCheckedAt
+          ? new Date(updated.liquidityCheckedAt).getTime()
+          : 0;
+        const gotFreshLiquidity = nextCheckedAt > prevCheckedAt;
+
+        if (!gotFreshLiquidity) {
+          // Dex lookup failed — fail-safe keeps prior bump state
+          summary.checkFailed += 1;
+          if (wasBumped) {
+            console.warn(
+              `[BumpLiquidity] Check failed (kept bumped): ${ad.id} pair=${ad.pairAddress} chain=${ad.blockchain}`
+            );
+          }
+        } else if (wasBumped && !updated.isBumped) {
           summary.unbumped += 1;
           socket.emitAdUpdate('update', updated);
-          console.log(`[BumpLiquidity] Unbumped ${updated.id} (liq $${updated.liquidityUsdSnapshot ?? '?'})`);
+          console.log(
+            `[BumpLiquidity] Unbumped ${updated.id} (liq $${updated.liquidityUsdSnapshot ?? '?'})`
+          );
         } else if (!wasBumped && updated.isBumped) {
           summary.rebumped += 1;
           socket.emitAdUpdate('update', updated);
-        } else if (updated !== ad && (updated.isBumped !== wasBumped || updated.liquidityUsdSnapshot !== ad.liquidityUsdSnapshot)) {
-          socket.emitAdUpdate('update', updated);
-          summary.unchanged += 1;
+          console.log(
+            `[BumpLiquidity] Re-bumped ${updated.id} (liq $${updated.liquidityUsdSnapshot ?? '?'})`
+          );
         } else {
+          if (updated !== ad) {
+            socket.emitAdUpdate('update', updated);
+          }
           summary.unchanged += 1;
         }
       } catch (err) {
@@ -71,7 +93,7 @@ async function enforceBumpedLiquidityRequirements() {
     }
 
     console.log(
-      `[BumpLiquidity] Done — checked: ${summary.checked}, unbumped: ${summary.unbumped}, rebumped: ${summary.rebumped}, errors: ${summary.errors}`
+      `[BumpLiquidity] Done — checked: ${summary.checked}, unbumped: ${summary.unbumped}, rebumped: ${summary.rebumped}, checkFailed: ${summary.checkFailed}, errors: ${summary.errors}`
     );
     return summary;
   } finally {

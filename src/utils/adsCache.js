@@ -33,12 +33,23 @@ export function mergeAdVotesSnapshot(ads) {
     return ads.map((ad) => {
       const snap = votes[ad.id];
       if (!snap) return ad;
+      const snapBull = snap.bullishVotes ?? 0;
+      const snapBear = snap.bearishVotes ?? 0;
+      const adBull = ad.bullishVotes ?? 0;
+      const adBear = ad.bearishVotes ?? 0;
+      const snapTotal = snapBull + snapBear;
+      const adTotal = adBull + adBear;
+      const snapVotesAhead =
+        snapTotal > adTotal || (snapTotal === adTotal && snapBull > adBull);
+
+      // Prefer newer vote tallies from the snapshot, but never resurrect a bump the
+      // ads payload already cleared (liquidity unbump / server sync).
       return {
         ...ad,
-        bullishVotes: snap.bullishVotes ?? ad.bullishVotes ?? 0,
-        bearishVotes: snap.bearishVotes ?? ad.bearishVotes ?? 0,
-        isBumped: snap.isBumped ?? ad.isBumped,
-        size: snap.size ?? ad.size,
+        bullishVotes: snapVotesAhead ? snapBull : adBull,
+        bearishVotes: snapVotesAhead ? snapBear : adBear,
+        isBumped: ad.isBumped,
+        size: ad.size ?? snap.size,
         userVote: snap.userVote ?? ad.userVote,
       };
     });
@@ -84,7 +95,12 @@ export function isBubbleLayoutPlaced(ad) {
   return ad.x !== 0 && ad.y !== 0;
 }
 
-/** Prefer fresher in-memory vote fields when a refetch returns stale counts. */
+/**
+ * Prefer fresher in-memory vote *counts* when a refetch returns stale tallies.
+ * Do NOT prefer client isBumped over the API — liquidity cron / server bump sync
+ * can legitimately clear bump while votes stay high; treating that as "stale API"
+ * left unbumped projects stuck in the bumped map row forever.
+ */
 export function mergeIncomingAdsWithCurrent(incomingAds, currentAds, mergeRecentVoteFields) {
   if (!Array.isArray(incomingAds)) return [];
   const currentById = Object.fromEntries(
@@ -122,19 +138,16 @@ export function mergeIncomingAdsWithCurrent(incomingAds, currentAds, mergeRecent
     const inTotal = inBull + inBear;
     const curTotal = curBull + curBear;
 
-    const currentIsAhead =
-      curTotal > inTotal ||
-      (curTotal === inTotal && curBull > inBull) ||
-      (!!current.isBumped && !merged.isBumped);
+    const currentVotesAhead =
+      curTotal > inTotal || (curTotal === inTotal && curBull > inBull);
 
-    if (!currentIsAhead) return merged;
+    if (!currentVotesAhead) return merged;
 
     return {
       ...merged,
       bullishVotes: curBull,
       bearishVotes: curBear,
-      isBumped: current.isBumped ?? merged.isBumped,
-      size: current.isBumped ? current.size : merged.size,
+      // isBumped / size stay from API (merged) — server is source of truth for bump
       userVote: current.userVote ?? merged.userVote,
     };
   });
