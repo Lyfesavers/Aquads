@@ -827,15 +827,18 @@ function routeNeedsAdsFetch(pathname) {
   return false;
 }
 
-const AdsFetchOnRoute = ({ loadAdsFromApi, hasLoadedAds }) => {
+const AdsFetchOnRoute = ({ loadAdsFromApi }) => {
   const location = useLocation();
+  const apiFetchedRef = useRef(false);
 
   useEffect(() => {
     if (!routeNeedsAdsFetch(location.pathname)) return;
-    // Fetch once when ads are first needed; route changes reuse in-memory state + sockets.
-    if (hasLoadedAds) return;
+    // Always refetch once per session when the bubble map is needed — even if localStorage
+    // hydrated ads (hasLoadedAds used to skip fetch, leaving stale isBumped stuck forever).
+    if (apiFetchedRef.current) return;
+    apiFetchedRef.current = true;
     loadAdsFromApi();
-  }, [location.pathname, loadAdsFromApi, hasLoadedAds]);
+  }, [location.pathname, loadAdsFromApi]);
 
   return null;
 };
@@ -3085,7 +3088,7 @@ function App() {
           currentUser={currentUser}
         />
         <HomeLayoutHandler arrangeDesktopGrid={arrangeDesktopGrid} adjustBubblesForMobile={adjustBubblesForMobile} />
-        <AdsFetchOnRoute loadAdsFromApi={loadAdsFromApi} hasLoadedAds={ads.length > 0} />
+        <AdsFetchOnRoute loadAdsFromApi={loadAdsFromApi} />
         <TokensFetchOnRoute loadTokensFromApi={loadTokensFromApi} hasLoadedTokens={tokenList.length > 0} />
         <DesktopInstallPrompt />
         {currentUser?.token && (

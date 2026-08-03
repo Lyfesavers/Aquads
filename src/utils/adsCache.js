@@ -1,7 +1,8 @@
 import logger from './logger';
 
 const ADS_CACHE_KEY = 'cachedAds';
-const AD_VOTES_CACHE_KEY = 'cachedAdVotes';
+/** Bumped when bump/liquidity logic changes so old isBumped snapshots are not reused. */
+const AD_VOTES_CACHE_KEY = 'cachedAdVotes_v2';
 
 /** Lightweight vote snapshot so counts survive even when full ads cache is too large for localStorage. */
 export function persistAdVotesSnapshot(ads) {
