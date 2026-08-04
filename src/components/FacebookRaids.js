@@ -83,7 +83,7 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
   const [newRaid, setNewRaid] = useState({
     postUrl: '',
     title: 'Facebook Raid',
-    description: 'Like, Share & Comment to earn 20 points!',
+    description: 'Like, Share & Comment to earn 5–20 points!',
     points: 20
   });
   
@@ -92,7 +92,7 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
   const [pointsRaidData, setPointsRaidData] = useState({
     postUrl: '',
     title: 'Facebook Raid',
-    description: 'Like, Share & Comment to earn 20 points!'
+    description: 'Like, Share & Comment to earn 5–20 points!'
   });
 
   // For free raid creation
@@ -100,7 +100,7 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
   const [freeRaidData, setFreeRaidData] = useState({
     postUrl: '',
     title: 'Facebook Raid',
-    description: 'Like, Share & Comment to earn 20 points!'
+    description: 'Like, Share & Comment to earn 5–20 points!'
   });
   const [freeRaidEligibility, setFreeRaidEligibility] = useState(null);
   const [showRules, setShowRules] = useState(false);
@@ -372,7 +372,7 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
         setFreeRaidData({
           postUrl: '',
           title: 'Facebook Raid',
-          description: 'Like, Share & Comment to earn 20 points!'
+          description: 'Like, Share & Comment to earn 5–20 points!'
         });
         fetchRaids();
         checkFreeRaidEligibility();
@@ -420,7 +420,7 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
         setNewRaid({
           postUrl: '',
           title: 'Facebook Raid',
-          description: 'Like, Share & Comment to earn 20 points!',
+          description: 'Like, Share & Comment to earn 5–20 points!',
           points: 20
         });
         fetchRaids();
@@ -468,7 +468,7 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
         setPointsRaidData({
           postUrl: '',
           title: 'Facebook Raid',
-          description: 'Like, Share & Comment to earn 20 points!'
+          description: 'Like, Share & Comment to earn 5–20 points!'
         });
         fetchRaids();
         fetchUserPoints(); // Refresh points balance
@@ -580,7 +580,7 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
              <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-bold mt-0.5">3</div>
              <div>
                <strong>Earn Points</strong>
-               <p className="text-gray-400 mt-1">Admin checks you did all 3, then awards 5–50 pts based on your comment</p>
+               <p className="text-gray-400 mt-1">Admin checks you did all 3, then awards 5–20 pts based on your comment</p>
              </div>
            </div>
          </div>
@@ -612,7 +612,7 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
              </svg>
              <div>
                <p className="text-blue-200 font-semibold mb-1 text-sm">After you do all 3, your points depend on your comment:</p>
-               <p className="text-blue-300 text-sm"><strong className="text-gray-300">5 pts</strong> = text comment only · <strong className="text-blue-400">10 pts</strong> = text comment + verified ✓ · <strong className="text-green-400">20 pts</strong> = comment with image · <strong className="text-cyan-400">50 pts</strong> = comment with image + verified ✓</p>
+               <p className="text-blue-300 text-sm"><strong className="text-gray-300">5 pts</strong> = text only, unverified · <strong className="text-green-400">10 pts</strong> = text + image, unverified · <strong className="text-blue-400">15 pts</strong> = text only + verified ✓ · <strong className="text-cyan-400">20 pts</strong> = text + image + verified ✓</p>
                <p className="text-blue-200/80 text-xs mt-1">Tip: Add an AI-generated image or meme to your comment to earn more points!</p>
              </div>
            </div>
@@ -647,7 +647,7 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
              </li>
              <li className="flex items-start gap-2">
                <span className="text-blue-400 mt-1">•</span>
-               <span>Want more points? Add an AI-generated image or meme to your comment (20 or 50 pts instead of 5 or 10)</span>
+               <span>Want more points? Add an AI-generated image or meme to your comment (10 or 20 pts instead of 5 or 15)</span>
              </li>
              <li className="flex items-start gap-2">
                <span className="text-blue-400 mt-1">•</span>
@@ -739,7 +739,7 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
                 Enter the URL of the Facebook post you want users to interact with.
                 <br />A new raid will be created with standard values:
                 <br />• Title: "Facebook Raid"
-                <br />• Description: "Like, Share & Comment to earn 20 points!"
+                <br />• Description: "Like, Share & Comment to earn 5–20 points!"
                 <br />• Points: 20
               </p>
             </div>
@@ -850,8 +850,8 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
                      <p className="text-gray-400 text-sm">{raid.description}</p>
                    </div>
                    <div className="text-right">
-                     <div className="text-2xl font-bold text-green-400">{raid.points}</div>
-                     <div className="text-xs text-gray-500">points</div>
+                     <div className="text-2xl font-bold text-green-400">5–20</div>
+                     <div className="text-xs text-gray-500">pts by tier</div>
                    </div>
                  </div>
                  
@@ -976,7 +976,7 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
                        <li>Click &quot;Open Facebook Post&quot; to view the post</li>
                        <li>Enter your Facebook username below</li>
                        <li>Click &quot;Submit for Admin Approval&quot;</li>
-                       <li>An admin checks you did all 3, then awards your points (5–50 depending on your comment)</li>
+                       <li>An admin checks you did all 3, then awards your points (5–20 depending on your comment)</li>
                      </ol>
                    </div>
                    

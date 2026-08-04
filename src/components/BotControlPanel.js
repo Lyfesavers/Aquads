@@ -734,7 +734,7 @@ function RaidsTab({ status, token, refresh, toast }) {
         body: JSON.stringify({
           tweetUrl: tweetUrl.trim(),
           title: `Twitter Raid by @${user.username}`,
-          description: 'Help boost this tweet! Like, retweet, comment, and bookmark to earn 20 points.',
+          description: 'Help boost this tweet! Like, retweet, comment, and bookmark to earn 5–20 points.',
         }),
       });
       toast(mode === 'free' ? 'Free raid created!' : 'Raid created (2,000 pts deducted)', 'success');
@@ -889,7 +889,7 @@ function RaidRow({ raid, onCancel, cancelling }) {
         <div className="text-xs text-gray-500 mt-1 flex items-center gap-2">
           <span>Created {new Date(raid.createdAt).toLocaleString()}</span>
           <span className="text-gray-700">·</span>
-          <span>{raid.points} pts per completion</span>
+          <span>5–20 pts per completion (by tier)</span>
         </div>
       </div>
       <button

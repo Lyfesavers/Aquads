@@ -2857,13 +2857,16 @@ Support Facebook content:
 
 ### Points System
 
-| Action | Typical Points |
-|--------|----------------|
-| Like | 5-10 points |
-| Retweet | 10-15 points |
-| Comment | 15-20 points |
-| Full Raid Completion | 20-50 points |
-| Bonus for early participation | +5-10 points |
+When you complete a Twitter or Facebook raid (Like + RT/Share + Comment + Bookmark on Twitter), an admin awards points based on your **comment type** and **verified ✓** status:
+
+| Points | Comment | Account |
+|--------|---------|---------|
+| **5** | Text only | Unverified |
+| **10** | Text + image | Unverified |
+| **15** | Text only | Verified ✓ |
+| **20** | Text + image | Verified ✓ |
+
+> 💡 Add an AI-generated image or meme to your comment for more points (10 or 20 instead of 5 or 15).
 
 ### Using Your Points
 
@@ -2930,7 +2933,7 @@ Follow the required actions:
 Click "Verify" to confirm your participation.
 
 **Step 5: Earn Points**
-Points credited upon verification.
+An admin verifies your submission and awards **5–20 points** based on your comment (text vs image) and verified ✓ status. See **Raids Overview** for the full tier table.
 
 ### Creating Raids
 
@@ -3107,7 +3110,7 @@ Click to see the target post/page.
 Submit verification of completion.
 
 **Step 5: Earn Points**
-Points credited after verification.
+An admin verifies your submission and awards **5–20 points** by tier (same as Twitter — see **Raids Overview**).
 
 ### Verification
 
@@ -3256,15 +3259,13 @@ Earn points through platform activities and unlock rewards.
 
 ### Earning Points
 
-**Raid Participation**
-| Action | Points |
-|--------|--------|
-| Twitter Like | 5 |
-| Retweet | 10 |
-| Comment | 15 |
-| Complete Raid | 20 |
-| Telegram Join | 10 |
-| Daily Engagement | 5-25 |
+**Raid Participation (Twitter & Facebook)**
+| Tier | Comment | Account | Points |
+|------|---------|---------|--------|
+| Base | Text only | Unverified | 5 |
+| + Image | Text + image | Unverified | 10 |
+| + Verified | Text only | Verified ✓ | 15 |
+| Max | Text + image | Verified ✓ | 20 |
 
 **Platform Activities**
 | Activity | Points |
@@ -4011,7 +4012,7 @@ For Facebook raid participation:
 ### What You Get (Free)
 
 - ✅ FREE raid posts (vote bump threshold applies): **Premium**: up to **5**/day before bump, up to **20**/day once bumped · **Starter (free)**: **1**/day before bump, up to **20**/day once bumped
-- ✅ Complete raids & earn 20 points each
+- ✅ Complete raids & earn **5–20 points each** (5 = text/unverified · 10 = text+image/unverified · 15 = text/verified ✓ · 20 = text+image/verified ✓)
 - ✅ Vote on projects (earn 1 pt per first vote)
 - ✅ View top 10 bubble rankings
 - ✅ Create extra raids (2000 pts each after your free daily quota)
@@ -4038,7 +4039,7 @@ When you list your project as **Premium** and it reaches **bumped** status (**10
 
 ### Points System
 
-- **Earn**: 20 points per raid completion
+- **Earn**: **5–20 points** per raid (tier table in Raids Overview)
 - **Earn**: 1 point per first vote on each project
 - **Spend**: 2000 points for additional raids
 - **Redeem**: $100 CAD per 10,000 points
@@ -4147,7 +4148,7 @@ The Aquads Bump Bot is built specifically for meme coin projects to grow their c
 1. Project owners create raids with tweet/post URLs
 2. Community members complete raids (like, RT, comment)
 3. Completions are admin-verified
-4. Participants earn 20 points per completion
+4. Participants earn **5–20 points** per completion (5/10/15/20 tier — see Raids Overview)
 
 **Raid Details:**
 - FREE raid posts per day: **Starter** **1** until bumped, then up to **20** · **Premium** up to **5** until bumped, then up to **20** (bump = **100+ bullish** + **$10k+ liquidity**)
@@ -4226,7 +4227,7 @@ Purchase boosts via \`/boostvote\`:
 
 | Action | Points |
 |--------|--------|
-| Complete a raid | +20 pts |
+| Complete a raid | +5 to +20 pts (by tier) |
 | First vote on project | +1 pt |
 | Create extra raid | -2000 pts |
 | Redeem for cash | 10,000 pts = $100 CAD |

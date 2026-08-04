@@ -868,7 +868,7 @@ export const RaidsMockup = () => (
               <h3 className="text-white font-medium">Twitter Raid - @CryptoProject</h3>
               <p className="text-gray-400 text-sm">Like, Retweet, Comment & Bookmark to earn points</p>
               <div className="flex items-center gap-4 mt-2">
-                <span className="text-green-400 text-sm">🎁 20 points</span>
+                <span className="text-green-400 text-sm">🎁 5–20 points</span>
                 <span className="text-gray-500 text-sm">👥 45 completed</span>
                 <span className="text-yellow-400 text-sm">⏱️ 23h left</span>
               </div>
@@ -1476,7 +1476,7 @@ export const TelegramBotMockup = () => (
           <div className="w-8 h-8 rounded-full bg-cyan-500 flex items-center justify-center text-white text-sm">🤖</div>
           <div className="bg-gray-800 rounded-lg rounded-tl-none px-3 py-2 max-w-xs">
             <p className="text-white text-sm font-medium">🚀 Twitter Raid Available!</p>
-            <p className="text-gray-400 text-xs mt-1">💰 Reward: 20 points</p>
+            <p className="text-gray-400 text-xs mt-1">💰 Reward: 5–20 pts</p>
             <div className="flex gap-2 mt-2">
               <span className="text-[10px] bg-pink-500/20 text-pink-400 px-2 py-1 rounded flex items-center gap-1">
                 ❤️ Like

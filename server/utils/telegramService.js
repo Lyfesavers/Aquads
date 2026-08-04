@@ -689,7 +689,7 @@ const telegramService = {
       // Construct the message text
       const message = `🚀 New ${platformName} Available!
 
-💰 Reward: ${raidData.points || 20} points
+💰 Reward: 5–20 points (by tier)
 🎯 Task: ${taskDescription}
 
 🔗 ${isFacebook ? 'Facebook Raid' : 'Tweet'}: ${postUrl}
@@ -1874,8 +1874,8 @@ Earn points by completing Twitter & Facebook raids!
 
 📋 Raid Rules:
 • You MUST Like + Retweet + Comment + Bookmark every time — commenting alone does NOT count!
-• Points (after you do all 4): 5 = text comment · 10 = text comment + verified ✓ · 20 = comment with image · 50 = comment with image + verified ✓
-• Tip: Add an AI image or meme to your comment for more points (20 or 50 instead of 5 or 10)
+• Points (after you do all 4): 5 = text only, unverified · 10 = text + image, unverified · 15 = text only + verified ✓ · 20 = text + image + verified ✓
+• Tip: Add an AI image or meme to your comment for more points (10 or 20 instead of 5 or 15)
 • Twitter account must be at least 6 months old
 • Account must have at least 50 followers
 • Must be following @_Aquads_
@@ -2224,7 +2224,7 @@ https://aquads.xyz`;
         
         let message = `🚀 ${raid.title}\n\n`;
         message += `📱 Platform: ${platform}\n`;
-        message += `💰 Reward: ${raid.points} points\n`;
+        message += `💰 Reward: 5–20 points (by tier)\n`;
         message += `🎯 Task: ${raid.description}\n`;
         message += `🔗 ${platform === 'Facebook' ? 'Facebook Post' : 'Tweet'}: ${postUrl}\n\n`;
         message += `${interactionNote}`;
@@ -2395,7 +2395,7 @@ https://aquads.xyz`;
 📝 ${platform}: @${username}
 🔗 ${platform === 'Facebook' ? 'Facebook Post' : 'Tweet'}: ${postUrl}
 ⏳ Status: Pending admin approval
-💰 Reward: ${raid.points} points (after approval)
+💰 Reward: 5–20 points (by tier, after approval)
 
 📋 What happens next:
 • Admin will review your submission
@@ -3274,7 +3274,7 @@ ${platformEmoji} ${platformName} Raid
           return;
         }
         const title = `Twitter Raid by @${user.username}`;
-        const description = `Help boost this tweet! Like, retweet, and comment to earn 20 points.`;
+        const description = `Help boost this tweet! Like, retweet, and comment to earn 5–20 points.`;
         const raid = applyNewRaidDefaults(new TwitterRaid({
           tweetId,
           tweetUrl,
@@ -3328,7 +3328,7 @@ ${platformEmoji} ${platformName} Raid
             successMessage += `\n\n✅ Raid sent to your default linked group!`;
           }
         }
-        successMessage += `\n\n💡 Users who complete your raid will earn 20 points.`;
+        successMessage += `\n\n💡 Users who complete your raid will earn 5–20 points (based on comment + verified ✓).`;
         const inPrivateChat = chatId === userId;
         await telegramService.editMessageWithKeyboard(chatId, messageId,
           inPrivateChat ? "✅ Raid created! Full details below." : "✅ Raid created! Full details sent to your private chat.",
@@ -4432,7 +4432,7 @@ Tap to update:`;
 
       // Success message
       await telegramService.sendBotMessage(chatId, 
-        `✅ ${platform} Raid submitted successfully!\n\n📝 ${platform}: @${username}\n💰 Reward: ${raid.points} points\n⏳ Status: Pending admin approval\n\n📋 What happens next:\n• Admin will review your submission\n• Points will be awarded after verification\n\n🌐 Track points & claim rewards on: https://aquads.xyz\n\n💡 Use /raids to see more available raids!`);
+        `✅ ${platform} Raid submitted successfully!\n\n📝 ${platform}: @${username}\n💰 Reward: 5–20 points (by tier, after approval)\n⏳ Status: Pending admin approval\n\n📋 What happens next:\n• Admin will review your submission\n• Points will be awarded after verification\n\n🌐 Track points & claim rewards on: https://aquads.xyz\n\n💡 Use /raids to see more available raids!`);
 
     } catch (error) {
       console.error('Complete raid with stored username error:', error);
@@ -4547,7 +4547,7 @@ Tap to update:`;
 
       // Success message
       await telegramService.sendBotMessage(chatId, 
-        `✅ ${platform} Raid submitted successfully!\n\n📝 ${platform}: @${cleanUsername}\n💰 Reward: ${state.raidPoints} points\n⏳ Status: Pending admin approval\n\n📋 What happens next:\n• Admin will review your submission\n• Points will be awarded after verification\n\n🌐 Track points & claim rewards on: https://aquads.xyz\n\n💡 Use /raids to see more available raids!`);
+        `✅ ${platform} Raid submitted successfully!\n\n📝 ${platform}: @${cleanUsername}\n💰 Reward: 5–20 points (by tier, after approval)\n⏳ Status: Pending admin approval\n\n📋 What happens next:\n• Admin will review your submission\n• Points will be awarded after verification\n\n🌐 Track points & claim rewards on: https://aquads.xyz\n\n💡 Use /raids to see more available raids!`);
 
     } catch (error) {
       console.error('Username input error:', error);
@@ -5205,7 +5205,7 @@ Tap to update:`;
       
       // Generate default title and description
       const title = `Twitter Raid by @${user.username}`;
-      const description = `Help boost this tweet! Like, retweet, and comment to earn 20 points.`;
+      const description = `Help boost this tweet! Like, retweet, and comment to earn 5–20 points.`;
       
       const dailyLimit = await getFreeRaidDailyLimitForUsername(user.username);
 
@@ -5281,7 +5281,7 @@ Tap to update:`;
           }
         }
         
-        successMessage += `\n\n💡 Users who complete your raid will earn 20 points.`;
+        successMessage += `\n\n💡 Users who complete your raid will earn 5–20 points (based on comment + verified ✓).`;
 
         await telegramService.sendBotMessage(telegramUserId, successMessage);
 

@@ -3,7 +3,8 @@ const TwitterRaid = require('../models/TwitterRaid');
 const FacebookRaid = require('../models/FacebookRaid');
 const User = require('../models/User');
 
-const VALID_TIERS = [5, 10, 20, 50];
+const VALID_TIERS = [5, 10, 15, 20];
+const LEGACY_TIER_MAP = { 50: 20 };
 const DEFAULT_TIER = 20;
 
 const BADGE_DEFS = [
@@ -13,13 +14,14 @@ const BADGE_DEFS = [
   { id: 'raider_100', label: 'Gold Raider', icon: '🥇', description: '100 approved raids with 60+ quality', check: (s) => s.approved >= 100 && s.qualityScore >= 60 },
   { id: 'raider_250', label: 'Diamond Raider', icon: '💎', description: '250 approved raids with 75+ quality', check: (s) => s.approved >= 250 && s.qualityScore >= 75 },
   { id: 'elite', label: 'Elite Raider', icon: '👑', description: '50+ raids with 85+ quality score', check: (s) => s.approved >= 50 && s.qualityScore >= 85 },
-  { id: 'verified_elite', label: 'Verified Elite', icon: '✓', description: '30%+ of approvals at verified tiers (10 or 50 pts)', check: (s) => s.approved >= 10 && s.verifiedTierRate >= 30 },
-  { id: 'image_master', label: 'Image Master', icon: '🖼️', description: '40%+ of approvals at image tiers (20 or 50 pts)', check: (s) => s.approved >= 10 && s.imageTierRate >= 40 },
+  { id: 'verified_elite', label: 'Verified Elite', icon: '✓', description: '30%+ of approvals at verified tiers (15 or 20 pts)', check: (s) => s.approved >= 10 && s.verifiedTierRate >= 30 },
+  { id: 'image_master', label: 'Image Master', icon: '🖼️', description: '40%+ of approvals at image tiers (10 or 20 pts)', check: (s) => s.approved >= 10 && s.imageTierRate >= 40 },
   { id: 'hot_streak', label: 'Hot Streak', icon: '🔥', description: '7-day raid streak', check: (s) => s.bestStreak >= 7 },
   { id: 'sniper', label: 'Sniper', icon: '⚡', description: '95%+ approval rate (min 20 raids)', check: (s) => s.decided >= 20 && s.approvalRate >= 95 },
 ];
 
 function normalizeTier(amount) {
+  if (LEGACY_TIER_MAP[amount] != null) return LEGACY_TIER_MAP[amount];
   if (VALID_TIERS.includes(amount)) return amount;
   return DEFAULT_TIER;
 }
@@ -329,7 +331,7 @@ async function getRaiderAnalytics(userId) {
   let approved = 0;
   let rejected = 0;
   let totalRaidPoints = 0;
-  const tierBreakdown = { 5: 0, 10: 0, 20: 0, 50: 0 };
+  const tierBreakdown = { 5: 0, 10: 0, 15: 0, 20: 0 };
   let verifiedTierCount = 0;
   let imageTierCount = 0;
   const approvedDates = [];
@@ -343,15 +345,15 @@ async function getRaiderAnalytics(userId) {
       const tier = row.pointsEarned != null ? normalizeTier(row.pointsEarned) : DEFAULT_TIER;
       tierBreakdown[tier] += 1;
       totalRaidPoints += tier;
-      if (tier === 10 || tier === 50) verifiedTierCount += 1;
-      if (tier === 20 || tier === 50) imageTierCount += 1;
+      if (tier === 15 || tier === 20) verifiedTierCount += 1;
+      if (tier === 10 || tier === 20) imageTierCount += 1;
     }
   }
 
   const decided = approved + rejected;
   const approvalRate = decided > 0 ? Math.round((approved / decided) * 100) : 0;
   const avgPointsPerRaid = approved > 0 ? Math.round((totalRaidPoints / approved) * 10) / 10 : 0;
-  const qualityScore = approved > 0 ? Math.round((avgPointsPerRaid / 50) * 100) : 0;
+  const qualityScore = approved > 0 ? Math.round((avgPointsPerRaid / 20) * 100) : 0;
   const raiderRating = Math.round(qualityScore * 0.6 + approvalRate * 0.4);
   const verifiedTierRate = approved > 0 ? Math.round((verifiedTierCount / approved) * 100) : 0;
   const imageTierRate = approved > 0 ? Math.round((imageTierCount / approved) * 100) : 0;

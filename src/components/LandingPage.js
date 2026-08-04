@@ -395,7 +395,7 @@ const FeaturePreviewSVG = ({ featureTitle }) => {
           <rect x="15" y="20" width="100" height="35" rx="6" fill="rgba(99, 102, 241, 0.3)" stroke="rgba(99, 102, 241, 0.5)" strokeWidth="1"/>
           <text x="20" y="32" fontSize="7" fill="#818cf8" fontWeight="600">🤖 Aquads Bot</text>
           <text x="20" y="42" fontSize="6" fill="#cbd5e1">Twitter Raid Available!</text>
-          <text x="20" y="50" fontSize="6" fill="#a5b4fc">💰 20 points</text>
+          <text x="20" y="50" fontSize="6" fill="#a5b4fc">💰 5–20 pts</text>
           
           {/* User Command */}
           <rect x="45" y="65" width="80" height="20" rx="6" fill="rgba(6, 182, 212, 0.3)" stroke="rgba(6, 182, 212, 0.5)" strokeWidth="1"/>
@@ -413,7 +413,7 @@ const FeaturePreviewSVG = ({ featureTitle }) => {
           <rect x="150" y="20" width="130" height="50" rx="6" fill="rgba(55, 65, 81, 0.6)" stroke="rgba(99, 102, 241, 0.4)" strokeWidth="1.5"/>
           <text x="215" y="35" fontSize="8" fill="#818cf8" textAnchor="middle" fontWeight="600">Your Points</text>
           <text x="215" y="50" fontSize="16" fill="#a5b4fc" textAnchor="middle" fontWeight="700">2,450</text>
-          <text x="215" y="62" fontSize="6" fill="#9ca3af" textAnchor="middle">+20 from raid</text>
+          <text x="215" y="62" fontSize="6" fill="#9ca3af" textAnchor="middle">+5–20 from raid</text>
           
           {/* Features List */}
           <rect x="150" y="80" width="130" height="45" rx="6" fill="rgba(55, 65, 81, 0.5)" stroke="rgba(99, 102, 241, 0.3)" strokeWidth="1"/>
@@ -2223,7 +2223,7 @@ const CarouselCard = ({ feature, index }) => {
                 </h2>
                 
                 <p className="text-gray-400 text-sm md:text-base lg:text-lg mb-6 max-w-xl">
-                  Boost visibility with coordinated social campaigns. Create Twitter raids—20 FREE daily for lifetime bumped projects, then use 2000 points for additional posts. Community earns 20 points per completion (50 with verified account). Auto-expires in 48hrs.
+                  Boost visibility with coordinated social campaigns. Create Twitter raids—20 FREE daily for lifetime bumped projects, then use 2000 points for additional posts. Community earns 5–20 points per completion (5/10/15/20 tiers). Auto-expires in 48hrs.
                 </p>
                 
                 {/* Stats grid */}
@@ -2231,7 +2231,7 @@ const CarouselCard = ({ feature, index }) => {
                   {[
                     { icon: '🆓', label: '20 Free Daily', value: 'Bumped Projects' },
                     { icon: '💎', label: '2000 Points', value: 'After Free' },
-                    { icon: '💰', label: '20 Pts/Raid', value: 'Earn Points' },
+                    { icon: '💰', label: '5–20 Pts/Raid', value: 'Earn by Tier' },
                     { icon: '⏱️', label: '48hr Expiry', value: 'Auto-Expires' }
                   ].map((item, i) => (
                     <motion.div
@@ -3023,14 +3023,14 @@ const CarouselCard = ({ feature, index }) => {
                     <div className="bg-indigo-500/20 border border-indigo-500/40 rounded-xl p-3 mb-3">
                       <div className="text-indigo-400 text-xs font-semibold mb-1">🤖 Aquads Bot</div>
                       <div className="text-white text-sm">Twitter Raid Available!</div>
-                      <div className="text-purple-400 text-xs mt-1">💰 20 points</div>
+                      <div className="text-purple-400 text-xs mt-1">💰 5–20 pts</div>
                     </div>
                     
                     {/* Points Display */}
                     <div className="bg-white/5 rounded-xl p-4 mb-3 text-center">
                       <div className="text-gray-400 text-xs mb-1">Your Points</div>
                       <div className="text-3xl font-bold text-purple-400 mb-1">2,450</div>
-                      <div className="text-green-400 text-xs">+20 from raid</div>
+                      <div className="text-green-400 text-xs">+5–20 from raid</div>
                     </div>
                     
                     {/* Trending Badge */}

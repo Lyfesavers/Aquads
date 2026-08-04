@@ -322,7 +322,7 @@ async function handleRaids(interaction) {
     const raid = availableRaids[i];
     const platform = raid.platform || (raid.tweetUrl ? 'Twitter' : 'Facebook');
     const postUrl = raid.tweetUrl || raid.postUrl || '';
-    lines.push(`**${i + 1}. ${raid.title}**\n📱 ${platform} | 💰 ${raid.points} pts\n🔗 ${postUrl}`);
+    lines.push(`**${i + 1}. ${raid.title}**\n📱 ${platform} | 💰 5–20 pts (by tier)\n🔗 ${postUrl}`);
     components.push(
       new ButtonBuilder()
         .setCustomId(`complete_${raid._id}`)
@@ -423,7 +423,7 @@ async function handleCompleteFromModal(interaction, raidId, username, postUrl, i
     points: raid.points || 20
   }).catch(() => {});
 
-  const successMessage = `✅ **${platform} Raid submitted!**\n\n📝 @${cleanUsername}\n💰 ${raid.points} points\n⏳ Pending admin approval.\n\nTrack at https://aquads.xyz`;
+  const successMessage = `✅ **${platform} Raid submitted!**\n\n📝 @${cleanUsername}\n💰 5–20 points (by tier, after approval)\n⏳ Pending admin approval.\n\nTrack at https://aquads.xyz`;
   await interaction.user.send({ content: successMessage }).catch(() => {});
   return respond(successMessage);
 }
@@ -836,7 +836,7 @@ async function doExecutePointsRaid(user, tweetUrl, opts = {}) {
     return { success: false, message: `❌ Not enough points anymore. You have ${user.points}; need ${POINTS_REQUIRED_RAID}. No points were deducted.` };
   }
   const title = `Twitter Raid by @${user.username}`;
-  const description = 'Help boost this tweet! Like, retweet, and comment to earn 20 points.';
+  const description = 'Help boost this tweet! Like, retweet, and comment to earn 5–20 points.';
   const raid = applyNewRaidDefaults(new TwitterRaid({
     tweetId,
     tweetUrl,
@@ -889,7 +889,7 @@ async function doCreateRaid(user, tweetUrl, opts = {}) {
     return { success: false, message: `❌ A raid for this tweet already exists.\n\n🔗 ${tweetUrl}\n\n💡 Use \`/raids\` to see it, or wait until it expires (48h).` };
   }
   const title = `Twitter Raid by @${user.username}`;
-  const description = 'Help boost this tweet! Like, retweet, and comment to earn 20 points.';
+  const description = 'Help boost this tweet! Like, retweet, and comment to earn 5–20 points.';
   const dailyLimit = await getFreeRaidDailyLimitForUsername(user.username);
   const eligibility = dailyLimit > 0 ? user.checkFreeRaidEligibility(dailyLimit) : { eligible: false };
   if (eligibility.eligible) {
@@ -1642,8 +1642,8 @@ async function startBot() {
               '4. Admin checks you did all 4, then awards points\n\n' +
               '**Raid Rules:**\n' +
               '• You MUST Like + Retweet + Comment + Bookmark every time — commenting alone does NOT count!\n' +
-              '• Points (after you do all 4): 5 = text comment · 10 = text comment + verified ✓ · 20 = comment with image · 50 = comment with image + verified ✓\n' +
-              '• Tip: Add an AI image or meme to your comment for more points (20 or 50 instead of 5 or 10)\n' +
+              '• Points (after you do all 4): 5 = text only, unverified · 10 = text + image, unverified · 15 = text only + verified ✓ · 20 = text + image + verified ✓\n' +
+              '• Tip: Add an AI image or meme to your comment for more points (10 or 20 instead of 5 or 15)\n' +
               '• Twitter account must be at least 6 months old\n' +
               '• Account must have at least 50 followers\n' +
               '• Must be following @_Aquads_\n' +

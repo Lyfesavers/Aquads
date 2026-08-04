@@ -86,7 +86,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
   const [newRaid, setNewRaid] = useState({
     tweetUrl: '',
     title: 'Twitter Raid',
-    description: 'Like, Retweet, Comment & Bookmark to earn 20 points!',
+    description: 'Like, Retweet, Comment & Bookmark to earn 5–20 points!',
     points: 20
   });
   
@@ -95,7 +95,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
   const [pointsRaidData, setPointsRaidData] = useState({
     tweetUrl: '',
     title: 'Twitter Raid',
-    description: 'Like, Retweet, Comment & Bookmark to earn 20 points!'
+    description: 'Like, Retweet, Comment & Bookmark to earn 5–20 points!'
   });
 
   // For free raid creation
@@ -103,7 +103,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
   const [freeRaidData, setFreeRaidData] = useState({
     tweetUrl: '',
     title: 'Twitter Raid',
-    description: 'Like, Retweet, Comment & Bookmark to earn 20 points!'
+    description: 'Like, Retweet, Comment & Bookmark to earn 5–20 points!'
   });
   const [freeRaidSubmitting, setFreeRaidSubmitting] = useState(false);
   const [freeRaidEligibility, setFreeRaidEligibility] = useState(null);
@@ -736,7 +736,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     const raidData = {
       ...newRaid,
       title: 'Twitter Raid',
-      description: 'Like, Retweet, Comment & Bookmark to earn 20 points!',
+      description: 'Like, Retweet, Comment & Bookmark to earn 5–20 points!',
       points: 20
     };
     
@@ -762,7 +762,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       setNewRaid({
         tweetUrl: '',
         title: 'Twitter Raid',
-        description: 'Like, Retweet, Comment & Bookmark to earn 20 points!',
+        description: 'Like, Retweet, Comment & Bookmark to earn 5–20 points!',
         points: 20
       });
       setShowCreateForm(false);
@@ -847,7 +847,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       setFreeRaidData({
         tweetUrl: '',
         title: 'Twitter Raid',
-        description: 'Like, Retweet, Comment & Bookmark to earn 20 points!'
+        description: 'Like, Retweet, Comment & Bookmark to earn 5–20 points!'
       });
       setShowFreeRaidForm(false);
       
@@ -1033,7 +1033,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       setPointsRaidData({
         tweetUrl: '',
         title: 'Twitter Raid',
-        description: 'Like, Retweet, Comment & Bookmark to earn 20 points!'
+        description: 'Like, Retweet, Comment & Bookmark to earn 5–20 points!'
       });
       setShowPointsCreateForm(false);
       
@@ -1153,7 +1153,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                   </svg>
                   <div>
                     <p className="text-blue-200 font-semibold mb-1">After you do all 4, your points depend on your comment:</p>
-                    <p className="text-blue-300"><strong className="text-gray-300">5 pts</strong> = text comment only · <strong className="text-blue-400">10 pts</strong> = text comment + verified ✓ · <strong className="text-green-400">20 pts</strong> = comment with image · <strong className="text-cyan-400">50 pts</strong> = comment with image + verified ✓</p>
+                    <p className="text-blue-300"><strong className="text-gray-300">5 pts</strong> = text only, unverified · <strong className="text-green-400">10 pts</strong> = text + image, unverified · <strong className="text-blue-400">15 pts</strong> = text only + verified ✓ · <strong className="text-cyan-400">20 pts</strong> = text + image + verified ✓</p>
                     <p className="text-blue-200/80 text-xs mt-1">Tip: Add an AI-generated image or meme to your comment to earn more points!</p>
                   </div>
                 </div>
@@ -1186,7 +1186,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                 </div>
                 <div className="flex items-start">
                   <span className="text-yellow-400 mr-2">•</span>
-                  <span>Want more points? Add an <strong>AI-generated image or meme</strong> to your comment (20 or 50 pts instead of 5 or 10)</span>
+                  <span>Want more points? Add an <strong>AI-generated image or meme</strong> to your comment (10 or 20 pts instead of 5 or 15)</span>
                 </div>
                 <div className="flex items-start">
                   <span className="text-yellow-400 mr-2">•</span>
@@ -1246,7 +1246,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                   <br />
                   • Title: "Twitter Raid"
                   <br />
-                  • Description: "Like, Retweet, Comment & Bookmark to earn 20 points!"
+                  • Description: "Like, Retweet, Comment & Bookmark to earn 5–20 points!"
                   <br />
                   • Points: 20
                 </p>
@@ -1571,7 +1571,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
                     </svg>
                   </a>
-                  <span className="bg-blue-500/20 text-blue-400 px-2 py-1 rounded text-sm">+{raid.points} points</span>
+                  <span className="bg-blue-500/20 text-blue-400 px-2 py-1 rounded text-sm">+5–20 pts</span>
                 </div>
                 
                 
@@ -1877,7 +1877,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                         <li>Click &quot;Show Interaction Buttons&quot; and use each button — they open Twitter in a new tab</li>
                         <li>Come back after you Like, Retweet, Comment, AND Bookmark</li>
                         <li>Enter your Twitter username and click &quot;Submit for Admin Approval&quot;</li>
-                        <li>An admin checks you did all 4, then awards your points (5–50 depending on your comment)</li>
+                        <li>An admin checks you did all 4, then awards your points (5–20 depending on your comment)</li>
                       </ol>
                     </div>
                     
@@ -1923,7 +1923,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                             </svg>
                             All Tweet Interactions Verified!
                           </div>
-                          <p className="text-gray-300 mt-1 text-sm">You did all 4! Submit below — admin will award 5–50 pts based on your comment.</p>
+                          <p className="text-gray-300 mt-1 text-sm">You did all 4! Submit below — admin will award 5–20 pts based on your comment.</p>
                         </div>
                       )}
                       

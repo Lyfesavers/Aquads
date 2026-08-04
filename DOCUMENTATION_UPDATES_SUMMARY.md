@@ -69,7 +69,7 @@ The Telegram points are prominently displayed with:
 2. **2.5 pts** - Daily Telegram reaction (NEW)
 3. **5 pts** - AquaSwap trade (minimum **$5 USD** notional per qualifying swap)
 4. **1 pt** - Vote on bubble
-5. **20 pts** - Complete raid
+5. **5–20 pts** - Complete raid (tier: 5/10/15/20 by comment + verified ✓)
 6. **5 pts** - New affiliate
 7. **20 pts** - Game vote
 8. **20 pts** - Affiliate lists service/ad

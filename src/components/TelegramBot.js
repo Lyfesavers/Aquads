@@ -13,7 +13,7 @@ const TelegramBot = () => {
     {
       icon: FaTwitter,
       title: 'Twitter Raids',
-      description: 'Boost your meme coin visibility! Create raids for your tweets — get 20 FREE raid posts daily (for lifetime bumped projects), then use 2000 points for more. Community earns 20 points per completion.',
+      description: 'Boost your meme coin visibility! Create raids for your tweets — get 20 FREE raid posts daily (for lifetime bumped projects), then use 2000 points for more. Community earns 5–20 points per completion.',
       command: '/raids • /createraid URL',
       color: 'from-sky-500 to-blue-600',
       details: ['20 FREE raids per day (lifetime bump)', '2000 pts after free raids', 'Auto-expires in 48hrs']
@@ -57,7 +57,7 @@ const TelegramBot = () => {
       description: 'Earn points by completing raids and voting. Use your accumulated points to create additional raids beyond your 20 free daily posts (2000 pts each).',
       command: 'Check in /help menu',
       color: 'from-amber-500 to-orange-600',
-      details: ['20 pts per raid completion', '1 pt per first vote', 'Spend 2000 pts for extra raids']
+      details: ['5–20 pts per raid (by tier)', '1 pt per first vote', 'Spend 2000 pts for extra raids']
     },
     {
       icon: FaNetworkWired,
@@ -228,7 +228,7 @@ const TelegramBot = () => {
     {
       icon: FaCoins,
       title: '$100 Per 10K Points',
-      description: 'We pay your community REAL CASH. Participants earn points from raids (e.g. 20 per completion) and a one-time 1 per bubble (first vote only); redeem 10,000 points for $100 CAD.',
+      description: 'We pay your community REAL CASH. Participants earn 5–20 pts per raid (by tier) and a one-time 1 pt per bubble (first vote only); redeem 10,000 points for $100 CAD.',
       highlight: 'Real cash payouts'
     }
   ];
@@ -439,7 +439,7 @@ const TelegramBot = () => {
                     </div>
                     <div className="bg-gray-800/80 rounded-2xl rounded-tl-sm p-3">
                       <p className="text-gray-300 text-sm">🚀 <b>Twitter Raid Available!</b></p>
-                      <p className="text-gray-400 text-xs mt-1">💰 Reward: 20 points</p>
+                      <p className="text-gray-400 text-xs mt-1">💰 Reward: 5–20 pts</p>
                       <div className="flex gap-2 mt-2">
                         <span className="flex items-center gap-1 text-xs text-pink-400 bg-pink-500/20 px-2 py-1 rounded">
                           <FaHeart className="text-[10px]" /> Like
@@ -456,7 +456,7 @@ const TelegramBot = () => {
                   
                   {/* Floating elements */}
                   <div className="absolute -top-3 -right-3 w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-500 rounded-xl flex items-center justify-center shadow-lg animate-bounce">
-                    <span className="text-white text-sm font-bold">+20</span>
+                    <span className="text-white text-sm font-bold">+5–20</span>
                   </div>
                   <div className="absolute -bottom-3 -left-3 w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg animate-pulse">
                     <FaCrown className="text-white text-sm" />
