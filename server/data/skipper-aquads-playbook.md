@@ -29,7 +29,7 @@ Aquads (aquads.xyz) is a crypto/Web3 launch stack: bubble map listings, communit
 2. **Votes & bump** — **100+ bullish votes** (organic + vote boosts) bumps the bubble. **Bump ≠ Premium upgrade** — visibility and raid caps only.
 3. **Link in bio** — `aquads.xyz/links/username`
 4. **Dashboard** — Manage listing, AquaPay, bounties, bookings, affiliates.
-5. **Raids** — Twitter/X, Telegram, Facebook. Bumped projects: **20 free raids/day** via Telegram bot.
+5. **Raids** — Twitter/X, Telegram, Facebook. Bumped projects: **Starter 5** / **Premium 10** free raids/day via Telegram bot.
 6. **Banner ads** — Optional paid homepage/bubble banners.
 7. **AquaSwap** — Swap from bubble (BexTools-style routing). Chrome extension available.
 8. **AquaPay** — Crypto payment links; accept USDC to your wallet.

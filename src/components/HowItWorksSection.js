@@ -45,7 +45,7 @@ const projectSteps = [
     title: 'Unlock the hype toolkit',
     oneLiner:
       "Bumped projects get the full kit to stay loud — every feature designed to refuel momentum, not bill you for it.",
-    perks: ['20 free raids/day', 'Telegram raid network', 'HyperSpace boosts', 'Banners', 'Deep Dive Q&A'],
+    perks: ['Free raids by tier (Starter 1→5 · Premium 5→10/day)', 'Telegram raid network', 'HyperSpace boosts', 'Banners', 'Deep Dive Q&A'],
     cta: { label: 'Explore the toolkit', to: '/telegram-bot' },
     mockup: 'toolkit',
   },
@@ -187,7 +187,7 @@ const ProjectMockup = ({ kind }) => {
           ))}
         </div>
         <div className="absolute bottom-2 left-3 right-3 flex items-center justify-between text-[10px] text-cyan-200/80">
-          <span>20 free raids · daily</span>
+          <span>Free raids · by tier</span>
           <span className="text-green-400">● active</span>
         </div>
       </div>

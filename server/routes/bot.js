@@ -30,6 +30,7 @@ const {
   getListingTier,
   allowsCustomBranding,
   getFreeRaidDailyLimitForUsername,
+  getFreeRaidQuotaForUsername,
   FREE_RAIDS_REQUIRES_LISTING_REASON,
   LISTING_TIER_PREMIUM,
 } = require('../utils/listingTier');
@@ -142,7 +143,7 @@ router.get('/status', auth, async (req, res) => {
 
     await backfillLegacyGroup(user);
 
-    const dailyLimit = await getFreeRaidDailyLimitForUsername(user.username);
+    const { dailyLimit, quotaTier } = await getFreeRaidQuotaForUsername(user.username);
     const eligibility = dailyLimit > 0
       ? user.checkFreeRaidEligibility(dailyLimit)
       : { eligible: false, reason: FREE_RAIDS_REQUIRES_LISTING_REASON, raidsRemaining: 0, raidsUsedToday: 0, dailyLimit: 0 };
@@ -175,6 +176,7 @@ router.get('/status', auth, async (req, res) => {
         raidsRemaining: eligibility.raidsRemaining || 0,
         eligible: !!eligibility.eligible,
         reason: eligibility.reason || null,
+        quotaTier: dailyLimit > 0 ? quotaTier : null,
       },
       projects,
     });

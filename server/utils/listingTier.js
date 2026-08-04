@@ -8,10 +8,12 @@ const PREMIUM_LISTING_FEE_USDC = 99;
 
 /** Starter: free raids per day while listing exists but no bubble is bumped yet */
 const STARTER_UNBUMPED_FREE_RAID_DAILY = 1;
+/** Starter: free raids per day once any Starter bubble is bumped */
+const STARTER_BUMPED_FREE_RAID_DAILY = 5;
 /** Premium: free raids per day while listing exists but no Premium bubble is bumped yet */
 const PREMIUM_UNBUMPED_FREE_RAID_DAILY = 5;
-/** Starter bumped OR Premium bumped: coordinated free raids per day */
-const BUMPED_FREE_RAID_DAILY = 20;
+/** Premium: free raids per day once any Premium bubble is bumped */
+const PREMIUM_BUMPED_FREE_RAID_DAILY = 10;
 
 /**
  * Legacy documents without listingTier are treated as premium (paid listings before Starter existed).
@@ -29,10 +31,11 @@ function allowsCustomBranding(ad) {
 
 /**
  * Daily free raid cap for Twitter/Facebook (and aligned bot flows).
- * Starter: 1/day if they have a live listing but none bumped; 20/day once any Starter bubble is bumped.
- * Premium (legacy counts as premium): 5/day when no Premium bubble is bumped; 20/day once any Premium bubble is bumped.
+ * Starter: 1/day unbumped → 5/day bumped.
+ * Premium: 5/day unbumped → 10/day bumped.
+ * Returns { dailyLimit, quotaTier } where quotaTier drives UI copy.
  */
-async function getFreeRaidDailyLimitForUsername(username) {
+async function getFreeRaidQuotaForUsername(username) {
   const ads = await Ad.find({
     owner: username,
     status: { $in: ['active', 'approved'] }
@@ -40,31 +43,46 @@ async function getFreeRaidDailyLimitForUsername(username) {
     .select('listingTier isBumped')
     .lean();
 
-  if (!ads.length) return 0;
+  if (!ads.length) return { dailyLimit: 0, quotaTier: null };
 
   let limit = 0;
+  let quotaTier = null;
 
   const starterAds = ads.filter((a) => getListingTier(a) === LISTING_TIER_STARTER);
   if (starterAds.length > 0) {
     const anyStarterBumped = starterAds.some((a) => a.isBumped);
-    limit = Math.max(limit, anyStarterBumped ? BUMPED_FREE_RAID_DAILY : STARTER_UNBUMPED_FREE_RAID_DAILY);
+    const starterLimit = anyStarterBumped
+      ? STARTER_BUMPED_FREE_RAID_DAILY
+      : STARTER_UNBUMPED_FREE_RAID_DAILY;
+    if (starterLimit >= limit) {
+      limit = starterLimit;
+      quotaTier = anyStarterBumped ? 'starter_bumped' : 'starter_unbumped';
+    }
   }
 
   const premiumAds = ads.filter((a) => getListingTier(a) === LISTING_TIER_PREMIUM);
   if (premiumAds.length > 0) {
     const anyPremiumBumped = premiumAds.some((a) => a.isBumped);
-    limit = Math.max(
-      limit,
-      anyPremiumBumped ? BUMPED_FREE_RAID_DAILY : PREMIUM_UNBUMPED_FREE_RAID_DAILY
-    );
+    const premiumLimit = anyPremiumBumped
+      ? PREMIUM_BUMPED_FREE_RAID_DAILY
+      : PREMIUM_UNBUMPED_FREE_RAID_DAILY;
+    if (premiumLimit > limit) {
+      limit = premiumLimit;
+      quotaTier = anyPremiumBumped ? 'premium_bumped' : 'premium_unbumped';
+    }
   }
 
-  return limit;
+  return { dailyLimit: limit, quotaTier };
+}
+
+async function getFreeRaidDailyLimitForUsername(username) {
+  const { dailyLimit } = await getFreeRaidQuotaForUsername(username);
+  return dailyLimit;
 }
 
 /** User-visible hint when no live listings qualify for free raids */
 const FREE_RAIDS_REQUIRES_LISTING_REASON =
-  'List an approved project on Aquads first. Starter: 1 free raid/day before your bubble is bumped, then 20/day once bumped. Premium: up to 5/day before bump, then 20/day once bumped.';
+  'List an approved project on Aquads first. Starter: 1 free raid/day before bump, then 5/day once bumped. Premium: up to 5/day before bump, then 10/day once bumped.';
 
 async function userHasBumpedAdForFreeRaids(username) {
   return (await getFreeRaidDailyLimitForUsername(username)) > 0;
@@ -75,11 +93,15 @@ module.exports = {
   LISTING_TIER_PREMIUM,
   PREMIUM_LISTING_FEE_USDC,
   STARTER_UNBUMPED_FREE_RAID_DAILY,
+  STARTER_BUMPED_FREE_RAID_DAILY,
   PREMIUM_UNBUMPED_FREE_RAID_DAILY,
-  BUMPED_FREE_RAID_DAILY,
+  PREMIUM_BUMPED_FREE_RAID_DAILY,
+  /** @deprecated use STARTER_BUMPED / PREMIUM_BUMPED constants */
+  BUMPED_FREE_RAID_DAILY: PREMIUM_BUMPED_FREE_RAID_DAILY,
   FREE_RAIDS_REQUIRES_LISTING_REASON,
   getListingTier,
   allowsCustomBranding,
+  getFreeRaidQuotaForUsername,
   getFreeRaidDailyLimitForUsername,
   userHasBumpedAdForFreeRaids
 };

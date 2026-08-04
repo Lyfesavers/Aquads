@@ -27,7 +27,7 @@ function userHasActiveSocket(userId, excludeSocketId = null) {
   return false;
 }
 
-const { getFreeRaidDailyLimitForUsername, FREE_RAIDS_REQUIRES_LISTING_REASON } = require('./utils/listingTier');
+const { getFreeRaidDailyLimitForUsername, getFreeRaidQuotaForUsername, FREE_RAIDS_REQUIRES_LISTING_REASON } = require('./utils/listingTier');
 
 // Initialize the socket.io instance
 function init(server) {
@@ -147,7 +147,7 @@ function init(server) {
             .slice(0, 50);
           
           // Calculate free raid eligibility (tier-based daily cap from listingTier.js)
-          const dailyLimit = await getFreeRaidDailyLimitForUsername(user.username);
+          const { dailyLimit, quotaTier } = await getFreeRaidQuotaForUsername(user.username);
 
           let freeRaidEligibility;
           if (dailyLimit > 0) {
@@ -155,7 +155,8 @@ function init(server) {
             freeRaidEligibility = {
               ...eligibility,
               eligibilitySource: 'bumped_listing',
-              eligible: eligibility.eligible !== false
+              eligible: eligibility.eligible !== false,
+              quotaTier
             };
           } else {
             freeRaidEligibility = {

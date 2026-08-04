@@ -799,7 +799,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
         setFreeRaidEligibility({
           eligible: false,
           reason:
-            'Could not load eligibility. List an approved project: Starter gets 1 free raid/day until bump, then 20/day; Premium gets up to 5/day until bump, then 20/day once bumped.'
+            'Could not load eligibility. List an approved project: Starter gets 1 free raid/day until bump, then 5/day; Premium gets up to 5/day until bump, then 10/day once bumped.'
         });
       }
     } catch (error) {
@@ -1366,18 +1366,24 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                     </p>
                     <p className="text-sm">
                       {freeRaidEligibility.eligible 
-                        ? `You have ${freeRaidEligibility.raidsRemaining} free raids remaining today (${freeRaidEligibility.raidsUsedToday}/${freeRaidEligibility.dailyLimit || 20} used)`
+                        ? `You have ${freeRaidEligibility.raidsRemaining} free raids remaining today (${freeRaidEligibility.raidsUsedToday}/${freeRaidEligibility.dailyLimit || 10} used)`
                         : freeRaidEligibility.reason
                       }
                     </p>
-                    {freeRaidEligibility.eligible && freeRaidEligibility.eligibilitySource === 'bumped_listing' && (
-                      <p className="text-xs text-green-300 mt-1">
-                        {freeRaidEligibility.dailyLimit === 1
-                          ? '✓ Starter quota: 1/day (bump for up to 20/day)'
-                          : freeRaidEligibility.dailyLimit === 5
-                          ? '✓ Premium quota: 5/day until bump (then up to 20/day)'
-                          : '✓ Listing qualifies for coordinated free raids'}
-                      </p>
+                    {freeRaidEligibility.eligible && freeRaidEligibility.quotaTier === 'starter_unbumped' && (
+                      <p className="text-xs text-green-300 mt-1">✓ Starter quota: 1/day (bump for up to 5/day)</p>
+                    )}
+                    {freeRaidEligibility.eligible && freeRaidEligibility.quotaTier === 'starter_bumped' && (
+                      <p className="text-xs text-green-300 mt-1">✓ Starter bumped: up to 5/day</p>
+                    )}
+                    {freeRaidEligibility.eligible && freeRaidEligibility.quotaTier === 'premium_unbumped' && (
+                      <p className="text-xs text-green-300 mt-1">✓ Premium quota: 5/day until bump (then up to 10/day)</p>
+                    )}
+                    {freeRaidEligibility.eligible && freeRaidEligibility.quotaTier === 'premium_bumped' && (
+                      <p className="text-xs text-green-300 mt-1">✓ Premium bumped: up to 10/day</p>
+                    )}
+                    {freeRaidEligibility.eligible && !freeRaidEligibility.quotaTier && freeRaidEligibility.eligibilitySource === 'bumped_listing' && (
+                      <p className="text-xs text-green-300 mt-1">✓ Listing qualifies for coordinated free raids</p>
                     )}
                   </div>
                 </div>

@@ -801,8 +801,8 @@ userSchema.methods.addAffiliate = async function(affiliateId) {
 };
 
 // Check if user is eligible for free raid
-// dailyLimit parameter allows dynamic limits (20 for lifetime bump)
-userSchema.methods.checkFreeRaidEligibility = function(dailyLimit = 20) {
+// dailyLimit parameter allows dynamic limits (10 for bumped listing)
+userSchema.methods.checkFreeRaidEligibility = function(dailyLimit = 10) {
   // This method is now called after verifying eligibility through lifetime bump or isFreeRaidProject
   // The eligibility check is done in the route before calling this method
   
@@ -829,7 +829,7 @@ userSchema.methods.checkFreeRaidEligibility = function(dailyLimit = 20) {
 
 // Use a free raid
 // dailyLimit parameter should match what was used in checkFreeRaidEligibility
-userSchema.methods.useFreeRaid = async function(dailyLimit = 20) {
+userSchema.methods.useFreeRaid = async function(dailyLimit = 10) {
   const eligibility = this.checkFreeRaidEligibility(dailyLimit);
   if (!eligibility.eligible) {
     throw new Error(eligibility.reason);

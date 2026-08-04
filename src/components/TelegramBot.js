@@ -13,10 +13,10 @@ const TelegramBot = () => {
     {
       icon: FaTwitter,
       title: 'Twitter Raids',
-      description: 'Boost your meme coin visibility! Create raids for your tweets — get 20 FREE raid posts daily (for lifetime bumped projects), then use 2000 points for more. Community earns 5–20 points per completion.',
+      description: 'Boost your meme coin visibility! Create raids for your tweets — free daily quota by listing tier (Starter: 1→5/day when bumped · Premium: 5→10/day when bumped), then use 2000 points for more. Community earns 5–20 points per completion.',
       command: '/raids • /createraid URL',
       color: 'from-sky-500 to-blue-600',
-      details: ['20 FREE raids per day (lifetime bump)', '2000 pts after free raids', 'Auto-expires in 48hrs']
+      details: ['Starter 1→5/day · Premium 5→10/day when bumped', '2000 pts after free raids', 'Auto-expires in 48hrs']
     },
     {
       icon: FaFacebook,
@@ -54,7 +54,7 @@ const TelegramBot = () => {
     {
       icon: FaCoins,
       title: 'Points System',
-      description: 'Earn points by completing raids and voting. Use your accumulated points to create additional raids beyond your 20 free daily posts (2000 pts each).',
+      description: 'Earn points by completing raids and voting. Use your accumulated points to create additional raids beyond your free daily quota (2000 pts each).',
       command: 'Check in /help menu',
       color: 'from-amber-500 to-orange-600',
       details: ['5–20 pts per raid (by tier)', '1 pt per first vote', 'Spend 2000 pts for extra raids']
@@ -105,7 +105,7 @@ const TelegramBot = () => {
         { name: 'Complete Raids & Earn Points', included: true },
         { name: 'Vote on Projects (Earn 1 pt)', included: true },
         { name: 'View Top 10 Bubble Rankings', included: true },
-        { name: '20 FREE Raid Posts Daily (Lifetime Bump)', included: true },
+        { name: 'FREE Raid Posts Daily (by listing tier)', included: true },
         { name: 'Create Extra Raids (2000 pts each)', included: true },
         { name: 'X Space live alerts (paste link)', included: true },
         { name: 'Auto voice chat alerts (Telegram)', included: true },
@@ -127,7 +127,7 @@ const TelegramBot = () => {
         { name: 'Complete Raids & Earn Points', included: true },
         { name: 'Vote on Projects (Earn 1 pt)', included: true },
         { name: 'View Top 10 Bubble Rankings', included: true },
-        { name: '20 FREE Raid Posts Daily (Lifetime Bump)', included: true },
+        { name: 'FREE Raid Posts Daily (by listing tier)', included: true },
         { name: 'Create Extra Raids (2000 pts each)', included: true },
         { name: 'X Space live alerts (paste link)', included: true },
         { name: 'Auto voice chat alerts (Telegram)', included: true },
@@ -150,7 +150,7 @@ const TelegramBot = () => {
     { cmd: '/help', desc: 'View interactive menu with all features', category: 'General' },
     { cmd: '/cancel', desc: 'Cancel any ongoing operation', category: 'General' },
     { cmd: '/raids', desc: 'View all available Twitter & Facebook raids', category: 'Raids' },
-    { cmd: '/createraid URL', desc: 'Create a Twitter raid (20 FREE daily for lifetime bump, then 2000 pts each)', category: 'Raids' },
+    { cmd: '/createraid URL', desc: 'Create a Twitter raid (Starter 1→5/day · Premium 5→10/day when bumped, then 2000 pts each)', category: 'Raids' },
     { cmd: '/cancelraid URL', desc: 'Cancel a raid you created', category: 'Raids' },
     { cmd: '/bubbles', desc: 'View top 10 bubbles by bullish votes', category: 'Bubbles' },
     { cmd: '/leaders', desc: 'Top 15 — lifetime points & USDC earnings', category: 'Bubbles' },
@@ -173,8 +173,8 @@ const TelegramBot = () => {
   const benefits = [
     {
       icon: FaBolt,
-      title: '20 Free Raids Daily',
-      description: 'Launch 20 FREE raid posts every day to pump your meme coin (for lifetime bumped projects). After that, use 2000 points for unlimited additional raids.',
+      title: 'Free Raids by Tier',
+      description: 'Launch free coordinated raids every day — Starter: 1/day before bump, up to 5/day when bumped; Premium: up to 5/day before bump, up to 10/day when bumped. After that, use 2000 points for additional raids.',
       highlight: 'FREE daily raids'
     },
     {
@@ -305,7 +305,7 @@ const TelegramBot = () => {
               </h1>
               
               <p className="text-lg md:text-xl text-gray-400 mb-8 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
-                The same powerful bot on <span className="text-cyan-400 font-semibold">Telegram</span> and <span className="text-indigo-400 font-semibold">Discord</span>. Get <span className="text-green-400 font-semibold">20 FREE raid posts daily</span> (for lifetime bumped projects), 
+                The same powerful bot on <span className="text-cyan-400 font-semibold">Telegram</span> and <span className="text-indigo-400 font-semibold">Discord</span>. Get <span className="text-green-400 font-semibold">free coordinated raids daily</span> by listing tier (Starter: 1→5/day when bumped · Premium: 5→10/day when bumped), 
                 boost with <span className="text-cyan-400 font-semibold">guaranteed bullish votes</span>, and get exposure on our <span className="text-purple-400 font-semibold">trending channel</span>.
               </p>
 
@@ -391,7 +391,7 @@ const TelegramBot = () => {
               <div className="flex flex-wrap gap-6 mt-8 justify-center lg:justify-start">
                 <div className="flex items-center gap-2 text-gray-400">
                   <FaCheckCircle className="text-green-500" />
-                  <span>20 FREE raids/day (lifetime bump)</span>
+                  <span>Starter 1→5 · Premium 5→10 raids/day when bumped</span>
                 </div>
                 <div className="flex items-center gap-2 text-gray-400">
                   <FaCheckCircle className="text-green-500" />
@@ -473,11 +473,11 @@ const TelegramBot = () => {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-              20 Free Raids Daily,
+              Free Coordinated Raids,
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500"> Trend Everywhere When Listed</span>
             </h2>
             <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-              Lifetime bumped projects get 20 FREE raid posts per day. List & bump to trend across <span className="text-cyan-400">Aquads homepage</span>, <span className="text-purple-400">BexTools trending</span>, and <span className="text-green-400">bubble rankings</span>.
+              Listed projects get free raids by tier — Starter: 1/day before bump, up to 5/day when bumped; Premium: up to 5/day before bump, up to 10/day when bumped. List & bump to trend across <span className="text-cyan-400">Aquads homepage</span>, <span className="text-purple-400">BexTools trending</span>, and <span className="text-green-400">bubble rankings</span>.
             </p>
           </div>
 
@@ -861,7 +861,7 @@ const TelegramBot = () => {
               {
                 step: '03',
                 title: 'Create Raids',
-                description: 'Use /createraid with your tweet URL. 20 FREE daily (lifetime bump), then 2000 points each!',
+                description: 'Use /createraid with your tweet URL. Free quota by tier (Starter 1→5/day · Premium 5→10/day when bumped), then 2000 points each!',
                 icon: FaCoins
               },
               {
@@ -919,7 +919,7 @@ const TelegramBot = () => {
               </h2>
               
               <p className="text-gray-400 text-lg mb-8 max-w-2xl mx-auto">
-                Start with 20 FREE raid posts daily (for lifetime bumped projects). Use the bot on Telegram or Discord — same features. Boost bubble ranking with `/boostvote` (votes only), and list & bump to trend across Aquads, BexTools, and bubble rankings with your custom branding.
+                Start with free coordinated raids by listing tier (Starter: 1→5/day when bumped · Premium: 5→10/day when bumped). Use the bot on Telegram or Discord — same features. Boost bubble ranking with `/boostvote` (votes only), and list & bump to trend across Aquads, BexTools, and bubble rankings with your custom branding.
               </p>
               
               <div className="flex flex-col sm:flex-row flex-wrap gap-4 justify-center">

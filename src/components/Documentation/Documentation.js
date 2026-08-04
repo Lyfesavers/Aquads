@@ -4011,7 +4011,7 @@ For Facebook raid participation:
 
 ### What You Get (Free)
 
-- ✅ FREE raid posts (vote bump threshold applies): **Premium**: up to **5**/day before bump, up to **20**/day once bumped · **Starter (free)**: **1**/day before bump, up to **20**/day once bumped
+- ✅ FREE raid posts (vote bump threshold applies): **Premium**: up to **5**/day before bump, up to **10**/day once bumped · **Starter (free)**: **1**/day before bump, up to **5**/day once bumped
 - ✅ Complete raids & earn **5–20 points each** (5 = text/unverified · 10 = text+image/unverified · 15 = text/verified ✓ · 20 = text+image/verified ✓)
 - ✅ Vote on projects (earn 1 pt per first vote)
 - ✅ View top 10 bubble rankings
@@ -4074,7 +4074,7 @@ Full reference of all 16 commands available in @aquadsbumpbot.
 | Command | Description |
 |---------|-------------|
 | \`/raids\` | View all available Twitter & Facebook raids |
-| \`/createraid URL\` | Create a Twitter raid (**Starter**: 1 free/day until bumped, then up to **20/day** · **Premium**: up to **5/day** until bumped, then up to **20/day** · bump = **100+ bullish** + **$10k+ liq**) |
+| \`/createraid URL\` | Create a Twitter raid (**Starter**: 1 free/day until bumped, then up to **5/day** · **Premium**: up to **5/day** until bumped, then up to **10/day** · bump = **100+ bullish** + **$10k+ liq**) |
 | \`/cancelraid URL\` | Cancel a raid you created |
 
 ### Bubble & Voting Commands
@@ -4151,7 +4151,7 @@ The Aquads Bump Bot is built specifically for meme coin projects to grow their c
 4. Participants earn **5–20 points** per completion (5/10/15/20 tier — see Raids Overview)
 
 **Raid Details:**
-- FREE raid posts per day: **Starter** **1** until bumped, then up to **20** · **Premium** up to **5** until bumped, then up to **20** (bump = **100+ bullish** + **$10k+ liquidity**)
+- FREE raid posts per day: **Starter** **1** until bumped, then up to **5** · **Premium** up to **5** until bumped, then up to **10** (bump = **100+ bullish** + **$10k+ liquidity**)
 - Additional raids cost 2000 points each
 - Raids auto-expire after 48 hours
 - Support both Twitter and Facebook
@@ -4232,7 +4232,7 @@ Purchase boosts via \`/boostvote\`:
 | Create extra raid | -2000 pts |
 | Redeem for cash | 10,000 pts = $100 CAD |
 
-> 💡 **Tip**: **Starter** gets the **full Bump Bot** (raids/votes/boosts)—**not** \`/setbranding\`; that’s **Premium** once bumped (**100+ bullish**, **$10k+ liq**). Premium also scales coordinated free raids from **up to 5**/day before bump to **up to 20**/day once bumped. Starter: **1**/day before bump, then **20**/day once bumped.
+> 💡 **Tip**: **Starter** gets the **full Bump Bot** (raids/votes/boosts)—**not** \`/setbranding\`; that’s **Premium** once bumped (**100+ bullish**, **$10k+ liq**). Premium scales free raids from **up to 5**/day before bump to **up to 10**/day once bumped. Starter: **1**/day before bump, then **5**/day once bumped.
     `,
     prevPage: { id: 'bot-commands', title: 'Bot Commands' },
     nextPage: { id: 'browser-extension', title: 'Browser Extension' },

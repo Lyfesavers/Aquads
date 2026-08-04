@@ -268,7 +268,7 @@ router.post('/vip/:userId', auth, async (req, res) => {
 
 // Note: Manual free raid toggle has been removed.
 // Free raids are now automatic for projects with lifetime bumps in bubbles.
-// Users with lifetime bumped projects get 20 free raids per day automatically.
+// Users with bumped listings get tier-based free raids per day (Starter: 5, Premium: 10).
 
 // Get detailed affiliate analytics for current user (user-facing)
 router.get('/analytics', auth, async (req, res) => {

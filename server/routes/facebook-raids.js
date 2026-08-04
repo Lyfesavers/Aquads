@@ -12,7 +12,7 @@ const mongoose = require('mongoose');
 const Notification = require('../models/Notification');
 const telegramService = require('../utils/telegramService');
 const { emitRaidUpdate, emitFacebookRaidApproved, emitFacebookRaidRejected, emitNewFacebookRaidCompletion } = require('../socket');
-const { getFreeRaidDailyLimitForUsername, FREE_RAIDS_REQUIRES_LISTING_REASON } = require('../utils/listingTier');
+const { getFreeRaidDailyLimitForUsername, getFreeRaidQuotaForUsername, FREE_RAIDS_REQUIRES_LISTING_REASON } = require('../utils/listingTier');
 
 // Use the imported module function
 const awardSocialMediaPoints = pointsModule.awardSocialMediaPoints;
@@ -68,7 +68,7 @@ router.get('/free-eligibility', auth, async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    const dailyLimit = await getFreeRaidDailyLimitForUsername(user.username);
+    const { dailyLimit, quotaTier } = await getFreeRaidQuotaForUsername(user.username);
 
     if (!dailyLimit) {
       return res.json({
@@ -78,7 +78,8 @@ router.get('/free-eligibility', auth, async (req, res) => {
           dailyLimit: 0,
           raidsRemaining: 0,
           raidsUsedToday: 0,
-          eligibilitySource: null
+          eligibilitySource: null,
+          quotaTier: null
         }
       });
     }
@@ -95,7 +96,8 @@ router.get('/free-eligibility', auth, async (req, res) => {
         dailyLimit: eligibility.dailyLimit,
         raidsRemaining: eligibility.raidsRemaining,
         raidsUsedToday: eligibility.raidsUsedToday,
-        eligibilitySource
+        eligibilitySource,
+        quotaTier
       }
     });
   } catch (error) {

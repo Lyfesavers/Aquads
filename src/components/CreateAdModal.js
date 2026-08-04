@@ -988,7 +988,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                   >
                     <div className="font-bold text-white">Starter</div>
                     <div className="mt-1 text-sm text-green-400">Free base listing</div>
-                    <p className="mt-2 text-xs text-gray-400">AquaSwap + Bex path from bubble · 1 complimentary 24h homepage banner · bump at 100+ votes + $10k liq · 1 raid/day → 20/day when bumped · optional packages: pay package prices only</p>
+                    <p className="mt-2 text-xs text-gray-400">AquaSwap + Bex path from bubble · 1 complimentary 24h homepage banner · bump at 100+ votes + $10k liq · 1 raid/day → 5/day when bumped · optional packages: pay package prices only</p>
                   </button>
                   <button
                     type="button"
@@ -1005,7 +1005,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                         `$${PREMIUM_LISTING_FEE_USDC} USDC`
                       )}
                     </div>
-                    <p className="mt-2 text-xs text-gray-400">$5 Skipper AI credit · PR/AMA · 7-day banner · ad credit · custom branding when bumped (100+ votes, $10k+ liq) · 5 raids/day → 20 when bumped</p>
+                    <p className="mt-2 text-xs text-gray-400">$5 Skipper AI credit · PR/AMA · 7-day banner · ad credit · custom branding when bumped (100+ votes, $10k+ liq) · 5 raids/day → 10 when bumped</p>
                   </button>
                 </div>
               </div>
@@ -1272,7 +1272,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                   >
                     <div className="font-bold text-white">Starter</div>
                     <div className="text-green-400 text-sm mt-1">Free base listing</div>
-                    <p className="text-gray-400 text-xs mt-2">AquaSwap + Bex routing · 1 complimentary 24h homepage banner · bump at 100+ votes + $10k liq · 1 raid/day → 20 when bumped · optional paid add-ons</p>
+                    <p className="text-gray-400 text-xs mt-2">AquaSwap + Bex routing · 1 complimentary 24h homepage banner · bump at 100+ votes + $10k liq · 1 raid/day → 5 when bumped · optional paid add-ons</p>
                   </button>
                   <button
                     type="button"
@@ -1287,7 +1287,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                         `$${PREMIUM_LISTING_FEE_USDC} USDC`
                       )}
                     </div>
-                    <p className="text-gray-400 text-xs mt-2">$5 Skipper AI credit · PR, AMA, 7-day banner, ad credit, custom branding when bumped · 5→20 raids/day</p>
+                    <p className="text-gray-400 text-xs mt-2">$5 Skipper AI credit · PR, AMA, 7-day banner, ad credit, custom branding when bumped · 5→10 raids/day</p>
                   </button>
                 </div>
 
@@ -1338,7 +1338,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                       </div>
                       <div>
                         <h4 className="font-semibold text-white">Coordinated Twitter & Facebook raids</h4>
-                        <p className="text-gray-300 text-sm"><strong className="text-white">1</strong> free raid per day until your bubble is bumped, then up to <strong className="text-white">20</strong>/day once you meet the bump threshold (100+ votes, $10k+ liquidity).</p>
+                        <p className="text-gray-300 text-sm"><strong className="text-white">1</strong> free raid per day until your bubble is bumped, then up to <strong className="text-white">5</strong>/day once you meet the bump threshold (100+ votes, $10k+ liquidity).</p>
                       </div>
                     </div>
 
@@ -1483,7 +1483,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                     </div>
                     <div>
                       <h4 className="font-semibold text-white">Community Twitter & Facebook raids</h4>
-                      <p className="text-gray-300 text-sm">Up to <strong className="text-white">5</strong> free coordinated raids per day before your bubble is bumped, then up to <strong className="text-white">20</strong>/day once bumped (<strong className="text-white">100+</strong> bullish votes, <strong className="text-white">$10k+</strong> liquidity).</p>
+                      <p className="text-gray-300 text-sm">Up to <strong className="text-white">5</strong> free coordinated raids per day before your bubble is bumped, then up to <strong className="text-white">10</strong>/day once bumped (<strong className="text-white">100+</strong> bullish votes, <strong className="text-white">$10k+</strong> liquidity).</p>
                     </div>
                   </div>
                   

@@ -867,7 +867,7 @@ const ProjectInfo = ({ currentUser, ads = [], onAdPatched }) => {
               <li className="flex items-start gap-3">
                 <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
                 <span className="min-w-0 flex-1 leading-relaxed">
-                  Coordinated raids: <strong className="text-white">1/day</strong> until bumped, then <strong className="text-white">up to 20/day</strong>
+                  Coordinated raids: <strong className="text-white">1/day</strong> until bumped, then <strong className="text-white">up to 5/day</strong>
                 </span>
               </li>
               <li className="flex items-start gap-3">
@@ -948,7 +948,7 @@ const ProjectInfo = ({ currentUser, ads = [], onAdPatched }) => {
               <li className="flex items-start gap-3">
                 <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
                 <span className="min-w-0 flex-1 leading-relaxed">
-                  Raids: <strong className="text-white">up to 5/day</strong> before bump, <strong className="text-white">up to 20/day</strong> once bumped
+                  Raids: <strong className="text-white">up to 5/day</strong> before bump, <strong className="text-white">up to 10/day</strong> once bumped
                 </span>
               </li>
               <li className="flex items-start gap-3">

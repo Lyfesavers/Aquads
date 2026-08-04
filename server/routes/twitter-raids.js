@@ -13,7 +13,7 @@ const { emitTwitterRaidApproved, emitTwitterRaidRejected, emitNewTwitterRaidComp
 const mongoose = require('mongoose');
 const Notification = require('../models/Notification');
 const telegramService = require('../utils/telegramService');
-const { getFreeRaidDailyLimitForUsername, FREE_RAIDS_REQUIRES_LISTING_REASON } = require('../utils/listingTier');
+const { getFreeRaidDailyLimitForUsername, getFreeRaidQuotaForUsername, FREE_RAIDS_REQUIRES_LISTING_REASON } = require('../utils/listingTier');
 const {
   RAID_LIFETIME_MS,
   getRaidCompletableError,
@@ -1203,7 +1203,7 @@ router.get('/free/eligibility', auth, async (req, res) => {
     }
 
     // Check eligibility sources
-    const dailyLimit = await getFreeRaidDailyLimitForUsername(user.username);
+    const { dailyLimit, quotaTier } = await getFreeRaidQuotaForUsername(user.username);
 
     if (!dailyLimit) {
       return res.json({
@@ -1212,7 +1212,8 @@ router.get('/free/eligibility', auth, async (req, res) => {
         dailyLimit: 0,
         raidsRemaining: 0,
         raidsUsedToday: 0,
-        eligibilitySource: null
+        eligibilitySource: null,
+        quotaTier: null
       });
     }
     const eligibilitySource = 'bumped_listing';
@@ -1226,7 +1227,8 @@ router.get('/free/eligibility', auth, async (req, res) => {
       dailyLimit: eligibility.dailyLimit,
       raidsRemaining: eligibility.raidsRemaining,
       raidsUsedToday: eligibility.raidsUsedToday,
-      eligibilitySource
+      eligibilitySource,
+      quotaTier
     });
   } catch (error) {
     console.error('Error checking free raid eligibility:', error);

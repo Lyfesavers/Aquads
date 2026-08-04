@@ -116,7 +116,7 @@ const BLOG_FEATURE_LINKS = {
     to: '/telegram-bot',
     label: 'Aquads Telegram & Discord Bot',
     description:
-      'Run Twitter and Facebook raids, earn points, and boost your bubble — includes 20 free raid posts daily for lifetime bumped projects.',
+      'Run Twitter and Facebook raids, earn points, and boost your bubble — free daily raids by listing tier (Starter: 1→5/day when bumped · Premium: 5→10/day when bumped).',
   },
 };
 

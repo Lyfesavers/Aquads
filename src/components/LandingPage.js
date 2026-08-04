@@ -2223,13 +2223,13 @@ const CarouselCard = ({ feature, index }) => {
                 </h2>
                 
                 <p className="text-gray-400 text-sm md:text-base lg:text-lg mb-6 max-w-xl">
-                  Boost visibility with coordinated social campaigns. Create Twitter raids—20 FREE daily for lifetime bumped projects, then use 2000 points for additional posts. Community earns 5–20 points per completion (5/10/15/20 tiers). Auto-expires in 48hrs.
+                  Boost visibility with coordinated social campaigns. Create Twitter raids—free daily quota by listing tier (Starter: 1→5/day when bumped · Premium: 5→10/day when bumped), then use 2000 points for additional posts. Community earns 5–20 points per completion (5/10/15/20 tiers). Auto-expires in 48hrs.
                 </p>
                 
                 {/* Stats grid */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
                   {[
-                    { icon: '🆓', label: '20 Free Daily', value: 'Bumped Projects' },
+                    { icon: '🆓', label: 'Free Daily', value: 'Starter 1→5 · Premium 5→10' },
                     { icon: '💎', label: '2000 Points', value: 'After Free' },
                     { icon: '💰', label: '5–20 Pts/Raid', value: 'Earn by Tier' },
                     { icon: '⏱️', label: '48hr Expiry', value: 'Auto-Expires' }
@@ -2312,8 +2312,8 @@ const CarouselCard = ({ feature, index }) => {
                       </div>
                       <div className="bg-white/5 rounded-xl p-3 text-center">
                         <div className="text-gray-400 text-xs mb-1">Free Raids</div>
-                        <div className="text-2xl font-bold text-green-400">20</div>
-                        <div className="text-gray-500 text-xs mt-1">Daily (bumped)</div>
+                        <div className="text-2xl font-bold text-green-400">1–10</div>
+                        <div className="text-gray-500 text-xs mt-1">Daily (by tier)</div>
                       </div>
                     </div>
                     
@@ -2939,13 +2939,13 @@ const CarouselCard = ({ feature, index }) => {
                 </h2>
                 
                 <p className="text-gray-400 text-sm md:text-base lg:text-lg mb-6 max-w-xl">
-                  Complete Telegram integration for project growth. Create Twitter & Facebook raids—20 FREE daily for lifetime bumped projects, then use points for additional posts. Boost trending across Aquads, BexTools, and bubble rankings. Custom branding in our trending channel.
+                  Complete Telegram integration for project growth. Create Twitter & Facebook raids—free daily quota by listing tier (Starter: 1→5/day when bumped · Premium: 5→10/day when bumped), then use points for additional posts. Boost trending across Aquads, BexTools, and bubble rankings. Custom branding in our trending channel.
                 </p>
                 
                 {/* Stats grid */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
                   {[
-                    { icon: '🐦', label: 'Twitter Raids', value: '20 Free Daily' },
+                    { icon: '🐦', label: 'Twitter Raids', value: 'Starter 1→5 · Premium 5→10' },
                     { icon: '👍', label: 'Bubble votes', value: '1 pt once' },
                     { icon: '📈', label: 'Boost Trending', value: 'Multi-Platform' },
                     { icon: '🎨', label: 'Custom Branding', value: 'Trending Channel' }
@@ -4206,7 +4206,7 @@ const LandingPage = () => {
     {
       icon: '🚀',
       title: 'Twitter Raids',
-      description: 'Coordinated social campaigns to keep momentum in week one. Bumped projects unlock 20 free raids per day—then scale with points.',
+      description: 'Coordinated social campaigns to keep momentum in week one. Free raids scale by listing tier—Starter 1→5/day when bumped, Premium 5→10/day when bumped—then scale with points.',
       gradient: 'from-sky-900/40 to-slate-900/80'
     },
     {

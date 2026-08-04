@@ -4250,7 +4250,7 @@ function App() {
                           {/* Feature grid */}
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-4">
                             {[
-                              { icon: '🐦', title: 'Twitter & Facebook Raids', desc: '20 FREE raids daily for lifetime bumps' },
+                              { icon: '🐦', title: 'Twitter & Facebook Raids', desc: 'Starter 1→5/day · Premium 5→10/day when bumped' },
                               { icon: '📈', title: 'Trending & Rankings', desc: 'Trend across Aquads, BexTools & trending channel' },
                               { icon: '🗳️', title: 'Voting & Boosts', desc: 'Get bullish votes + real TG members' },
                               { icon: '🎨', title: 'Custom Branding', desc: 'Your logo in vote notifications on trending channel' },

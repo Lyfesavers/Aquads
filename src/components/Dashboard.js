@@ -4472,24 +4472,29 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onAdPatche
                       <div>
                         <h4 className="text-lg font-medium text-white">Free Raid Posts</h4>
                         <p className="text-3xl font-bold text-purple-400">
-                          {freeRaidEligibility.raidsRemaining}/{freeRaidEligibility.dailyLimit || 20}
+                          {freeRaidEligibility.raidsRemaining}/{freeRaidEligibility.dailyLimit || 10}
                         </p>
                         <p className="text-sm text-purple-300">
                           Daily free raids remaining
                         </p>
-                        {freeRaidEligibility.dailyLimit === 1 && (
+                        {freeRaidEligibility.quotaTier === 'starter_unbumped' && (
                           <p className="text-xs text-green-400 mt-1">
-                            Starter listing: 1 coordinated raid/day until you bump (then up to 20/day).
+                            Starter listing: 1 coordinated raid/day until you bump (then up to 5/day).
                           </p>
                         )}
-                        {freeRaidEligibility.dailyLimit === 5 && (
+                        {freeRaidEligibility.quotaTier === 'starter_bumped' && (
                           <p className="text-xs text-green-400 mt-1">
-                            Premium listing: 5 coordinated raids/day until you bump (then up to 20/day).
+                            Starter listing bumped: up to 5 coordinated raids/day.
                           </p>
                         )}
-                        {freeRaidEligibility.dailyLimit >= 20 && (
+                        {freeRaidEligibility.quotaTier === 'premium_unbumped' && (
                           <p className="text-xs text-green-400 mt-1">
-                            Full daily free raid quota active.
+                            Premium listing: 5 coordinated raids/day until you bump (then up to 10/day).
+                          </p>
+                        )}
+                        {freeRaidEligibility.quotaTier === 'premium_bumped' && (
+                          <p className="text-xs text-green-400 mt-1">
+                            Premium listing bumped: up to 10 coordinated raids/day.
                           </p>
                         )}
                       </div>
@@ -4514,9 +4519,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onAdPatche
                       <div>
                         <h4 className="text-lg font-medium text-white">Unlock free coordinated raids</h4>
                         <p className="text-sm text-gray-300 mt-1">
-                          List an approved project on Aquads. <span className="text-purple-400 font-semibold">Starter</span>: 1 free raid/day until your bubble hits{' '}
-                          <span className="text-purple-400 font-semibold">100+ bullish votes</span> (bumped), then up to 20/day.{' '}
-                          <span className="text-purple-400 font-semibold">Premium</span>: up to 5 free raids/day before bump, then up to 20/day once bumped (100+ bullish votes).
+                          List an approved project on Aquads. <span className="text-purple-400 font-semibold">Starter</span>: 1 free raid/day until bumped, then up to 5/day.{' '}
+                          <span className="text-purple-400 font-semibold">Premium</span>: up to 5 free raids/day before bump, then up to 10/day once bumped (100+ bullish votes, $10k+ liquidity).
                         </p>
                         <div className="mt-3 flex flex-wrap gap-2">
                           <a 
