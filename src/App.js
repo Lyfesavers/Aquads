@@ -205,8 +205,8 @@ const TOP_PADDING = BANNER_HEIGHT + 5; // Additional padding from top to account
 
 /** Bumped bubbles per page on 1080p desktop panels @ 100–125% scale (user-tested). */
 const BUBBLE_MAP_ITEMS_PER_PAGE_1080P = 90;
-/** 1080p panel @ 150% Windows scale — logical ~1280×720; smaller viewport than 90-cap. */
-const BUBBLE_MAP_ITEMS_PER_PAGE_1080P_150 = 48;
+/** 1080p panel @ 150% Windows scale — logical ~1280×720: 5 full rows of 11 columns. */
+const BUBBLE_MAP_ITEMS_PER_PAGE_1080P_150 = 55;
 /** 1440p @ 100% scale — user-tested: ~10 rows × 20 cols (65 shown + 135 more room). */
 const BUBBLE_MAP_ITEMS_PER_PAGE_1440P = 200;
 /** 1440p @ 125% scale (Windows recommended) — user-tested fit at 100% browser zoom. */
@@ -215,6 +215,43 @@ const BUBBLE_MAP_ITEMS_PER_PAGE_1440P_125 = 96;
 const DESKTOP_GRID_CELL_WIDTH = 115;
 const DESKTOP_GRID_H_MARGIN = 10;
 const DESKTOP_GRID_V_MARGIN = 30;
+/** The map sits in an inner scroll container, so its usable width is a scrollbar narrower than window.innerWidth. */
+const DESKTOP_GRID_SCROLLBAR_RESERVE = 18;
+/** Smallest edge-to-edge gap between two full-size discs sharing a row. */
+const DESKTOP_GRID_MIN_H_GAP = 12;
+/** At or below this width rows keep the tuned fixed cell (tablet page sizes are aligned to it). */
+const DESKTOP_GRID_FIXED_CELL_MAX_WIDTH = 768;
+
+/**
+ * Columns and cell width for one desktop/laptop row.
+ *
+ * A fixed 115px cell discards every leftover pixel under one whole cell. On a 1080p laptop at
+ * 150% Windows scale (logical 1280px) that left ~110px unused — one column short on every row.
+ * Sizing the cell from the largest disc the viewport can paint plus a minimum gap recovers it,
+ * then the leftover is spread across the row instead of sitting as a right-hand gutter.
+ *
+ * The reference disc is the viewport's max diameter, not this page's largest disc, so the
+ * column count stays identical on every page as unbumped bubbles shrink.
+ */
+function resolveDesktopGridColumns(screenWidth) {
+  if (screenWidth <= DESKTOP_GRID_FIXED_CELL_MAX_WIDTH) {
+    const availableWidth = Math.max(1, screenWidth - DESKTOP_GRID_H_MARGIN * 2);
+    return {
+      columns: Math.max(1, Math.floor(availableWidth / DESKTOP_GRID_CELL_WIDTH)),
+      cellWidth: DESKTOP_GRID_CELL_WIDTH,
+    };
+  }
+
+  const availableWidth = Math.max(
+    1,
+    screenWidth - DESKTOP_GRID_H_MARGIN * 2 - DESKTOP_GRID_SCROLLBAR_RESERVE
+  );
+  // Past DESKTOP_GRID_FIXED_CELL_MAX_WIDTH getResponsiveSize() no longer scales the disc down.
+  const referenceCell = BASE_MAX_SIZE + DESKTOP_GRID_MIN_H_GAP;
+  const columns = Math.max(1, Math.floor(availableWidth / referenceCell));
+
+  return { columns, cellWidth: availableWidth / columns };
+}
 
 /**
  * Desktop grid positions for a whole page, from the visible sort order.
@@ -225,11 +262,9 @@ const DESKTOP_GRID_V_MARGIN = 30;
  * and overlapped the bumped rows. Uniform-size pages keep the exact same geometry.
  */
 function computeDesktopGridLayout(sizesPx, screenWidth) {
-  const cellWidth = DESKTOP_GRID_CELL_WIDTH;
   const horizontalMargin = DESKTOP_GRID_H_MARGIN;
   const verticalMargin = DESKTOP_GRID_V_MARGIN;
-  const availableWidth = screenWidth - horizontalMargin * 2;
-  const columns = Math.max(1, Math.floor(availableWidth / cellWidth));
+  const { columns, cellWidth } = resolveDesktopGridColumns(screenWidth);
 
   const positions = [];
   let rowTop = TOP_PADDING + verticalMargin;
