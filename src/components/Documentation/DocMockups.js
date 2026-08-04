@@ -866,7 +866,7 @@ export const RaidsMockup = () => (
             </div>
             <div className="flex-1">
               <h3 className="text-white font-medium">Twitter Raid - @CryptoProject</h3>
-              <p className="text-gray-400 text-sm">Like, Retweet & Comment to earn points</p>
+              <p className="text-gray-400 text-sm">Like, Retweet, Comment & Bookmark to earn points</p>
               <div className="flex items-center gap-4 mt-2">
                 <span className="text-green-400 text-sm">🎁 20 points</span>
                 <span className="text-gray-500 text-sm">👥 45 completed</span>

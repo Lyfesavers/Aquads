@@ -2923,7 +2923,8 @@ Click the raid to see the target tweet.
 Follow the required actions:
 - ❤️ Like the tweet
 - 🔄 Retweet
-- 💬 Comment (if required)
+- 💬 Comment
+- 🔖 Bookmark
 
 **Step 4: Verify**
 Click "Verify" to confirm your participation.

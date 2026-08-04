@@ -683,8 +683,8 @@ const telegramService = {
       const isFacebook = raidData.platform === 'Facebook';
       const platformName = isFacebook ? 'Facebook Raid' : 'Twitter Raid';
       const postUrl = isFacebook ? raidData.postUrl : raidData.tweetUrl;
-      const taskDescription = isFacebook ? 'Like, Share & Comment' : 'Like, Retweet & Comment';
-      const actionDescription = isFacebook ? 'Like, Share & Comment on the Facebook raid above' : 'Like, Retweet & Comment on the tweet above';
+      const taskDescription = isFacebook ? 'Like, Share & Comment' : 'Like, Retweet, Comment & Bookmark';
+      const actionDescription = isFacebook ? 'Like, Share & Comment on the Facebook raid above' : 'Like, Retweet, Comment & Bookmark on the tweet above';
 
       // Construct the message text
       const message = `🚀 New ${platformName} Available!
@@ -1865,16 +1865,16 @@ Earn points by completing Twitter & Facebook raids!
   Cancel a raid you created (use the same URL you used to create it)
 
 💡 How it works:
-1. Do ALL 3 on every raid: Like + Retweet + Comment (all required!)
+1. Do ALL 4 on every raid: Like + Retweet + Comment + Bookmark (all required!)
 2. Use /raids to see available raids
 3. Click "Complete in Private Chat" button
-4. Admin checks you did all 3, then awards points
+4. Admin checks you did all 4, then awards points
 
 ⏰ Raids expire after 48 hours
 
 📋 Raid Rules:
-• You MUST Like + Retweet + Comment every time — commenting alone does NOT count!
-• Points (after you do all 3): 5 = text comment · 10 = text comment + verified ✓ · 20 = comment with image · 50 = comment with image + verified ✓
+• You MUST Like + Retweet + Comment + Bookmark every time — commenting alone does NOT count!
+• Points (after you do all 4): 5 = text comment · 10 = text comment + verified ✓ · 20 = comment with image · 50 = comment with image + verified ✓
 • Tip: Add an AI image or meme to your comment for more points (20 or 50 instead of 5 or 10)
 • Twitter account must be at least 6 months old
 • Account must have at least 50 followers
