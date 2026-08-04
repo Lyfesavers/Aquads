@@ -4357,8 +4357,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onAdPatche
                     {/* Points Rules */}
                     <div className="text-sm text-gray-400 mt-4">
                       <h4 className="text-lg font-medium text-white mb-2">Points Earning Rules</h4>
-                      <p>• Earn 5 points for sending a message in our Telegram group (once per day)</p>
-                      <p>• Earn 5 points for reacting to posts in our Telegram group (once per day)</p>
+                      <p>• Earn 5 points for your first message each day in our Telegram group or Aquads Discord (link your account with the bot; once per day per platform)</p>
+                      <p>• Earn 5 points for your first reaction each day in our Telegram group or Aquads Discord (link your account with the bot; once per day per platform)</p>
                       <p>• Earn 5 points for each qualifying swap completed on AquaSwap (minimum <strong>$5 USD</strong> notional on the From side)</p>
                       <p>• Earn 5 points for shilling a project from AquaSwap DEX charts (once per day)</p>
                       <p>• Earn 1 point for your first vote on each project bubble (one time per bubble; you can change bullish/bearish anytime)</p>
