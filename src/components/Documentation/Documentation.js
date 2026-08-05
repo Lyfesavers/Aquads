@@ -7,7 +7,7 @@ import {
   FaHome, FaBook, FaRocket, FaCoins, FaBriefcase, FaExchangeAlt,
   FaCreditCard, FaBullhorn, FaGamepad, FaHandshake, FaTelegram,
   FaCog, FaLightbulb, FaExclamationTriangle, FaInfoCircle, FaCheckCircle, FaRobot,
-  FaBars, FaTimes, FaMoon, FaSun, FaExternalLinkAlt, FaCopy
+  FaBars, FaTimes, FaMoon, FaSun, FaExternalLinkAlt, FaCopy, FaTrophy
 } from 'react-icons/fa';
 import './Documentation.css';
 
@@ -34,7 +34,8 @@ import {
   TelegramBotMockup,
   BubbleAdsMockup,
   LinkInBioMockup,
-  SkipperAgentMockup
+  SkipperAgentMockup,
+  BountyBoardMockup
 } from './DocMockups';
 
 const SHOW_BUSINESS_PLAN = false;
@@ -89,6 +90,17 @@ const documentationStructure = [
       { id: 'onchain-resume', title: 'On-Chain Resume', content: 'onchainResume' },
       { id: 'skill-tests', title: 'Skill Tests & Badges', content: 'skillTests' },
       { id: 'freelancer-workshop', title: 'Freelancer Workshop', content: 'freelancerWorkshop' },
+    ]
+  },
+  {
+    id: 'bounties',
+    title: 'Bounties',
+    icon: FaTrophy,
+    children: [
+      { id: 'bounties-overview', title: 'Overview', content: 'bountiesOverview' },
+      { id: 'posting-bounty', title: 'Posting a Bounty', content: 'postingBounty' },
+      { id: 'hunting-bounties', title: 'Hunting & Winning Bounties', content: 'huntingBounties' },
+      { id: 'bounty-escrow', title: 'Bounty Escrow & Disputes', content: 'bountyEscrow' },
     ]
   },
   {
@@ -209,7 +221,7 @@ After your token goes live on Pump.fun, Raydium, Uniswap, or elsewhere, you need
 |--------|------------------------|
 | **Get listed** | Free bubble on the map; votes, bumps, BexTools trending—your storefront, not a CoinGecko clone |
 | **Grow** | Twitter/Facebook raids, Telegram/Discord bot, X Space & VC live alerts, HyperSpace, banners, PR packages |
-| **Hire** | Freelancer marketplace with escrow, trust scores, and on-chain resumes |
+| **Hire** | Freelancer marketplace with escrow, trust scores, and on-chain resumes — or post a USDC bounty and pay only the winning submission |
 | **Get paid** | AquaPay links and AquaSwap from your listing—funds to your wallet |
 
 ### The Interactive Bubble Map
@@ -230,6 +242,7 @@ Click any bubble to view project details, vote, and trade via integrated swap ro
 | **Raids & Telegram bot** | Grow community after launch |
 | **HyperSpace & PR** | Amplify AMAs and press |
 | **Freelancer marketplace** | Hire launch help (design, mods, dev, marketing) |
+| **Bounties** | Post an escrow-funded USDC task, pay only the winning submission |
 | **AquaPay** | Accept payments (presales, merch, services) |
 | **AquaSwap** | Cross-chain swaps from your listing |
 | **Skipper Agent** | AI co-pilot for copy, plans, images, and Aquads how-to (verified accounts) |
@@ -353,6 +366,7 @@ The navigation bar provides quick access to all major sections:
 |--------|-------------|
 | **Freelancer** | Freelancer Hub marketplace |
 | **Games** | GameHub with blockchain games |
+| **Bounties** | Escrow-backed USDC task board |
 | **Paid Ads** | Create banner advertisements |
 | **Learn** | Tutorials, blogs, skill tests |
 | **List token free** | Benefits of listing your project for free (bubble map) |
@@ -381,6 +395,7 @@ After logging in, you'll see:
 |---------|--------|-------------|
 | **Bubble Map** | /home | Interactive token visualization |
 | **Freelancer Hub** | /marketplace | Services and job marketplace |
+| **Bounties** | /bounties | Escrow-backed USDC task board |
 | **GameHub** | /games | Play and list games |
 | **AquaSwap** | /aquaswap | DEX aggregator for swaps |
 | **AquaFi** | /aquafi | Savings pools |
@@ -402,7 +417,7 @@ Aquads is fully responsive with:
 The footer provides organized access to:
 - **Social**: Twitter, Telegram, Discord, Medium, Instagram, Facebook
 - **Resources**: Documentation, Business Plan, Learn, Affiliate, Verify User
-- **Platform**: AquaFi, AquaSwap, Freelancer Hub, GameHub, Partner Rewards, Telegram Bot, AquaPay, HyperSpace
+- **Platform**: AquaFi, AquaSwap, Freelancer Hub, Bounties, GameHub, Partner Rewards, Telegram Bot, AquaPay, HyperSpace
 - **Legal**: Terms & Conditions, Privacy Policy
 - **Mobile Apps**: PWA install, coming soon to app stores
     `,
@@ -1362,6 +1377,7 @@ Navigate to the Freelancer Hub by:
 - Get matched jobs based on your skills
 - Build your reputation through reviews
 - Earn in cryptocurrency
+- Compete for escrow-funded tasks on the [Bounties board](/docs#bounties-overview)
 
 **Build Your Profile**
 - Create your CV with the built-in CV Builder
@@ -1385,6 +1401,7 @@ Navigate to the Freelancer Hub by:
 - Receive applications from freelancers
 - Manage the hiring process
 - Pay securely through the platform
+- Or [post a bounty](/docs#posting-bounty) instead — publish a fixed USDC reward and pay only the winning submission
 
 ### Service Categories
 
@@ -1999,9 +2016,320 @@ The Freelancer Workshop is a structured learning program covering:
 > 💡 **Tip**: Complete all modules to unlock exclusive opportunities and priority in job matching.
     `,
     prevPage: { id: 'skill-tests', title: 'Skill Tests & Badges' },
+    nextPage: { id: 'bounties-overview', title: 'Bounties Overview' },
+  },
+
+  // Bounties
+  bountiesOverview: {
+    title: 'Bounties Overview',
+    description: 'Aquads Bounties is an escrow-backed task board where projects post USDC rewards and hunters compete to win them.',
+    mockup: <BountyBoardMockup />,
+    content: `
+## What are Bounties?
+
+**Bounties** are an escrow-backed task board at **[aquads.xyz/bounties](/bounties)**. A project posts a clearly defined piece of work, funds the reward into escrow **before** the bounty goes live, and anyone on Aquads can attempt it. The poster reviews every submission, approves one winner, and the reward settles on-chain to that hunter's wallet.
+
+Because the reward is already escrowed when the bounty appears publicly, hunters never work against an unfunded promise, and posters never pay before they have seen the work.
+
+### Bounties vs. the Freelancer Marketplace
+
+Both live on Aquads and both use escrow, but they solve different problems:
+
+| Aspect | **Bounties** | **Freelancer Marketplace** |
+|--------|--------------|----------------------------|
+| Deal shape | Competitive — many hunters attempt one task | One-to-one booking with a chosen freelancer |
+| Pricing | Fixed reward published upfront | Negotiated per service or package |
+| Who gets paid | Only the winning submission | The booked freelancer |
+| Best for | Well-specified, self-contained deliverables | Ongoing work, retainers, custom scope |
+
+> 💡 **Tip**: Use a bounty when you can describe "done" in a paragraph. Use the marketplace when the work needs back-and-forth.
+
+### Bounty lifecycle
+
+| Status | Meaning |
+|--------|---------|
+| **Unfunded** | Created but escrow is still awaiting your deposit — not visible publicly |
+| **Open** | Escrow verified on-chain; accepting submissions |
+| **Completed** | A winner was approved and the reward paid out |
+| **Cancelled** | Closed before completion; funded rewards are refunded |
+
+### Categories
+
+Every bounty is filed under one category so hunters can filter the board:
+
+- **Development** — code, contracts, integrations, tooling
+- **Design** — logos, brand kits, UI, motion, illustration
+- **Content** — threads, articles, docs, video scripts
+- **Marketing** — campaigns, growth experiments, distribution
+- **Community** — moderation, events, onboarding
+- **Research** — tokenomics reviews, competitor analysis, reports
+- **Other** — anything that doesn't fit above
+
+### At a glance
+
+| Detail | Value |
+|--------|-------|
+| Reward currency | **USDC** |
+| Minimum reward | **1 USDC** |
+| Platform fee | **1.25%**, taken on payout (and on refund) |
+| Supported chains | Solana, Ethereum, Base, Polygon, Arbitrum, BNB |
+| Who can post | Project owners with an **active/approved bubble listing** |
+| Who can submit | Any user with **AquaPay activated** (Solana + EVM wallets set) |
+| Submissions per hunter | **One per bounty** |
+
+### Discussion and transparency
+
+- Each bounty has a public **Q&A thread** with one level of replies, so scope questions are answered where every hunter can see them.
+- If the poster edits scope text after submissions already exist, the bounty is flagged as **edited after submissions** — hunters can see the goalposts moved.
+- Bounty pages are shareable (\`/bounties/{id}\`) and generate a "wanted poster" preview image for social. Affiliate \`?ref=\` links work on them too.
+
+### Where to find bounties
+
+- Main nav → **🏆 Bounties**
+- Footer → **Platform → Bounties**
+- Direct: **[/bounties](/bounties)**
+    `,
+    prevPage: { id: 'freelancer-workshop', title: 'Freelancer Workshop' },
+    nextPage: { id: 'posting-bounty', title: 'Posting a Bounty' },
+  },
+
+  postingBounty: {
+    title: 'Posting a Bounty',
+    description: 'How project owners create, fund, manage, and award an Aquads bounty.',
+    content: `
+## Posting a Bounty
+
+Posting is for **project owners**. You must own at least one bubble map listing in **active** or **approved** status — this ties every bounty back to a real, reviewed project.
+
+> ⚠️ **Important**: If you don't have a listing yet, [list your token](/home?openListProject=true) first. Free Starter listings qualify.
+
+### Step 1: Open the post form
+
+1. Go to **[/bounties](/bounties)**
+2. Click **Post a Bounty**
+3. Optionally pick which of your projects the bounty is for — its logo and name appear on the bounty card. Leave it blank and your profile picture is used instead.
+
+### Step 2: Write the bounty
+
+| Field | Required | Limit | Notes |
+|-------|----------|-------|-------|
+| **Title** | Yes | 140 chars | Lead with the outcome, e.g. "Build a Solana staking widget" |
+| **Description** | Yes | 8,000 chars | Context: what the project is, why the task matters |
+| **Deliverables** | No | 4,000 chars | Exactly what the hunter must hand over to win |
+| **Rules** | No | 4,000 chars | Eligibility, judging criteria, what disqualifies a submission |
+| **Category** | No | — | Defaults to **Other** |
+| **Reward** | Yes | Min **1 USDC** | Locked once set — cannot be edited later |
+| **Deadline** | No | — | After it passes, submissions are rejected |
+| **Resources** | No | **10 max** | Label + \`https://\` link (repo, brand kit, design file, docs) |
+
+> 💡 **Tip**: The clearer the **Deliverables** and **Rules**, the fewer off-target submissions you have to sift through. Write them as an acceptance checklist.
+
+### Step 3: Fund the escrow
+
+Creating a bounty does **not** publish it. The bounty is created as **unfunded** and you are sent to the funding page (\`/bounty-pay/{escrowId}\`) to deposit the reward.
+
+1. Choose your chain — **Solana, Ethereum, Base, Polygon, Arbitrum, or BNB**
+2. Connect your wallet and send the reward to the escrow address
+3. Wait for on-chain verification
+
+Once the deposit is verified, the bounty flips to **Open** and appears on the public board in real time. If verification stalls, you can retry it from the same page.
+
+> ⚠️ **Important**: An unfunded bounty is invisible to hunters. Nothing happens until the deposit clears.
+
+### Step 4: Manage it while it's live
+
+**You can edit** the title, description, deliverables, rules, resources, and deadline while the bounty is unfunded or open.
+
+**You cannot edit** the reward amount — it is escrowed on-chain.
+
+If you change scope text after submissions have arrived, the bounty is publicly marked **edited after submissions**. Prefer answering questions in the Q&A thread over silently rewriting the spec.
+
+You can also **delete comments** on your own bounty (yours, or anyone's), and hunters' questions notify you as they come in.
+
+### Step 5: Approve a winner
+
+Only you can see the full submission list. For each submission you get the hunter, their deliverable link, and their notes.
+
+1. Review the submissions
+2. Click **Approve & Pay** on the winner
+3. The escrow releases on-chain to that hunter's AquaPay wallet, minus the **1.25%** fee
+4. The bounty moves to **Completed**
+
+> 💡 **Tip**: A winner must have AquaPay set up with a wallet on your funding chain. If they don't, approval is blocked until they finish setup — nudge them in the Q&A thread.
+
+### Cancelling
+
+You (or an admin) can cancel a bounty. If it was already funded, the deposit is refunded to you **minus the 1.25% fee**. If it was never funded, cancelling costs nothing.
+    `,
+    prevPage: { id: 'bounties-overview', title: 'Bounties Overview' },
+    nextPage: { id: 'hunting-bounties', title: 'Hunting & Winning Bounties' },
+  },
+
+  huntingBounties: {
+    title: 'Hunting & Winning Bounties',
+    description: 'How to find Aquads bounties, submit work, and get paid in USDC.',
+    content: `
+## Hunting & Winning Bounties
+
+Anyone with an Aquads account can hunt bounties — you do **not** need a project listing, and you do **not** need to be a listed freelancer.
+
+### Before you submit: activate AquaPay
+
+This is the one hard requirement, and it's worth doing before you start working. To submit you need:
+
+1. **AquaPay enabled** on your account
+2. A **Solana** wallet address saved
+3. An **EVM/Ethereum** wallet address saved
+
+Both are required because the reward pays out on whichever chain the poster funded — Solana rewards go to your Solana address, EVM rewards (Ethereum, Base, Polygon, Arbitrum, BNB) go to your EVM address.
+
+Set this up under **Dashboard → AquaPay**. See [AquaPay Overview](/docs#aquapay-overview) for the walkthrough.
+
+> ⚠️ **Important**: Submissions are rejected until AquaPay is fully configured. Don't finish the work and then discover this.
+
+### Step 1: Find a bounty
+
+Go to **[/bounties](/bounties)** and filter by:
+
+- **Status** — Open (accepting work) or Completed (see what won before)
+- **Category** — Development, Design, Content, Marketing, Community, Research, Other
+
+Reading completed bounties is the fastest way to calibrate what a given project actually accepts.
+
+### Step 2: Read the whole thing
+
+Before writing a line of code or opening Figma, check:
+
+| Check | Why it matters |
+|-------|----------------|
+| **Deliverables** | This is the acceptance checklist you'll be judged against |
+| **Rules** | Eligibility and disqualifiers |
+| **Reward** | Already escrowed — verify it's worth your time |
+| **Deadline** | Submissions are hard-blocked after it passes |
+| **Resources** | Repos, brand kits, and docs the poster provided |
+| **Submission count** | How many hunters you're competing with |
+| **"Edited after submissions"** flag | Scope changed mid-flight — re-read carefully |
+
+### Step 3: Ask questions publicly
+
+Every bounty has a **Q&A thread**. Ask before you build — ambiguity resolved upfront beats a rejected submission. Answers are visible to everyone, and the poster is notified when you post.
+
+### Step 4: Submit
+
+1. Click **Submit Work** on an open bounty
+2. Paste your **deliverable link** — a PR, repo, Figma file, published thread, doc, or video
+3. Add **notes** explaining your approach and how you met each deliverable
+
+**You get one submission per bounty**, so make it count. You also can't submit to your own bounty.
+
+> 💡 **Tip**: Make your link publicly viewable without a login. A poster who can't open your work can't award it.
+
+### Step 5: Get paid
+
+The poster reviews all submissions and approves one winner. When they do:
+
+- The escrow releases **on-chain** to your AquaPay wallet
+- You receive the reward **minus the 1.25% platform fee**
+- The bounty is marked **Completed** with you as the winner
+
+There is no invoicing step and no waiting on the poster's cash flow — the money was already locked in escrow before you started.
+
+### If you win but something goes wrong
+
+The winner (or the poster) can **open a dispute** on a funded escrow. An Aquads admin reviews it and either releases the reward to you or refunds the poster. See [Bounty Escrow & Disputes](/docs#bounty-escrow).
+
+### Not winning is normal
+
+Bounties are competitive by design — one reward, many attempts. To improve your odds:
+
+- Pick bounties matching skills you already have proof of
+- Go early on newly posted bounties with few submissions
+- Over-deliver on the explicit deliverables rather than adding unrequested extras
+- Build a track record: your [On-Chain Resume](/docs#onchain-resume) and [Skill Tests](/docs#skill-tests) make posters take your submissions more seriously
+    `,
+    prevPage: { id: 'posting-bounty', title: 'Posting a Bounty' },
+    nextPage: { id: 'bounty-escrow', title: 'Bounty Escrow & Disputes' },
+  },
+
+  bountyEscrow: {
+    title: 'Bounty Escrow & Disputes',
+    description: 'How Aquads bounty escrow works on-chain, what the 1.25% fee covers, and how disputes are resolved.',
+    content: `
+## Bounty Escrow & Disputes
+
+Every bounty reward is held in a dedicated **on-chain escrow** created alongside the bounty. This is what makes the board trustworthy in both directions: hunters know the money exists, posters know it isn't released until they approve.
+
+### Supported chains and currency
+
+Rewards are denominated in **USDC**. The poster chooses the settlement chain at deposit time:
+
+| Chain type | Networks |
+|------------|----------|
+| **Solana** | Solana |
+| **EVM** | Ethereum, Base, Polygon, Arbitrum, BNB |
+
+The winner is paid on the same chain the poster funded — which is why hunters must have **both** a Solana and an EVM wallet on their AquaPay profile.
+
+### Escrow lifecycle
+
+| Status | What it means |
+|--------|---------------|
+| **Awaiting deposit** | Bounty created, no funds sent yet — bounty is hidden |
+| **Deposit pending** | Transaction submitted, waiting for on-chain confirmation |
+| **Funded** | Verified. Bounty is **Open** and accepting submissions |
+| **Pending release** | Winner approved, payout transaction in flight |
+| **Released** | Reward delivered to the winner's wallet |
+| **Disputed** | A dispute was opened; awaiting admin review |
+| **Resolved / Cancelled** | Admin released to the winner or refunded the poster |
+
+### The 1.25% platform fee
+
+A flat **1.25%** fee is deducted from the escrowed amount:
+
+- **On payout** — the winner receives the reward minus 1.25%
+- **On refund** — a cancelled or refunded funded bounty returns the deposit minus 1.25%
+
+There is no listing fee, no posting fee, and no subscription for using the bounty board.
+
+> 💡 **Tip**: Because the fee applies to refunds too, only fund a bounty once you're confident in the scope. Draft freely — unfunded bounties cost nothing to abandon.
+
+### Deposit verification
+
+After the poster sends funds, Aquads verifies the transaction on-chain before flipping the bounty to **Open**. If a deposit doesn't register (RPC hiccup, slow confirmation), the poster can **retry verification** from the funding page rather than sending a second transaction.
+
+> ⚠️ **Important**: Never send a second deposit for the same bounty. Retry verification instead, or contact support.
+
+### Disputes
+
+Either the **poster** or the **approved winner** can open a dispute on a funded escrow — for example if a deliverable turns out to be plagiarized, or if a poster refuses to award clearly qualifying work.
+
+**How it works:**
+
+1. Open a dispute from the bounty and state your reason
+2. The escrow moves to **Disputed** and is frozen — no automatic payout
+3. An Aquads admin reviews the bounty spec, the submissions, and the Q&A history
+4. The admin either **releases to the winner** or **refunds the poster**, with resolution notes recorded
+
+Admins resolve bounty disputes from **Dashboard → Bounty Disputes**.
+
+### What escrow does and doesn't protect
+
+**Escrow protects against:**
+- Posters who disappear or run out of money after work is done
+- Hunters worrying whether a reward is real
+- Payment delays — funds are already on-chain
+
+**Escrow does not protect against:**
+- Vague specs. A bounty with no deliverables is hard for anyone to adjudicate
+- Work done outside Aquads. Keep the deliverable and the discussion on the bounty
+- Losing fairly. Competitive bounties have one winner; that's not a dispute
+
+> 💡 **Tip**: The Q&A thread is your evidence trail. If scope is clarified there, a dispute reviewer can see it. Side-channel DMs leave no record.
+    `,
+    prevPage: { id: 'hunting-bounties', title: 'Hunting & Winning Bounties' },
     nextPage: { id: 'aquaswap', title: 'AquaSwap' },
   },
-  
+
   // AquaSwap & DeFi
   aquaswap: {
     title: 'AquaSwap (Token Swapping)',
@@ -2100,7 +2428,7 @@ Add AquaSwap to your website:
 
 > ⚠️ **Important**: Always verify token addresses and check for slippage before swapping. Use official contract addresses only.
     `,
-    prevPage: { id: 'freelancer-workshop', title: 'Freelancer Workshop' },
+    prevPage: { id: 'bounty-escrow', title: 'Bounty Escrow & Disputes' },
     nextPage: { id: 'aquafi', title: 'AquaFi' },
   },
   
@@ -5019,15 +5347,15 @@ const Documentation = () => {
   // Handle URL-based navigation
   useEffect(() => {
     const hash = location.hash.replace('#', '');
-    if (hash && documentationContent[hash.replace(/-/g, '')]) {
+    if (!hash) return;
+    // Resolve against the nav tree — article ids are hyphenated while their
+    // content keys are camelCase, so the two can't be matched by string munging.
+    const parentSection = documentationStructure.find(section =>
+      section.children.some(child => child.id === hash)
+    );
+    if (parentSection) {
       setActivePage(hash);
-      // Find and expand parent section
-      documentationStructure.forEach(section => {
-        const child = section.children.find(c => c.id === hash);
-        if (child) {
-          setExpandedSections(prev => [...new Set([...prev, section.id])]);
-        }
-      });
+      setExpandedSections(prev => [...new Set([...prev, parentSection.id])]);
     }
   }, [location.hash]);
 
@@ -5445,6 +5773,7 @@ const Documentation = () => {
               "Token listing",
               "Community raids and growth",
               "Freelancer marketplace",
+              "Bounties escrow-backed task board",
               "AquaPay multi-chain payments",
               "AquaSwap cross-chain swap",
               "AquaFi DeFi savings"

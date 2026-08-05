@@ -45,6 +45,11 @@ const LANDING_FAQS = [
       'Yes — the Aquads Marketplace is a Web3 freelancer hub where founders can browse and book verified developers, designers, marketers, raiders, and AMA hosts directly. Payments run through AquaPay payment links and the freelancer escrow flow, both non-custodial, and freelancers carry an on-chain resume verified on Base via EAS attestations, so credentials are publicly auditable rather than self-claimed.',
   },
   {
+    question: 'What are Aquads Bounties and how do they differ from hiring a freelancer?',
+    answer:
+      "Aquads Bounties are an escrow-backed task board at aquads.xyz/bounties where project owners post a defined piece of work — a dashboard component, a logo pack, a thread, a research report — and fund the USDC reward into escrow before it goes live. Any Aquads user with AquaPay activated can submit work, the poster reviews every submission and approves one winner, and the reward settles on-chain to that hunter's wallet minus a 1.25% platform fee. The difference from the Marketplace is the shape of the deal: a booking is a negotiated one-to-one engagement with a freelancer you choose upfront, while a bounty is competitive and outcome-priced — you publish the price and the spec, multiple hunters attempt it, and you only pay for the result you actually pick. Posting requires an active bubble map listing, so every bounty traces back to a real project.",
+  },
+  {
     question: 'What does Aquads actually do for my project after I list?',
     answer:
       'Aquads is a post-launch growth stack, not just a listing site. After your project is live you get community votes that auto-bump your bubble at 100 bullish (with optional vote boosts to accelerate hitting that threshold), homepage and bubble banner ads for extra visibility, raid coordination across X, Telegram, and Facebook, AquaSwap trading directly from your bubble, the Skipper AI agent for automating tasks, and optional PR packages that push coverage to outlets like Forbes, CoinTelegraph, CoinMarketCap, and Yahoo Finance.',
@@ -278,7 +283,7 @@ const FeaturesCarousel = ({ features }) => {
                 key={feature.title}
                 className="flex-shrink-0 w-screen h-screen snap-center flex flex-col"
               >
-                {feature.link && feature.title !== 'AquaPay' && feature.title !== 'On-Chain Resume' && feature.title !== 'Telegram Bot' && feature.title !== 'Freelancer Marketplace' && feature.title !== 'Web3 Game Hub' && feature.title !== 'Twitter Raids' && feature.title !== 'Dynamic Token Bubbles' && feature.title !== 'AquaSwap' && feature.title !== 'Trust Score System' && feature.title !== 'Live Market Data' && feature.title !== 'Job Board' && feature.title !== 'AquaFi' && feature.title !== 'Marketing & PR' && feature.title !== 'Link in Bio' ? (
+                {feature.link && feature.title !== 'AquaPay' && feature.title !== 'On-Chain Resume' && feature.title !== 'Telegram Bot' && feature.title !== 'Freelancer Marketplace' && feature.title !== 'Web3 Game Hub' && feature.title !== 'Twitter Raids' && feature.title !== 'Dynamic Token Bubbles' && feature.title !== 'AquaSwap' && feature.title !== 'Trust Score System' && feature.title !== 'Live Market Data' && feature.title !== 'Job Board' && feature.title !== 'AquaFi' && feature.title !== 'Marketing & PR' && feature.title !== 'Link in Bio' && feature.title !== 'Bounties' ? (
                   <Link to={feature.link} className="block h-full flex flex-col">
                     <CarouselCard feature={feature} index={index} />
                   </Link>
@@ -3545,6 +3550,168 @@ const CarouselCard = ({ feature, index }) => {
     );
   }
 
+  if (feature.title === 'Bounties') {
+    return (
+      <section className="relative w-full h-full px-3 sm:px-4 md:px-6 pt-4 md:pt-6 pb-16 overflow-hidden flex flex-col landing-section">
+        {/* Background glow effects - contained to prevent overflow */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute top-1/2 left-1/4 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 bg-amber-500/20 rounded-full blur-3xl -translate-y-1/2" />
+          <div className="absolute top-1/2 right-1/4 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 bg-yellow-500/20 rounded-full blur-3xl -translate-y-1/2" />
+        </div>
+
+        <div className="max-w-6xl mx-auto relative pb-0 flex-1 flex flex-col">
+          <motion.div
+            className="relative rounded-3xl border border-white/10 bg-gradient-to-br from-amber-950/50 via-slate-900/90 to-yellow-950/50 backdrop-blur-xl overflow-hidden flex-1 flex flex-col"
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.7 }}
+          >
+            {/* Animated border glow */}
+            <div className="absolute inset-0 rounded-3xl opacity-50">
+              <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-amber-500/0 via-yellow-500/50 to-amber-500/0" style={{ maskImage: 'linear-gradient(black, transparent)' }} />
+            </div>
+
+            <div className="relative p-6 md:p-12 flex flex-col lg:flex-row items-center gap-8 lg:gap-12 flex-1">
+              {/* Left content */}
+              <div className="flex-1 text-center lg:text-left">
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-4 font-display">
+                  <span className="bg-gradient-to-r from-amber-300 to-yellow-500 bg-clip-text text-transparent">Bounties</span>
+                  <br />
+                  <span className="text-xl sm:text-2xl md:text-3xl text-gray-300">Escrow-Backed Task Board</span>
+                </h2>
+
+                <p className="text-gray-400 text-sm md:text-base lg:text-lg mb-6 max-w-xl">
+                  Post a task, fund the reward in USDC escrow, and let hunters compete. You review every submission, pick the winner, and the payout settles on-chain to their AquaPay wallet. Cheaper than hiring hourly, safer than paying upfront.
+                </p>
+
+                {/* Stats grid */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+                  {[
+                    { icon: '🔒', label: 'USDC Escrow', value: 'Funded upfront' },
+                    { icon: '🎯', label: 'Winner Takes All', value: 'You pick' },
+                    { icon: '⚡', label: '1.25% Fee', value: 'On payout only' },
+                    { icon: '🌐', label: 'Solana + EVM', value: '6 chains' }
+                  ].map((item, i) => (
+                    <motion.div
+                      key={item.label}
+                      className="flex flex-col items-center lg:items-start gap-1 text-white text-xs md:text-sm bg-white/5 rounded-lg px-3 py-2"
+                      initial={{ opacity: 0, x: -10 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: 0.3 + i * 0.1 }}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg drop-shadow-[0_0_6px_rgba(255,255,255,0.6)]">{item.icon}</span>
+                        <span className="font-semibold">{item.label}</span>
+                      </div>
+                      <span className="text-amber-400 text-xs">{item.value}</span>
+                    </motion.div>
+                  ))}
+                </div>
+
+                <motion.div
+                  className="flex flex-col gap-3 justify-center lg:justify-start"
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.5 }}
+                >
+                  <Link to="/bounties">
+                    <motion.button
+                      className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-900 font-bold text-sm md:text-base shadow-lg shadow-amber-500/25"
+                      whileHover={{ scale: 1.05, boxShadow: '0 0 40px rgba(245, 158, 11, 0.5)' }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      🏆 Browse Bounties
+                    </motion.button>
+                  </Link>
+
+                  {/* Guide indicator */}
+                  <div className="flex items-center gap-2 text-gray-400 text-xs md:text-sm">
+                    <svg className="w-4 h-4 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>Post &amp; fund → Hunters submit → Approve &amp; pay</span>
+                  </div>
+                </motion.div>
+              </div>
+
+              {/* Right visual - Wanted poster mockup */}
+              <motion.div
+                className="flex-shrink-0 w-full max-w-[280px] sm:max-w-xs md:max-w-sm lg:max-w-md mockup-card-container"
+                initial={{ opacity: 0, scale: 0.9, rotate: -5 }}
+                whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.3, duration: 0.6 }}
+              >
+                <div className="relative">
+                  {/* Glow behind card */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-amber-500/30 to-yellow-500/30 rounded-2xl blur-2xl scale-110" />
+
+                  {/* Mockup card */}
+                  <div className="relative bg-gray-900 rounded-2xl p-6 border border-amber-500/30 shadow-2xl">
+                    {/* Wanted band */}
+                    <div className="text-center mb-4 pb-4 border-b border-dashed border-amber-500/40">
+                      <div className="text-amber-400 text-[10px] tracking-[0.35em] font-bold mb-1">WANTED</div>
+                      <div className="text-white font-bold text-base leading-snug">Build a Solana Staking Widget</div>
+                      <div className="text-gray-500 text-xs mt-1">posted by AquaLabs · Development</div>
+                    </div>
+
+                    {/* Reward */}
+                    <div className="bg-amber-500/15 border border-amber-500/40 rounded-xl p-4 mb-4 text-center">
+                      <div className="text-gray-400 text-xs mb-1">Reward in escrow</div>
+                      <div className="text-amber-400 font-bold text-3xl mb-1">1,500</div>
+                      <div className="text-amber-300 text-xs font-semibold">USDC · Solana</div>
+                    </div>
+
+                    {/* Status rows */}
+                    <div className="space-y-2 mb-4">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-gray-400">Escrow status</span>
+                        <span className="text-green-400 font-semibold">✓ Funded</span>
+                      </div>
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-gray-400">Submissions</span>
+                        <span className="text-white font-semibold">7 hunters</span>
+                      </div>
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-gray-400">Deadline</span>
+                        <span className="text-white font-semibold">in 5 days</span>
+                      </div>
+                    </div>
+
+                    {/* Approve action */}
+                    <div className="bg-white/5 rounded-lg p-3 text-center">
+                      <div className="text-gray-400 text-xs mb-1">Poster action</div>
+                      <div className="text-amber-400 font-semibold text-sm">Approve &amp; Pay Winner</div>
+                    </div>
+                  </div>
+
+                  {/* Floating badges */}
+                  <motion.div
+                    className="absolute -top-3 -right-3 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg"
+                    animate={{ y: [0, -5, 0] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  >
+                    🔒 Escrowed
+                  </motion.div>
+                  <motion.div
+                    className="absolute -bottom-3 -left-3 bg-amber-500 text-slate-900 text-xs font-bold px-3 py-1 rounded-full shadow-lg"
+                    animate={{ y: [0, -5, 0] }}
+                    transition={{ duration: 2, repeat: Infinity, delay: 1 }}
+                  >
+                    🏆 Open
+                  </motion.div>
+                </div>
+              </motion.div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="relative w-full h-full px-3 sm:px-4 md:px-6 pt-4 md:pt-6 pb-16 overflow-hidden flex flex-col landing-section">
       {/* Background glow effects - contained to prevent overflow */}
@@ -4068,7 +4235,7 @@ const LaunchStackPillars = () => {
       icon: '👥',
       title: 'Hire help',
       subtitle: 'Graphics, mods, dev & more',
-      description: 'Web3-native freelancers for logos, social content, community mods, and smart contracts. Book, escrow, and pay in crypto—no Upwork friction.',
+      description: 'Web3-native freelancers for logos, social content, community mods, and smart contracts. Book them directly or post a USDC bounty and pay only the winning submission—escrow either way, no Upwork friction.',
       link: '/marketplace',
       cta: 'Browse talent',
       accent: 'purple',
@@ -4231,6 +4398,13 @@ const LandingPage = () => {
       description: 'Hire help—logos, social graphics, community mods, dev, and marketing. Book, review, and pay in crypto with escrow. No monthly fees.',
       gradient: 'from-violet-900/40 to-slate-900/80',
       link: '/marketplace'
+    },
+    {
+      icon: '🏆',
+      title: 'Bounties',
+      description: 'Post a task, fund it in USDC escrow, and let hunters compete. Pick the winning submission and the reward pays out on-chain—no hourly rates, no upfront trust required.',
+      gradient: 'from-amber-900/40 to-yellow-900/80',
+      link: '/bounties'
     },
     {
       icon: '💸',
@@ -4423,6 +4597,7 @@ const LandingPage = () => {
               "Cross-chain swap (AquaSwap) across 50+ payment chains",
               "DeFi savings and staking (AquaFi)",
               "Web3 freelancer marketplace with escrow and reviews",
+              "Escrow-backed bounty board with USDC rewards",
               "Multi-chain non-custodial payment links (AquaPay)",
               "On-chain freelancer resume verified on Base (EAS)",
               "Twitter Spaces audience boosting (HyperSpace)",

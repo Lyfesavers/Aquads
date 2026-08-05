@@ -1664,6 +1664,103 @@ export const SkipperAgentMockup = () => (
   </MockupContainer>
 );
 
+// Bounty board mockup — wanted-poster styling mirrors the live /bounties page
+export const BountyBoardMockup = () => (
+  <MockupContainer title="Bounty Board">
+    <div className="bg-gray-900 rounded-lg p-4">
+      {/* Filter bar */}
+      <div className="flex flex-wrap gap-2 mb-4">
+        <span className="text-[10px] px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 font-medium">
+          Open
+        </span>
+        {['Development', 'Design', 'Content', 'Marketing', 'Community'].map((cat) => (
+          <span
+            key={cat}
+            className="text-[10px] px-2.5 py-1 rounded-full bg-gray-800 text-gray-400 border border-gray-700"
+          >
+            {cat}
+          </span>
+        ))}
+      </div>
+
+      {/* Bounty cards */}
+      <div className="grid gap-3 sm:grid-cols-2 mb-4">
+        {[
+          {
+            title: 'Build a Solana staking widget',
+            project: 'AquaLabs',
+            category: 'Development',
+            amount: '1,500',
+            submissions: 7,
+            deadline: 'in 5 days'
+          },
+          {
+            title: 'Design a 6-asset brand kit',
+            project: 'TidePad',
+            category: 'Design',
+            amount: '400',
+            submissions: 3,
+            deadline: 'in 12 days'
+          }
+        ].map((b) => (
+          <div
+            key={b.title}
+            className="bg-gray-800 rounded-xl border border-amber-500/30 p-4 flex flex-col"
+          >
+            <div className="text-amber-400 text-[9px] tracking-[0.3em] font-bold mb-1.5 text-center">
+              WANTED
+            </div>
+            <h4 className="text-white text-sm font-semibold leading-snug mb-1">{b.title}</h4>
+            <p className="text-gray-500 text-[10px] mb-3">
+              {b.project} · {b.category}
+            </p>
+
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg py-2 text-center mb-3">
+              <div className="text-amber-400 font-bold text-lg leading-none">{b.amount}</div>
+              <div className="text-amber-300/80 text-[9px] mt-0.5">USDC in escrow</div>
+            </div>
+
+            <div className="flex items-center justify-between text-[10px] text-gray-400 mt-auto">
+              <span>{b.submissions} submissions</span>
+              <span>{b.deadline}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Lifecycle strip */}
+      <div className="bg-gray-800 rounded-lg p-4">
+        <h4 className="text-white text-sm font-medium mb-3">Bounty lifecycle</h4>
+        <div className="flex items-center justify-between gap-1 text-center">
+          {[
+            { label: 'Unfunded', hint: 'Draft' },
+            { label: 'Open', hint: 'Escrow funded' },
+            { label: 'Submissions', hint: 'Hunters compete' },
+            { label: 'Completed', hint: 'Winner paid' }
+          ].map((s, i) => (
+            <React.Fragment key={s.label}>
+              {i > 0 && <span className="text-amber-500/60 text-xs">→</span>}
+              <div className="flex-1">
+                <div className="text-amber-400 text-[10px] font-semibold">{s.label}</div>
+                <div className="text-gray-500 text-[9px]">{s.hint}</div>
+              </div>
+            </React.Fragment>
+          ))}
+        </div>
+      </div>
+
+      {/* Fee note */}
+      <div className="mt-3 bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 flex items-center justify-between gap-2">
+        <div>
+          <h4 className="text-amber-400 font-medium text-sm">Rewards held in escrow</h4>
+          <p className="text-gray-400 text-xs">Solana or EVM · paid out on approval</p>
+        </div>
+        <span className="text-amber-300 text-xs font-medium whitespace-nowrap">1.25% fee</span>
+      </div>
+    </div>
+  </MockupContainer>
+);
+
 // Export all mockups
 export default {
   CreateAccountMockup,
@@ -1687,6 +1784,7 @@ export default {
   TokenListingMockup,
   TelegramBotMockup,
   BubbleAdsMockup,
-  SkipperAgentMockup
+  SkipperAgentMockup,
+  BountyBoardMockup
 };
 

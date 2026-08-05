@@ -35,6 +35,7 @@ exports.handler = async (event, context) => {
     { loc: 'https://www.aquads.xyz/', changefreq: 'daily', priority: '1.0' },
     { loc: 'https://www.aquads.xyz/home', changefreq: 'daily', priority: '0.95' },
     { loc: 'https://www.aquads.xyz/marketplace', changefreq: 'daily', priority: '0.9' },
+    { loc: 'https://www.aquads.xyz/bounties', changefreq: 'daily', priority: '0.9' },
     { loc: 'https://www.aquads.xyz/learn', changefreq: 'daily', priority: '0.8' },
     { loc: 'https://www.aquads.xyz/aquaswap', changefreq: 'daily', priority: '0.9' },
     { loc: 'https://www.aquads.xyz/games', changefreq: 'weekly', priority: '0.8' },
