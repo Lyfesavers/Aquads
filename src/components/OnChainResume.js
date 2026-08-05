@@ -185,6 +185,9 @@ const OnChainResume = ({ currentUser, showNotification }) => {
     try {
       let provider = null;
       let accounts = [];
+      // Declared out here so the WalletConnect catch block can still disconnect
+      // the modal observer when the connection attempt throws.
+      let cleanupObserver = () => {};
 
       switch (walletId) {
         case 'walletconnect':
@@ -258,7 +261,7 @@ const OnChainResume = ({ currentUser, showNotification }) => {
             setTimeout(forceModalOnTop, 1000);
             
             // Cleanup observer after connection attempt
-            const cleanupObserver = () => observer.disconnect();
+            cleanupObserver = () => observer.disconnect();
             
             await wcProvider.connect();
             cleanupObserver(); // Cleanup MutationObserver after successful connection

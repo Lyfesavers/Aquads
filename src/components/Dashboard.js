@@ -323,7 +323,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onAdPatche
       setBookings([]);
       setAffiliateInfo(null);
       setPointsInfo(null);
-      setMembershipInfo(null);
       setAffiliateEarnings(null);
       setEarningsSummary(null);
       setUserJobs([]);
