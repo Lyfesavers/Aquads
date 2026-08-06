@@ -3386,7 +3386,8 @@ ${raidLinkLine}
         {
           callback_query_id: queryId,
           text: text,
-        }
+        },
+        { timeout: 15000 }
       );
       return true;
     } catch (error) {
@@ -3410,7 +3411,8 @@ ${raidLinkLine}
           text: text,
           parse_mode: 'HTML',
           reply_markup: addHyperSpaceToKeyboard(keyboard)
-        }
+        },
+        { timeout: 15000 }
       );
       return true;
     } catch (error) {
@@ -3433,7 +3435,8 @@ ${raidLinkLine}
           text: text,
           reply_markup: addHyperSpaceToKeyboard(keyboard),
           parse_mode: 'HTML'
-        }
+        },
+        { timeout: 15000 }
       );
       
       if (response.data.ok) {
