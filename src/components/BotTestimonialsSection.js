@@ -91,21 +91,18 @@ function Toast({ toast, onDone }) {
   );
 }
 
-function TestimonialCard({ item, isAdmin, onEdit, onDelete, accent, featured, index }) {
+function TestimonialCard({ item, isAdmin, onEdit, onDelete, accent }) {
   const name = attributionLabel(item);
   const role = item.role || null;
   const metaBits = [item.project?.title, role].filter(Boolean);
 
   return (
     <article
-      className={`bot-t-slip group relative ${featured ? 'bot-t-slip--featured md:col-span-2' : ''} ${
-        index % 2 === 1 && !featured ? 'md:translate-y-4' : ''
-      }`}
+      className="bot-t-slip group relative shrink-0 w-[280px] sm:w-[300px]"
       style={{
         '--bot-t-bar': accent.bar,
         '--bot-t-soft': accent.soft,
         '--bot-t-glow': accent.glow,
-        animationDelay: `${Math.min(index, 6) * 60}ms`,
       }}
     >
       <div className="bot-t-slip-notch" aria-hidden />
@@ -114,33 +111,29 @@ function TestimonialCard({ item, isAdmin, onEdit, onDelete, accent, featured, in
         “
       </span>
 
-      <div className={`relative z-10 flex flex-col h-full ${featured ? 'p-7 sm:p-9' : 'p-6 sm:p-7'}`}>
-        <div className="flex items-center justify-between gap-3 mb-4">
-          <div className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.18em] font-semibold text-white/55">
+      <div className="relative z-10 flex flex-col h-full p-5 min-h-[200px]">
+        <div className="flex items-center justify-between gap-2 mb-3">
+          <div className="inline-flex items-center gap-1.5 text-[9px] uppercase tracking-[0.16em] font-semibold text-white/50">
             <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: accent.bar }} />
             Live signal
           </div>
-          <div className="flex items-center gap-2 text-white/35">
-            <FaTelegram className="text-xs" />
-            <FaDiscord className="text-xs" />
+          <div className="flex items-center gap-1.5 text-white/30">
+            <FaTelegram className="text-[10px]" />
+            <FaDiscord className="text-[10px]" />
           </div>
         </div>
 
-        <p
-          className={`relative z-[1] text-white/95 leading-relaxed font-medium ${
-            featured ? 'text-lg sm:text-xl md:text-2xl' : 'text-[15px] sm:text-base'
-          }`}
-        >
+        <p className="relative z-[1] text-[13px] sm:text-sm leading-relaxed text-white/90 italic flex-1">
           {item.quote}
         </p>
 
-        <div className="mt-auto pt-6 flex items-center gap-3">
+        <div className="mt-auto pt-4 flex items-center gap-2.5">
           <div className="relative flex shrink-0">
             {item.project?.logo ? (
               <img
                 src={item.project.logo}
                 alt=""
-                className="w-11 h-11 rounded-[14px] object-cover ring-2 ring-black/40"
+                className="w-9 h-9 rounded-[12px] object-cover ring-2 ring-black/40"
                 loading="lazy"
               />
             ) : null}
@@ -148,14 +141,14 @@ function TestimonialCard({ item, isAdmin, onEdit, onDelete, accent, featured, in
               <img
                 src={item.user.image}
                 alt=""
-                className={`w-11 h-11 rounded-full object-cover ring-2 ring-black/40 ${
-                  item.project?.logo ? '-ml-3' : ''
+                className={`w-9 h-9 rounded-full object-cover ring-2 ring-black/40 ${
+                  item.project?.logo ? '-ml-2.5' : ''
                 }`}
                 loading="lazy"
               />
             ) : !item.project?.logo ? (
               <div
-                className="w-11 h-11 rounded-full flex items-center justify-center text-sm font-bold text-black ring-2 ring-black/40"
+                className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-black ring-2 ring-black/40"
                 style={{ background: accent.bar }}
               >
                 {(name.replace(/^@/, '')[0] || 'A').toUpperCase()}
@@ -163,37 +156,37 @@ function TestimonialCard({ item, isAdmin, onEdit, onDelete, accent, featured, in
             ) : null}
           </div>
           <div className="min-w-0 flex-1">
-            <div className="font-semibold text-white truncate tracking-tight">{name}</div>
-            <div className="text-xs text-white/45 truncate">
+            <div className="text-sm font-semibold text-white truncate tracking-tight">{name}</div>
+            <div className="text-[11px] text-white/45 truncate">
               {metaBits.length ? metaBits.join(' · ') : 'Using the Aquads bot'}
             </div>
           </div>
           {!item.published && isAdmin ? (
-            <span className="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30">
+            <span className="text-[9px] uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30">
               Hidden
             </span>
           ) : null}
         </div>
 
         {isAdmin ? (
-          <div className="absolute top-3 right-3 flex gap-1.5 z-20">
+          <div className="absolute top-2.5 right-2.5 flex gap-1 z-20 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
             <button
               type="button"
               onClick={() => onEdit(item)}
-              className="w-8 h-8 rounded-lg bg-black/35 hover:bg-cyan-500/25 border border-white/15 text-cyan-200 flex items-center justify-center backdrop-blur-sm"
+              className="w-7 h-7 rounded-lg bg-black/35 hover:bg-cyan-500/25 border border-white/15 text-cyan-200 flex items-center justify-center backdrop-blur-sm"
               title="Edit"
               aria-label="Edit testimonial"
             >
-              <FaPencilAlt className="text-xs" />
+              <FaPencilAlt className="text-[10px]" />
             </button>
             <button
               type="button"
               onClick={() => onDelete(item)}
-              className="w-8 h-8 rounded-lg bg-black/35 hover:bg-red-500/25 border border-white/15 text-red-200 flex items-center justify-center backdrop-blur-sm"
+              className="w-7 h-7 rounded-lg bg-black/35 hover:bg-red-500/25 border border-white/15 text-red-200 flex items-center justify-center backdrop-blur-sm"
               title="Delete"
               aria-label="Delete testimonial"
             >
-              <FaTrash className="text-xs" />
+              <FaTrash className="text-[10px]" />
             </button>
           </div>
         ) : null}
@@ -529,6 +522,16 @@ export default function BotTestimonialsSection({ currentUser }) {
     return items.filter((i) => i.published);
   }, [items, isAdmin]);
 
+  // Duplicate for seamless marquee when there are enough cards
+  const marqueeItems = useMemo(() => {
+    if (visible.length === 0) return [];
+    // Need enough width to loop cleanly — repeat until we have at least 6
+    let loop = [...visible];
+    while (loop.length < 6) loop = loop.concat(visible);
+    return loop.concat(loop);
+  }, [visible]);
+
+  const scrollSeconds = Math.max(28, marqueeItems.length * 4);
   const handleSaved = (saved, action) => {
     if (!saved?._id) {
       load();
@@ -568,59 +571,66 @@ export default function BotTestimonialsSection({ currentUser }) {
   return (
     <section className="relative py-20 sm:py-24 border-t border-white/5 overflow-hidden">
       <style>{`
-        @keyframes botTIn {
-          from { opacity: 0; transform: translateY(18px) rotate(-0.4deg); }
-          to { opacity: 1; transform: translateY(0) rotate(0); }
-        }
         @keyframes botTToastIn {
           from { opacity: 0; transform: translate(-50%, 16px); }
           to { opacity: 1; transform: translate(-50%, 0); }
         }
+        @keyframes botTMarquee {
+          from { transform: translate3d(0, 0, 0); }
+          to { transform: translate3d(-50%, 0, 0); }
+        }
         .bot-t-toast { animation: botTToastIn 0.28s ease-out; }
+        .bot-t-marquee {
+          display: flex;
+          width: max-content;
+          gap: 1rem;
+          animation: botTMarquee var(--bot-t-speed, 40s) linear infinite;
+          will-change: transform;
+        }
+        .bot-t-marquee-wrap:hover .bot-t-marquee {
+          animation-play-state: paused;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .bot-t-marquee { animation: none; }
+        }
         .bot-t-slip {
           position: relative;
           isolation: isolate;
-          border-radius: 1.35rem 1.35rem 1.35rem 0.55rem;
+          border-radius: 1.15rem 1.15rem 1.15rem 0.45rem;
           background:
             linear-gradient(145deg, rgba(255,255,255,0.07) 0%, rgba(8,12,20,0.88) 38%, rgba(8,12,20,0.95) 100%);
           border: 1px solid rgba(255,255,255,0.1);
           box-shadow:
             0 0 0 1px rgba(0,0,0,0.35) inset,
-            0 22px 50px -28px rgba(0,0,0,0.95),
-            0 0 40px -18px var(--bot-t-glow);
+            0 16px 36px -22px rgba(0,0,0,0.95),
+            0 0 28px -14px var(--bot-t-glow);
           overflow: hidden;
-          animation: botTIn 0.5s ease both;
-          transition: transform 0.35s ease, box-shadow 0.35s ease, border-color 0.35s ease;
+          transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
         }
         .bot-t-slip:hover {
-          transform: translateY(-6px) rotate(-0.3deg);
+          transform: translateY(-4px);
           border-color: color-mix(in srgb, var(--bot-t-bar) 45%, transparent);
           box-shadow:
             0 0 0 1px rgba(0,0,0,0.35) inset,
-            0 28px 60px -24px rgba(0,0,0,0.95),
-            0 0 56px -12px var(--bot-t-glow);
-        }
-        .bot-t-slip--featured {
-          border-radius: 1.6rem 0.7rem 1.6rem 1.6rem;
-          background:
-            linear-gradient(120deg, rgba(255,255,255,0.09) 0%, rgba(8,12,20,0.9) 45%, rgba(8,14,28,0.96) 100%);
+            0 22px 44px -20px rgba(0,0,0,0.95),
+            0 0 40px -10px var(--bot-t-glow);
         }
         .bot-t-slip-bar {
           position: absolute;
           left: 0;
-          top: 12%;
-          bottom: 12%;
-          width: 4px;
+          top: 14%;
+          bottom: 14%;
+          width: 3px;
           border-radius: 999px;
           background: linear-gradient(180deg, transparent, var(--bot-t-bar), transparent);
-          box-shadow: 0 0 18px var(--bot-t-glow);
+          box-shadow: 0 0 14px var(--bot-t-glow);
         }
         .bot-t-slip-notch {
           position: absolute;
-          right: -18px;
+          right: -14px;
           top: 50%;
-          width: 36px;
-          height: 36px;
+          width: 28px;
+          height: 28px;
           border-radius: 999px;
           background: #0a0a0f;
           transform: translateY(-50%);
@@ -628,9 +638,9 @@ export default function BotTestimonialsSection({ currentUser }) {
         }
         .bot-t-slip-mark {
           position: absolute;
-          right: 1.1rem;
-          bottom: -0.35rem;
-          font-size: 7.5rem;
+          right: 0.85rem;
+          bottom: -0.45rem;
+          font-size: 5.5rem;
           line-height: 1;
           font-family: Georgia, 'Times New Roman', serif;
           color: var(--bot-t-soft);
@@ -642,6 +652,26 @@ export default function BotTestimonialsSection({ currentUser }) {
           writing-mode: vertical-rl;
           transform: rotate(180deg);
           letter-spacing: 0.35em;
+        }
+        .bot-t-fade-l,
+        .bot-t-fade-r {
+          pointer-events: none;
+          position: absolute;
+          top: 0;
+          bottom: 0;
+          width: 48px;
+          z-index: 2;
+        }
+        .bot-t-fade-l {
+          left: 0;
+          background: linear-gradient(90deg, #0a0a0f, transparent);
+        }
+        .bot-t-fade-r {
+          right: 0;
+          background: linear-gradient(270deg, #0a0a0f, transparent);
+        }
+        @media (min-width: 640px) {
+          .bot-t-fade-l, .bot-t-fade-r { width: 72px; }
         }
       `}</style>
 
@@ -700,14 +730,9 @@ export default function BotTestimonialsSection({ currentUser }) {
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6">
-            {[0, 1, 2].map((i) => (
-              <div
-                key={i}
-                className={`h-52 rounded-2xl bg-white/[0.03] border border-white/5 animate-pulse ${
-                  i === 0 ? 'md:col-span-2' : ''
-                }`}
-              />
+          <div className="flex gap-4 overflow-hidden">
+            {[0, 1, 2, 3].map((i) => (
+              <div key={i} className="h-[200px] w-[280px] sm:w-[300px] shrink-0 rounded-2xl bg-white/[0.03] border border-white/5 animate-pulse" />
             ))}
           </div>
         ) : visible.length === 0 ? (
@@ -715,22 +740,29 @@ export default function BotTestimonialsSection({ currentUser }) {
             No testimonials yet. Add the first one.
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6 lg:gap-7">
-            {visible.map((item, index) => (
-              <TestimonialCard
-                key={item._id}
-                item={item}
-                isAdmin={isAdmin}
-                accent={ACCENTS[index % ACCENTS.length]}
-                featured={index === 0}
-                index={index}
-                onEdit={(t) => {
-                  setEditing(t);
-                  setFormOpen(true);
-                }}
-                onDelete={handleDelete}
-              />
-            ))}
+          <div className="bot-t-marquee-wrap relative -mx-4 sm:mx-0">
+            <div className="bot-t-fade-l hidden sm:block" aria-hidden />
+            <div className="bot-t-fade-r hidden sm:block" aria-hidden />
+            <div className="overflow-hidden px-4 sm:px-0 py-2">
+              <div
+                className="bot-t-marquee"
+                style={{ '--bot-t-speed': `${scrollSeconds}s` }}
+              >
+                {marqueeItems.map((item, index) => (
+                  <TestimonialCard
+                    key={`${item._id}-${index}`}
+                    item={item}
+                    isAdmin={isAdmin}
+                    accent={ACCENTS[index % ACCENTS.length]}
+                    onEdit={(t) => {
+                      setEditing(t);
+                      setFormOpen(true);
+                    }}
+                    onDelete={handleDelete}
+                  />
+                ))}
+              </div>
+            </div>
           </div>
         )}
 
