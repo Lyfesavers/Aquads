@@ -3318,6 +3318,10 @@ ${raidLinkLine}
           createdAt: new Date()
         });
         await Promise.all([raid.save(), user.save()]);
+        try {
+          const { notifyTwitterRaidCreated } = require('./raidListLive');
+          await notifyTwitterRaidCreated(raid);
+        } catch (_) {}
         const notifySourceChatId = sourceChatId || (typeof user.getDefaultTelegramGroupId === 'function'
           ? user.getDefaultTelegramGroupId()
           : (user.telegramGroupId ? user.telegramGroupId.toString() : null));
@@ -5268,6 +5272,11 @@ Tap to update:`;
 
         await raid.save();
 
+        try {
+          const { notifyTwitterRaidCreated } = require('./raidListLive');
+          await notifyTwitterRaidCreated(raid);
+        } catch (_) {}
+
         // Send Telegram notification: use source group when from group, else
         // user's default linked group so /raidin broadcast still works.
         const notifySourceChatId = sourceChatId || (typeof user.getDefaultTelegramGroupId === 'function'
@@ -5463,6 +5472,12 @@ Tap to update:`;
       // Emit socket event for real-time update
       const { emitRaidUpdate } = require('../socket');
       emitRaidUpdate('cancelled', { _id: raid._id.toString() }, platform);
+      if (platform === 'twitter') {
+        try {
+          const { invalidateTwitterRaidsListCache } = require('./raidListLive');
+          invalidateTwitterRaidsListCache();
+        } catch (_) {}
+      }
 
       await telegramService.sendBotMessage(chatId, 
         `✅ Raid Cancelled Successfully!\n\n🔗 URL: ${raidUrl}\n📱 Platform: ${platform === 'twitter' ? 'Twitter' : 'Facebook'}\n\n🗑️ The raid has been removed and Telegram notifications have been deleted.`);

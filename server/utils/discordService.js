@@ -859,6 +859,10 @@ async function doExecutePointsRaid(user, tweetUrl, opts = {}) {
     createdAt: new Date()
   });
   await Promise.all([raid.save(), user.save()]);
+  try {
+    const { notifyTwitterRaidCreated } = require('./raidListLive');
+    await notifyTwitterRaidCreated(raid);
+  } catch (_) {}
   const telegramService = require('./telegramService');
   await telegramService.sendRaidNotification({
     raidId: raid._id.toString(),
@@ -913,6 +917,10 @@ async function doCreateRaid(user, tweetUrl, opts = {}) {
       pointsSpent: 0
     }));
     await raid.save();
+    try {
+      const { notifyTwitterRaidCreated } = require('./raidListLive');
+      await notifyTwitterRaidCreated(raid);
+    } catch (_) {}
     const telegramService = require('./telegramService');
     await telegramService.sendRaidNotification({
       raidId: raid._id.toString(),
@@ -1027,6 +1035,12 @@ async function handleCancelRaid(interaction) {
   }
   const { emitRaidUpdate } = require('../socket');
   if (emitRaidUpdate) emitRaidUpdate('cancelled', { _id: raid._id.toString() }, platform);
+  if (platform === 'twitter') {
+    try {
+      const { invalidateTwitterRaidsListCache } = require('./raidListLive');
+      invalidateTwitterRaidsListCache();
+    } catch (_) {}
+  }
   return reply(interaction, `✅ **Raid cancelled.**\n\n🔗 ${raidUrl}\n📱 ${platform}`, true);
 }
 

@@ -1248,3 +1248,4 @@ const warmupRaidsCache = async () => {
 
 module.exports = router;
 module.exports.warmupRaidsCache = warmupRaidsCache;
+module.exports.invalidateRaidsCache = invalidateRaidsCache;
