@@ -2228,12 +2228,19 @@ async function sendRaidNotificationToChannel(raidData) {
   const taskDescription = isFacebook ? 'Like, Share & Comment' : 'Like, Retweet, Comment & Bookmark';
   const actionDescription = isFacebook ? 'Like, Share & Comment on the Facebook raid above' : 'Like, Retweet, Comment & Bookmark on the tweet above';
 
+  let tweetMetaBlock = '';
+  if (!isFacebook && postUrl) {
+    const { fetchTweetMetadata, formatTweetMetaForMessage } = require('./tweetMetadata');
+    const meta = await fetchTweetMetadata(postUrl);
+    tweetMetaBlock = formatTweetMetaForMessage(meta);
+  }
+
   const embed = new EmbedBuilder()
     .setTitle(`🚀 New ${platformName} Available!`)
     .setDescription(
       `💰 **Reward:** ${raidData.points || 20} points\n` +
       `🎯 **Task:** ${taskDescription}\n\n` +
-      `🔗 ${isFacebook ? 'Facebook Raid' : 'Tweet'}: ${postUrl}\n\n` +
+      `🔗 ${isFacebook ? 'Facebook Raid' : 'Tweet'}: ${postUrl}${tweetMetaBlock}\n\n` +
       `📋 **Requirements:**\n` +
       `• You MUST have an Aquads account to participate\n` +
       `• Link your account: \`/link your_aquads_username\`\n\n` +

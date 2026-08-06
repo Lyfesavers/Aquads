@@ -686,14 +686,20 @@ const telegramService = {
       const taskDescription = isFacebook ? 'Like, Share & Comment' : 'Like, Retweet, Comment & Bookmark';
       const actionDescription = isFacebook ? 'Like, Share & Comment on the Facebook raid above' : 'Like, Retweet, Comment & Bookmark on the tweet above';
 
-      // Construct the message text
+      let tweetMetaBlock = '';
+      if (!isFacebook && postUrl) {
+        const { fetchTweetMetadata, formatTweetMetaForMessage } = require('./tweetMetadata');
+        const tweetMeta = await fetchTweetMetadata(postUrl);
+        tweetMetaBlock = formatTweetMetaForMessage(tweetMeta);
+      }
+
+      // Construct the message text (short tweet teaser under URL; Complete Raid is the inline button)
       const message = `🚀 New ${platformName} Available!
 
 💰 Reward: 5–20 points (by tier)
 🎯 Task: ${taskDescription}
 
-🔗 ${isFacebook ? 'Facebook Raid' : 'Tweet'}: ${postUrl}
-🤖 Complete: @aquadsbumpbot
+🔗 ${isFacebook ? 'Facebook Raid' : 'Tweet'}: ${postUrl}${tweetMetaBlock}
 
 📋 Requirements:
 • You MUST have an Aquads account to participate
