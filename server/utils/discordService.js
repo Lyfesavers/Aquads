@@ -90,12 +90,12 @@ function getEngagementChannelId() {
 }
 
 const {
-  getFreeRaidDailyLimitForUsername,
   allowsCustomBranding,
   getListingTier,
   LISTING_TIER_STARTER,
   FREE_RAIDS_REQUIRES_LISTING_REASON
 } = require('./listingTier');
+const { tryConsumeBotFreeRaid, isDiscordMemberAdmin } = require('./botLinkedProjectRaid');
 
 const POINTS_REQUIRED_RAID = 2000;
 
@@ -876,7 +876,7 @@ async function doExecutePointsRaid(user, tweetUrl, opts = {}) {
 
 /** Shared raid creation from tweet URL. Returns { success, message } or { needsConfirmation, message, tweetUrl, tweetId, guildId, channelId }. Used by /createraid and by admin pasting tweet URL. */
 async function doCreateRaid(user, tweetUrl, opts = {}) {
-  const { guildId = null, channelId = null } = opts;
+  const { guildId = null, channelId = null, isDiscordAdmin = false } = opts;
   const tweetIdMatch = tweetUrl.match(/\/status\/(\d+)/);
   if (!tweetIdMatch?.[1]) {
     return { success: false, message: '❌ Invalid Twitter URL. Use a valid tweet URL.' };
@@ -890,10 +890,15 @@ async function doCreateRaid(user, tweetUrl, opts = {}) {
   }
   const title = `Twitter Raid by @${user.username}`;
   const description = 'Help boost this tweet! Like, retweet, and comment to earn 5–20 points.';
-  const dailyLimit = await getFreeRaidDailyLimitForUsername(user.username);
-  const eligibility = dailyLimit > 0 ? user.checkFreeRaidEligibility(dailyLimit) : { eligible: false };
-  if (eligibility.eligible) {
-    const usage = await user.useFreeRaid(dailyLimit);
+
+  // Linked channel + Discord admin → project owner's shared free pool (same as website).
+  const freeResult = await tryConsumeBotFreeRaid(user, {
+    discordChannelId: channelId || null,
+    isDiscordAdmin: !!isDiscordAdmin,
+  });
+
+  if (freeResult.used) {
+    const usage = freeResult.usage;
     const raid = applyNewRaidDefaults(new TwitterRaid({
       tweetId,
       tweetUrl,
@@ -920,11 +925,22 @@ async function doCreateRaid(user, tweetUrl, opts = {}) {
       discordSourceGuildId: guildId || null,
       discordSourceChannelId: channelId || null
     }).catch(() => {});
-    return { success: true, message: `✅ **Free raid created!**\n\n🔗 ${tweetUrl}\n🆓 ${usage.raidsRemaining} free raids remaining today.\n\nhttps://aquads.xyz` };
+    let msg = `✅ **Free raid created!**\n\n🔗 ${tweetUrl}\n🆓 ${usage.raidsRemaining} free raids remaining today.`;
+    if (freeResult.fromLinkedProjectAdmin && freeResult.project) {
+      msg += `\n📁 Project pool: **${freeResult.project.title}**`;
+      if (freeResult.poolUser.username !== user.username) {
+        msg += ` (owner @${freeResult.poolUser.username})`;
+      }
+    }
+    msg += `\n\nhttps://aquads.xyz`;
+    return { success: true, message: msg };
   }
   if (user.points < POINTS_REQUIRED_RAID) {
     let msg = `❌ Not enough points. You have ${user.points}; need ${POINTS_REQUIRED_RAID}.`;
-    if (!dailyLimit) msg += `\n\n${FREE_RAIDS_REQUIRES_LISTING_REASON}`;
+    if (!freeResult.dailyLimit) msg += `\n\n${FREE_RAIDS_REQUIRES_LISTING_REASON}`;
+    else if (freeResult.fromLinkedProjectAdmin && freeResult.project) {
+      msg += `\n\n🆓 Project free raids for **${freeResult.project.title}** are used up for today.`;
+    }
     return { success: false, message: msg + '\n\nEarn points: `/raids`' };
   }
   // User would pay 2000 points — return confirmation so caller can show Yes/No buttons
@@ -945,7 +961,12 @@ async function handleCreateRaid(interaction) {
     return replyLinkRequired(interaction, '❌ Link your account first: `/link your_username`\n\nhttps://aquads.xyz');
   }
   const tweetUrl = interaction.options.getString('tweet_url', true).trim();
-  const result = await doCreateRaid(user, tweetUrl, { guildId: interaction.guildId || null, channelId: interaction.channelId || null });
+  const isAdmin = isDiscordMemberAdmin(interaction.member, interaction.guild);
+  const result = await doCreateRaid(user, tweetUrl, {
+    guildId: interaction.guildId || null,
+    channelId: interaction.channelId || null,
+    isDiscordAdmin: isAdmin,
+  });
   if (result.needsConfirmation) {
     setState(discordUserId, { tweetUrl: result.tweetUrl, tweetId: result.tweetId, guildId: result.guildId, channelId: result.channelId });
     const row = new ActionRowBuilder().addComponents(
@@ -1503,7 +1524,7 @@ async function startBot() {
 
     const tweetUrlMatch = message.content.match(/(https?:\/\/(?:www\.)?(?:twitter\.com|x\.com)\/[^/]+\/status\/\d+)/i);
     if (tweetUrlMatch && tweetUrlMatch[1]) {
-      const isAdmin = message.member?.permissions?.has?.(PermissionFlagsBits.Administrator) === true;
+      const isAdmin = isDiscordMemberAdmin(message.member, message.guild);
       if (!isAdmin) return;
       const user = await User.findOne({ discordId: discordUserId });
       if (!user) {
@@ -1512,7 +1533,11 @@ async function startBot() {
         return;
       }
       const tweetUrl = tweetUrlMatch[1].trim();
-      const result = await doCreateRaid(user, tweetUrl, { guildId: message.guildId || null, channelId: message.channelId || null });
+      const result = await doCreateRaid(user, tweetUrl, {
+        guildId: message.guildId || null,
+        channelId: message.channelId || null,
+        isDiscordAdmin: true,
+      });
       if (result.needsConfirmation) {
         setState(discordUserId, { tweetUrl: result.tweetUrl, tweetId: result.tweetId, guildId: message.guildId || null, channelId: message.channelId || null });
         const row = new ActionRowBuilder().addComponents(
@@ -1570,8 +1595,8 @@ async function startBot() {
       }
       if (interaction.isChatInputCommand()) {
         const name = interaction.commandName;
-        // In server channels, allow /bubbles, /mybubble, /raidin, /raidout, /linkproject, /unlinkproject. Redirect rest to DMs to keep channel clean.
-        const allowedInChannel = ['bubbles', 'leaders', 'mybubble', 'raidin', 'raidout', 'linkproject', 'unlinkproject'];
+        // In server channels, allow project/raid ops that belong in-channel. Redirect rest to DMs.
+        const allowedInChannel = ['bubbles', 'leaders', 'mybubble', 'raidin', 'raidout', 'linkproject', 'unlinkproject', 'createraid'];
         if (interaction.guildId && !allowedInChannel.includes(name)) {
           const dmHint = 'Right‑click my name → **Message**, or open the app and start a DM with me.';
           const fullDmText =

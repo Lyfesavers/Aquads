@@ -19,12 +19,12 @@ const {
   BRANDING_VIDEO_URL_GUIDANCE,
 } = require('./brandingMedia');
 const {
-  getFreeRaidDailyLimitForUsername,
   allowsCustomBranding,
   getListingTier,
   LISTING_TIER_STARTER,
   FREE_RAIDS_REQUIRES_LISTING_REASON
 } = require('./listingTier');
+const { tryConsumeBotFreeRaid } = require('./botLinkedProjectRaid');
 
 // (for white-label: raid + completion use creator's image or video URL when set)
 async function getCreatorBrandingFromRaidId(raidId, platform = null) {
@@ -1865,7 +1865,8 @@ Earn points by completing Twitter & Facebook raids!
   View all available raids
 
 • /createraid TWEET_URL
-  Create your own raid (free raids used first if available, otherwise 2000 points)
+  Create a raid (free raids used first if available, otherwise 2000 points).
+  In a /linkproject group, TG admins share the project owner's free pool.
 
 • /cancelraid URL
   Cancel a raid you created (use the same URL you used to create it)
@@ -5198,7 +5199,7 @@ Tap to update:`;
       
       if (!tweetUrl) {
         await telegramService.sendBotMessage(chatId, 
-          "❌ Please provide a tweet URL.\n\n📝 Usage: /createraid TWEET_URL\n\n💡 Example: /createraid https://twitter.com/user/status/123456789\n\n🆓 Free raids are used first if available, otherwise costs 2000 points");
+          "❌ Please provide a tweet URL.\n\n📝 Usage: /createraid TWEET_URL\n\n💡 Example: /createraid https://twitter.com/user/status/123456789\n\n🆓 Free raids are used first if available, otherwise costs 2000 points (confirm first).\n📁 In a project-linked group, admins share that project's owner free pool.");
         return;
       }
 
@@ -5229,15 +5230,15 @@ Tap to update:`;
       // Generate default title and description
       const title = `Twitter Raid by @${user.username}`;
       const description = `Help boost this tweet! Like, retweet, and comment to earn 5–20 points.`;
-      
-      const dailyLimit = await getFreeRaidDailyLimitForUsername(user.username);
 
-      const eligibility = dailyLimit > 0 ? user.checkFreeRaidEligibility(dailyLimit) : { eligible: false };
+      // Linked group + TG admin → project owner's shared free pool (same as website).
+      // Otherwise → caller's own free pool. Points always from the caller after confirm.
+      const freeResult = await tryConsumeBotFreeRaid(user, {
+        telegramChatId: sourceChatId,
+      });
 
-      if (eligibility.eligible) {
-        // Use free raid
-        const usage = await user.useFreeRaid(dailyLimit);
-        
+      if (freeResult.used) {
+        const usage = freeResult.usage;
         const raid = applyNewRaidDefaults(new TwitterRaid({
           tweetId,
           tweetUrl,
@@ -5269,8 +5270,14 @@ Tap to update:`;
           isAdmin: false
         });
 
-        // Check if group is linked and opted-in, provide helpful message
-        let successMessage = `✅ Free Raid Created Successfully!\n\n🔗 Tweet: ${tweetUrl}\n🆓 Used Free Raid (${usage.raidsRemaining} remaining today)\n\n🚀 Your raid is now live!`;
+        let successMessage = `✅ Free Raid Created Successfully!\n\n🔗 Tweet: ${tweetUrl}\n🆓 Used Free Raid (${usage.raidsRemaining} remaining today)`;
+        if (freeResult.fromLinkedProjectAdmin && freeResult.project) {
+          successMessage += `\n📁 Project pool: ${freeResult.project.title}`;
+          if (freeResult.poolUser.username !== user.username) {
+            successMessage += ` (owner @${freeResult.poolUser.username})`;
+          }
+        }
+        successMessage += `\n\n🚀 Your raid is now live!`;
         
         if (sourceChatId) {
           // Group is linked (raid created from group)
@@ -5316,8 +5323,10 @@ Tap to update:`;
         let noPointsMessage = `❌ Not enough points. You have ${user.points} points but need ${POINTS_REQUIRED} points to create a raid.`;
         
         // No free raid quota left or none qualifies — explain tiers before suggesting points
-        if (!dailyLimit) {
+        if (!freeResult.dailyLimit) {
           noPointsMessage += `\n\n📋 ${FREE_RAIDS_REQUIRES_LISTING_REASON}`;
+        } else if (freeResult.fromLinkedProjectAdmin && freeResult.project) {
+          noPointsMessage += `\n\n🆓 Project free raids for ${freeResult.project.title} are used up for today.`;
         }
         
         noPointsMessage += `\n\n💡 Earn points by completing raids: /raids`;
