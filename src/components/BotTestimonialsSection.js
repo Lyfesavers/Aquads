@@ -9,6 +9,8 @@ import {
   FaSearch,
   FaTelegram,
   FaDiscord,
+  FaCheckCircle,
+  FaExclamationCircle,
 } from 'react-icons/fa';
 import { API_URL } from '../services/api';
 
@@ -55,35 +57,90 @@ const emptyForm = {
   project: null,
 };
 
-function TestimonialCard({ item, isAdmin, onEdit, onDelete }) {
+const ACCENTS = [
+  { bar: '#22d3ee', soft: 'rgba(34,211,238,0.18)', glow: 'rgba(34,211,238,0.35)' },
+  { bar: '#818cf8', soft: 'rgba(129,140,248,0.18)', glow: 'rgba(129,140,248,0.35)' },
+  { bar: '#34d399', soft: 'rgba(52,211,153,0.16)', glow: 'rgba(52,211,153,0.3)' },
+  { bar: '#38bdf8', soft: 'rgba(56,189,248,0.18)', glow: 'rgba(56,189,248,0.32)' },
+];
+
+function Toast({ toast, onDone }) {
+  useEffect(() => {
+    if (!toast) return undefined;
+    const t = setTimeout(onDone, 3200);
+    return () => clearTimeout(t);
+  }, [toast, onDone]);
+
+  if (!toast) return null;
+  const ok = toast.type !== 'error';
+  return (
+    <div
+      role="status"
+      className={`bot-t-toast fixed z-[60] left-1/2 -translate-x-1/2 bottom-6 sm:bottom-8 flex items-center gap-3 px-4 py-3 rounded-2xl border shadow-2xl backdrop-blur-md max-w-[min(92vw,420px)] ${
+        ok
+          ? 'bg-emerald-950/90 border-emerald-400/40 text-emerald-50'
+          : 'bg-red-950/90 border-red-400/40 text-red-50'
+      }`}
+    >
+      {ok ? <FaCheckCircle className="text-emerald-400 text-lg shrink-0" /> : <FaExclamationCircle className="text-red-400 text-lg shrink-0" />}
+      <span className="text-sm font-medium leading-snug">{toast.message}</span>
+      <button type="button" onClick={onDone} className="ml-1 text-white/50 hover:text-white shrink-0" aria-label="Dismiss">
+        <FaTimes className="text-xs" />
+      </button>
+    </div>
+  );
+}
+
+function TestimonialCard({ item, isAdmin, onEdit, onDelete, accent, featured, index }) {
   const name = attributionLabel(item);
-  const role = item.role || (item.project ? 'Project' : null);
+  const role = item.role || null;
+  const metaBits = [item.project?.title, role].filter(Boolean);
 
   return (
-    <article className="bot-t-card group relative flex flex-col h-full">
-      <div className="bot-t-card-shine" aria-hidden />
-      <div className="relative z-10 flex flex-col h-full p-6 sm:p-7">
-        <div className="flex items-start justify-between gap-3 mb-5">
-          <span className="inline-flex items-center justify-center w-11 h-11 rounded-2xl bg-cyan-400/10 border border-cyan-400/25 text-cyan-300">
-            <FaQuoteLeft className="text-lg" />
-          </span>
-          <div className="flex items-center gap-1.5 opacity-80">
-            <FaTelegram className="text-cyan-500/70 text-xs" />
-            <FaDiscord className="text-indigo-400/70 text-xs" />
+    <article
+      className={`bot-t-slip group relative ${featured ? 'bot-t-slip--featured md:col-span-2' : ''} ${
+        index % 2 === 1 && !featured ? 'md:translate-y-4' : ''
+      }`}
+      style={{
+        '--bot-t-bar': accent.bar,
+        '--bot-t-soft': accent.soft,
+        '--bot-t-glow': accent.glow,
+        animationDelay: `${Math.min(index, 6) * 60}ms`,
+      }}
+    >
+      <div className="bot-t-slip-notch" aria-hidden />
+      <div className="bot-t-slip-bar" aria-hidden />
+      <span className="bot-t-slip-mark" aria-hidden>
+        “
+      </span>
+
+      <div className={`relative z-10 flex flex-col h-full ${featured ? 'p-7 sm:p-9' : 'p-6 sm:p-7'}`}>
+        <div className="flex items-center justify-between gap-3 mb-4">
+          <div className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.18em] font-semibold text-white/55">
+            <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: accent.bar }} />
+            Live signal
+          </div>
+          <div className="flex items-center gap-2 text-white/35">
+            <FaTelegram className="text-xs" />
+            <FaDiscord className="text-xs" />
           </div>
         </div>
 
-        <p className="text-[15px] sm:text-base leading-relaxed text-slate-200/95 flex-1 mb-6">
+        <p
+          className={`relative z-[1] text-white/95 leading-relaxed font-medium ${
+            featured ? 'text-lg sm:text-xl md:text-2xl' : 'text-[15px] sm:text-base'
+          }`}
+        >
           {item.quote}
         </p>
 
-        <div className="mt-auto pt-5 border-t border-white/[0.06] flex items-center gap-3">
-          <div className="relative flex -space-x-2 shrink-0">
+        <div className="mt-auto pt-6 flex items-center gap-3">
+          <div className="relative flex shrink-0">
             {item.project?.logo ? (
               <img
                 src={item.project.logo}
                 alt=""
-                className="w-10 h-10 rounded-full object-cover ring-2 ring-[#0c1220] bg-slate-800"
+                className="w-11 h-11 rounded-[14px] object-cover ring-2 ring-black/40"
                 loading="lazy"
               />
             ) : null}
@@ -91,21 +148,24 @@ function TestimonialCard({ item, isAdmin, onEdit, onDelete }) {
               <img
                 src={item.user.image}
                 alt=""
-                className={`w-10 h-10 rounded-full object-cover ring-2 ring-[#0c1220] bg-slate-800 ${
-                  item.project?.logo ? '' : ''
+                className={`w-11 h-11 rounded-full object-cover ring-2 ring-black/40 ${
+                  item.project?.logo ? '-ml-3' : ''
                 }`}
                 loading="lazy"
               />
             ) : !item.project?.logo ? (
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-500/40 to-blue-600/40 ring-2 ring-[#0c1220] flex items-center justify-center text-sm font-bold text-white">
+              <div
+                className="w-11 h-11 rounded-full flex items-center justify-center text-sm font-bold text-black ring-2 ring-black/40"
+                style={{ background: accent.bar }}
+              >
                 {(name.replace(/^@/, '')[0] || 'A').toUpperCase()}
               </div>
             ) : null}
           </div>
           <div className="min-w-0 flex-1">
-            <div className="font-semibold text-white truncate">{name}</div>
-            <div className="text-xs text-slate-400 truncate">
-              {[item.project?.title, role].filter(Boolean).join(' · ') || 'Raid bot user'}
+            <div className="font-semibold text-white truncate tracking-tight">{name}</div>
+            <div className="text-xs text-white/45 truncate">
+              {metaBits.length ? metaBits.join(' · ') : 'Using the Aquads bot'}
             </div>
           </div>
           {!item.published && isAdmin ? (
@@ -116,11 +176,11 @@ function TestimonialCard({ item, isAdmin, onEdit, onDelete }) {
         </div>
 
         {isAdmin ? (
-          <div className="absolute top-3 right-3 flex gap-1.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+          <div className="absolute top-3 right-3 flex gap-1.5 z-20">
             <button
               type="button"
               onClick={() => onEdit(item)}
-              className="w-8 h-8 rounded-lg bg-white/5 hover:bg-cyan-500/20 border border-white/10 text-cyan-300 flex items-center justify-center"
+              className="w-8 h-8 rounded-lg bg-black/35 hover:bg-cyan-500/25 border border-white/15 text-cyan-200 flex items-center justify-center backdrop-blur-sm"
               title="Edit"
               aria-label="Edit testimonial"
             >
@@ -129,7 +189,7 @@ function TestimonialCard({ item, isAdmin, onEdit, onDelete }) {
             <button
               type="button"
               onClick={() => onDelete(item)}
-              className="w-8 h-8 rounded-lg bg-white/5 hover:bg-red-500/20 border border-white/10 text-red-300 flex items-center justify-center"
+              className="w-8 h-8 rounded-lg bg-black/35 hover:bg-red-500/25 border border-white/15 text-red-200 flex items-center justify-center backdrop-blur-sm"
               title="Delete"
               aria-label="Delete testimonial"
             >
@@ -150,7 +210,7 @@ function Typeahead({ label, placeholder, valueLabel, onClear, results, onSearch,
     if (timer.current) clearTimeout(timer.current);
     if (!q.trim()) {
       onSearch('');
-      return;
+      return undefined;
     }
     timer.current = setTimeout(() => onSearch(q.trim()), 250);
     return () => {
@@ -289,12 +349,16 @@ function TestimonialForm({ token, initial, onClose, onSaved }) {
         clearUser: !form.user,
         clearProject: !form.project,
       };
+      let saved;
+      let action;
       if (initial?._id) {
-        await api(`/bot-testimonials/${initial._id}`, { token, method: 'PUT', body });
+        saved = await api(`/bot-testimonials/${initial._id}`, { token, method: 'PUT', body });
+        action = 'updated';
       } else {
-        await api('/bot-testimonials', { token, method: 'POST', body });
+        saved = await api('/bot-testimonials', { token, method: 'POST', body });
+        action = 'created';
       }
-      onSaved();
+      onSaved(saved, action);
       onClose();
     } catch (err) {
       setError(err.message || 'Save failed');
@@ -434,6 +498,13 @@ export default function BotTestimonialsSection({ currentUser }) {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [error, setError] = useState('');
+  const [toast, setToast] = useState(null);
+
+  const showToast = useCallback((message, type = 'success') => {
+    setToast({ message, type, id: Date.now() });
+  }, []);
+
+  const clearToast = useCallback(() => setToast(null), []);
 
   const load = useCallback(async () => {
     setError('');
@@ -458,14 +529,35 @@ export default function BotTestimonialsSection({ currentUser }) {
     return items.filter((i) => i.published);
   }, [items, isAdmin]);
 
+  const handleSaved = (saved, action) => {
+    if (!saved?._id) {
+      load();
+      showToast(action === 'updated' ? 'Testimonial updated' : 'Testimonial created');
+      return;
+    }
+    setItems((prev) => {
+      const idx = prev.findIndex((x) => x._id === saved._id);
+      if (idx >= 0) {
+        const next = [...prev];
+        next[idx] = saved;
+        return next;
+      }
+      return [saved, ...prev];
+    });
+    showToast(
+      action === 'updated' ? 'Testimonial updated successfully' : 'Testimonial created successfully'
+    );
+  };
+
   const handleDelete = async (item) => {
     if (!token) return;
     if (!window.confirm('Delete this testimonial?')) return;
     try {
       await api(`/bot-testimonials/${item._id}`, { token, method: 'DELETE' });
-      await load();
+      setItems((prev) => prev.filter((x) => x._id !== item._id));
+      showToast('Testimonial deleted');
     } catch (err) {
-      alert(err.message || 'Delete failed');
+      showToast(err.message || 'Delete failed', 'error');
     }
   };
 
@@ -474,76 +566,164 @@ export default function BotTestimonialsSection({ currentUser }) {
   }
 
   return (
-    <section className="relative py-20 border-t border-gray-800/50">
+    <section className="relative py-20 sm:py-24 border-t border-white/5 overflow-hidden">
       <style>{`
-        .bot-t-card {
-          border-radius: 1.25rem;
+        @keyframes botTIn {
+          from { opacity: 0; transform: translateY(18px) rotate(-0.4deg); }
+          to { opacity: 1; transform: translateY(0) rotate(0); }
+        }
+        @keyframes botTToastIn {
+          from { opacity: 0; transform: translate(-50%, 16px); }
+          to { opacity: 1; transform: translate(-50%, 0); }
+        }
+        .bot-t-toast { animation: botTToastIn 0.28s ease-out; }
+        .bot-t-slip {
+          position: relative;
+          isolation: isolate;
+          border-radius: 1.35rem 1.35rem 1.35rem 0.55rem;
           background:
-            linear-gradient(165deg, rgba(34,211,238,0.08) 0%, rgba(14,20,32,0.92) 42%, rgba(99,102,241,0.06) 100%);
-          border: 1px solid rgba(255,255,255,0.08);
-          box-shadow: 0 0 0 1px rgba(34,211,238,0.04) inset, 0 18px 40px -28px rgba(0,0,0,0.9);
+            linear-gradient(145deg, rgba(255,255,255,0.07) 0%, rgba(8,12,20,0.88) 38%, rgba(8,12,20,0.95) 100%);
+          border: 1px solid rgba(255,255,255,0.1);
+          box-shadow:
+            0 0 0 1px rgba(0,0,0,0.35) inset,
+            0 22px 50px -28px rgba(0,0,0,0.95),
+            0 0 40px -18px var(--bot-t-glow);
           overflow: hidden;
-          transition: transform 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease;
+          animation: botTIn 0.5s ease both;
+          transition: transform 0.35s ease, box-shadow 0.35s ease, border-color 0.35s ease;
         }
-        .bot-t-card:hover {
-          transform: translateY(-4px);
-          border-color: rgba(34,211,238,0.28);
-          box-shadow: 0 0 0 1px rgba(34,211,238,0.1) inset, 0 24px 48px -24px rgba(34,211,238,0.25);
+        .bot-t-slip:hover {
+          transform: translateY(-6px) rotate(-0.3deg);
+          border-color: color-mix(in srgb, var(--bot-t-bar) 45%, transparent);
+          box-shadow:
+            0 0 0 1px rgba(0,0,0,0.35) inset,
+            0 28px 60px -24px rgba(0,0,0,0.95),
+            0 0 56px -12px var(--bot-t-glow);
         }
-        .bot-t-card-shine {
+        .bot-t-slip--featured {
+          border-radius: 1.6rem 0.7rem 1.6rem 1.6rem;
+          background:
+            linear-gradient(120deg, rgba(255,255,255,0.09) 0%, rgba(8,12,20,0.9) 45%, rgba(8,14,28,0.96) 100%);
+        }
+        .bot-t-slip-bar {
           position: absolute;
-          inset: 0;
-          background: radial-gradient(ellipse 80% 50% at 0% 0%, rgba(34,211,238,0.12), transparent 55%);
+          left: 0;
+          top: 12%;
+          bottom: 12%;
+          width: 4px;
+          border-radius: 999px;
+          background: linear-gradient(180deg, transparent, var(--bot-t-bar), transparent);
+          box-shadow: 0 0 18px var(--bot-t-glow);
+        }
+        .bot-t-slip-notch {
+          position: absolute;
+          right: -18px;
+          top: 50%;
+          width: 36px;
+          height: 36px;
+          border-radius: 999px;
+          background: #0a0a0f;
+          transform: translateY(-50%);
+          box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
+        }
+        .bot-t-slip-mark {
+          position: absolute;
+          right: 1.1rem;
+          bottom: -0.35rem;
+          font-size: 7.5rem;
+          line-height: 1;
+          font-family: Georgia, 'Times New Roman', serif;
+          color: var(--bot-t-soft);
           pointer-events: none;
+          user-select: none;
+          transform: rotate(8deg);
+        }
+        .bot-t-rail {
+          writing-mode: vertical-rl;
+          transform: rotate(180deg);
+          letter-spacing: 0.35em;
         }
       `}</style>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-12">
-          <div className="text-center sm:text-left max-w-2xl">
-            <p className="text-cyan-400/90 text-xs font-semibold tracking-[0.2em] uppercase mb-3">
-              Community voices
-            </p>
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-3">
-              What projects say about the
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-indigo-400"> raid bot</span>
-            </h2>
-            <p className="text-gray-400 text-base">
-              Real notes from teams using Aquads raids on Telegram and Discord.
-            </p>
+      <div className="pointer-events-none absolute inset-0" aria-hidden>
+        <div className="absolute -left-24 top-10 w-72 h-72 rounded-full bg-cyan-500/10 blur-3xl" />
+        <div className="absolute right-0 bottom-0 w-80 h-80 rounded-full bg-indigo-500/10 blur-3xl" />
+        <div
+          className="absolute inset-x-0 top-0 h-px"
+          style={{
+            background:
+              'linear-gradient(90deg, transparent, rgba(34,211,238,0.45), rgba(129,140,248,0.35), transparent)',
+          }}
+        />
+      </div>
+
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col lg:flex-row gap-10 lg:gap-14 mb-12">
+          <div className="hidden lg:flex flex-col items-center gap-4 pt-2">
+            <div className="w-px flex-1 min-h-[120px] bg-gradient-to-b from-cyan-400/60 via-indigo-400/30 to-transparent" />
+            <span className="bot-t-rail text-[11px] uppercase text-cyan-300/70 font-semibold">
+              Voices
+            </span>
           </div>
-          {isAdmin ? (
-            <button
-              type="button"
-              onClick={() => {
-                setEditing(null);
-                setFormOpen(true);
-              }}
-              className="inline-flex items-center justify-center gap-2 self-center sm:self-auto px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 shadow-lg shadow-cyan-500/20"
-            >
-              <FaPlus />
-              Add testimonial
-            </button>
-          ) : null}
+
+          <div className="flex-1 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-5">
+            <div className="max-w-2xl">
+              <div className="inline-flex items-center gap-2 mb-4 px-3 py-1.5 rounded-full border border-cyan-400/25 bg-cyan-400/5 text-cyan-300 text-xs font-semibold tracking-wide">
+                <FaQuoteLeft className="text-[10px]" />
+                Community feedback
+              </div>
+              <h2 className="text-3xl md:text-4xl lg:text-[2.75rem] font-bold text-white leading-[1.15] tracking-tight mb-3">
+                What users are saying about{' '}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-sky-400 to-indigo-400">
+                  our bot
+                </span>
+              </h2>
+              <p className="text-gray-400 text-base md:text-lg max-w-xl">
+                Straight from teams running raids on Telegram and Discord with Aquads.
+              </p>
+            </div>
+
+            {isAdmin ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setEditing(null);
+                  setFormOpen(true);
+                }}
+                className="inline-flex items-center justify-center gap-2 self-start sm:self-auto px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 shadow-lg shadow-cyan-500/20"
+              >
+                <FaPlus />
+                Add testimonial
+              </button>
+            ) : null}
+          </div>
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6">
             {[0, 1, 2].map((i) => (
-              <div key={i} className="h-56 rounded-2xl bg-white/[0.03] border border-white/5 animate-pulse" />
+              <div
+                key={i}
+                className={`h-52 rounded-2xl bg-white/[0.03] border border-white/5 animate-pulse ${
+                  i === 0 ? 'md:col-span-2' : ''
+                }`}
+              />
             ))}
           </div>
         ) : visible.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.02] px-6 py-14 text-center text-slate-400">
+          <div className="rounded-2xl border border-dashed border-cyan-500/25 bg-cyan-500/[0.03] px-6 py-14 text-center text-slate-400">
             No testimonials yet. Add the first one.
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {visible.map((item) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6 lg:gap-7">
+            {visible.map((item, index) => (
               <TestimonialCard
                 key={item._id}
                 item={item}
                 isAdmin={isAdmin}
+                accent={ACCENTS[index % ACCENTS.length]}
+                featured={index === 0}
+                index={index}
                 onEdit={(t) => {
                   setEditing(t);
                   setFormOpen(true);
@@ -565,9 +745,11 @@ export default function BotTestimonialsSection({ currentUser }) {
             setFormOpen(false);
             setEditing(null);
           }}
-          onSaved={load}
+          onSaved={handleSaved}
         />
       ) : null}
+
+      <Toast toast={toast} onDone={clearToast} />
     </section>
   );
 }
