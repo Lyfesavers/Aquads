@@ -5235,7 +5235,20 @@ Tap to update:`;
       // Otherwise → caller's own free pool. Points always from the caller after confirm.
       const freeResult = await tryConsumeBotFreeRaid(user, {
         telegramChatId: sourceChatId,
+        telegramUserId: telegramUserId,
       });
+
+      // Telegram API timed out / failed while checking admin — ask to retry (don't fake "need points")
+      if (freeResult.linkStatus === 'admin_check_failed') {
+        await telegramService.sendBotMessage(
+          chatId,
+          `⏳ Telegram is slow right now — couldn't verify you're a group admin to use the project free raids.\n\n` +
+            `📁 Project: ${freeResult.project ? freeResult.project.title : 'linked project'}\n\n` +
+            `💡 Please paste the tweet URL again in a few seconds.`,
+          { skipPromoKeyboard: true }
+        );
+        return;
+      }
 
       if (freeResult.used) {
         const usage = freeResult.usage;
@@ -5321,17 +5334,22 @@ Tap to update:`;
       // No free raids available, use points — ask for confirmation first
       if (user.points < POINTS_REQUIRED) {
         let noPointsMessage = `❌ Not enough points. You have ${user.points} points but need ${POINTS_REQUIRED} points to create a raid.`;
-        
-        // No free raid quota left or none qualifies — explain tiers before suggesting points
-        if (!freeResult.dailyLimit) {
-          noPointsMessage += `\n\n📋 ${FREE_RAIDS_REQUIRES_LISTING_REASON}`;
+
+        if (sourceChatId && freeResult.linkStatus === 'not_linked') {
+          noPointsMessage += `\n\n📁 This group is not linked to a project with <code>/linkproject</code>, so the project free-raid pool cannot be used here.\n\n💡 The project owner (group creator) should run /linkproject in this group.`;
+        } else if (sourceChatId && freeResult.linkStatus === 'not_admin') {
+          noPointsMessage += `\n\n📁 This group is linked to <b>${freeResult.project ? freeResult.project.title : 'a project'}</b>, but only Telegram <b>admins</b> can use that project's free raids.\n\n💡 Ask an admin to paste the tweet URL, or earn 2000 points.`;
+        } else if (sourceChatId && freeResult.linkStatus === 'owner_missing') {
+          noPointsMessage += `\n\n⚠️ Project is linked but the Aquads owner account could not be found. Contact support or have the owner re-link.`;
         } else if (freeResult.fromLinkedProjectAdmin && freeResult.project) {
           noPointsMessage += `\n\n🆓 Project free raids for ${freeResult.project.title} are used up for today.`;
+        } else if (!freeResult.dailyLimit) {
+          noPointsMessage += `\n\n📋 ${FREE_RAIDS_REQUIRES_LISTING_REASON}`;
         }
-        
+
         noPointsMessage += `\n\n💡 Earn points by completing raids: /raids`;
-        
-        await telegramService.sendBotMessage(chatId, noPointsMessage);
+
+        await telegramService.sendBotMessage(chatId, noPointsMessage, sourceChatId ? { parseMode: 'HTML' } : undefined);
         return;
       }
 

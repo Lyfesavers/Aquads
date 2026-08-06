@@ -321,6 +321,7 @@ adSchema.index({ pairAddress: 1 }); // For pair address lookups
 adSchema.index({ bullishVotes: -1, status: 1 }); // For top voted ads
 adSchema.index({ bearishVotes: -1, status: 1 }); // For bearish voted ads
 adSchema.index({ discordChannelId: 1 }, { sparse: true });
+adSchema.index({ telegramGroupId: 1 }, { sparse: true });
 adSchema.index({ listingSource: 1, claimStatus: 1, status: 1 });
 adSchema.index({ contractAddress: 1 }, { sparse: true });
 
