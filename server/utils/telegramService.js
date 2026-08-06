@@ -2880,20 +2880,34 @@ https://aquads.xyz`;
       const platformName = isFacebook ? 'Facebook' : 'Twitter';
       const platformEmoji = isFacebook ? '📘' : '🐦';
 
-      // Get live completion count for this raid
+      // Get live completion count + post URL for this raid
       let completionCount = null;
+      let raidPostUrl = completionData.tweetUrl || completionData.postUrl || null;
       if (completionData.raidId) {
         try {
           const RaidModel = isFacebook ? FacebookRaid : TwitterRaid;
-          const raid = await RaidModel.findById(completionData.raidId).select('completions').lean();
-          if (raid) completionCount = raid.completions.length;
+          const raid = await RaidModel.findById(completionData.raidId)
+            .select(isFacebook ? 'completions postUrl' : 'completions tweetUrl')
+            .lean();
+          if (raid) {
+            completionCount = raid.completions.length;
+            if (!raidPostUrl) {
+              raidPostUrl = isFacebook ? raid.postUrl : raid.tweetUrl;
+            }
+          }
         } catch (e) { /* ignore */ }
       }
+
+      // Escape Markdown special chars so tweet URLs with underscores don't break the caption
+      const escapeMd = (s) => String(s || '').replace(/([_*`\[])/g, '\\$1');
+      const raidLinkLine = raidPostUrl
+        ? `${platformEmoji} ${platformName} Raid\n🔗 ${escapeMd(raidPostUrl)}`
+        : `${platformEmoji} ${platformName} Raid`;
 
       // Construct the message
       const message = `🎉 Someone Just Raided!
 
-${platformEmoji} ${platformName} Raid
+${raidLinkLine}
 👤 ${username}${telegramUsername ? ` ${telegramUsername}` : ''} just completed a raid
 💰 Reward: ${completionData.points} points${completionCount !== null ? `\n👥 Total Raiders: ${completionCount}` : ''}
 

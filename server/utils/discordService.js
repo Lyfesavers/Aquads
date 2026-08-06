@@ -2310,27 +2310,36 @@ async function sendRaidCompletionToChannel(completionData) {
   const isFacebook = completionData.platform === 'Facebook';
   const platformName = isFacebook ? 'Facebook' : 'Twitter';
 
-  // Get live completion count for this raid
+  // Get live completion count + post URL for this raid
   let completionCount = null;
+  let raidPostUrl = completionData.tweetUrl || completionData.postUrl || null;
   if (completionData.raidId) {
     try {
       const RaidModel = isFacebook ? FacebookRaid : TwitterRaid;
-      const raid = await RaidModel.findById(completionData.raidId).select('completions').lean();
-      if (raid) completionCount = raid.completions.length;
+      const raid = await RaidModel.findById(completionData.raidId)
+        .select(isFacebook ? 'completions postUrl' : 'completions tweetUrl')
+        .lean();
+      if (raid) {
+        completionCount = raid.completions.length;
+        if (!raidPostUrl) {
+          raidPostUrl = isFacebook ? raid.postUrl : raid.tweetUrl;
+        }
+      }
     } catch (e) { /* ignore */ }
   }
 
   const embed = new EmbedBuilder()
     .setTitle('🎉 Someone Just Raided!')
     .setDescription(
-      `${platformName} Raid\n` +
+      `${platformName} Raid` +
+      (raidPostUrl ? `\n🔗 ${raidPostUrl}` : '') + `\n` +
       `👤 **${username}** just completed a raid\n` +
       `💰 Reward: ${completionData.points} points\n` +
       (completionCount !== null ? `👥 **Total Raiders: ${completionCount}**\n` : '') +
       `\n🌐 Complete more raids: use \`/raids\` in Discord or https://aquads.xyz`
     )
     .setColor(0x00bfff)
-    .setURL('https://aquads.xyz');
+    .setURL(raidPostUrl || 'https://aquads.xyz');
   const components = [
     new ActionRowBuilder().addComponents(
       new ButtonBuilder().setLabel('Join Raids').setStyle(ButtonStyle.Link).setURL('https://aquads.xyz')
