@@ -63,10 +63,10 @@ async function fetchTweetMetadata(tweetUrl) {
   }
 }
 
-/** Default tweet-text teaser length (well under 500; keep raid body short). */
-const DEFAULT_TWEET_SNIPPET_LEN = 100;
+/** Default tweet-text teaser length (short preview; under 500). */
+const DEFAULT_TWEET_SNIPPET_LEN = 280;
 /** Absolute ceiling for the whole meta block (author + snippet). */
-const MAX_TWEET_META_BLOCK_LEN = 160;
+const MAX_TWEET_META_BLOCK_LEN = 320;
 
 /**
  * Plain-text teaser under the tweet URL in raid notifications.
