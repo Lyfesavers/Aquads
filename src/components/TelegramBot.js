@@ -4,8 +4,9 @@ import { FaArrowLeft, FaTelegram, FaDiscord, FaRocket, FaChartLine, FaTwitter, F
 const DISCORD_BOT_INVITE = 'https://discord.com/oauth2/authorize?client_id=1481005410465874112&permissions=2251801961425920&integration_type=0&scope=bot+applications.commands';
 import { Link } from 'react-router-dom';
 import { TELEGRAM_RAID_BOTS_ARTICLE, blogPath } from '../utils/blogRelatedPosts';
+import BotTestimonialsSection from './BotTestimonialsSection';
 
-const TelegramBot = () => {
+const TelegramBot = ({ currentUser }) => {
   const [activeTab, setActiveTab] = useState('features');
 
   // Real features from the actual bot
@@ -896,6 +897,8 @@ const TelegramBot = () => {
           </div>
         </div>
       </div>
+
+      <BotTestimonialsSection currentUser={currentUser} />
 
       {/* Final CTA Section */}
       <div className="relative py-20">

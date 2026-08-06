@@ -4365,7 +4365,7 @@ function App() {
             />
             <Route path="/why-list" element={<Navigate to="/list-token-free" replace />} />
             <Route path="/freelancer-benefits" element={<FreelancerBenefits currentUser={currentUser} />} />
-            <Route path="/telegram-bot" element={<TelegramBot />} />
+            <Route path="/telegram-bot" element={<TelegramBot currentUser={currentUser} />} />
             <Route path="/telegram-bot/panel" element={<BotControlPanel currentUser={currentUser} />} />
             <Route path="/aquapay" element={<AquaPayInfo />} />
             <Route path="/hyperspace" element={<HyperSpace currentUser={currentUser} />} />

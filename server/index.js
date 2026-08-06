@@ -767,6 +767,7 @@ app.use('/api/twitter-raids', require('./routes/twitter-raids'));
 app.use('/api/facebook-raids', require('./routes/facebook-raids'));
 app.use('/api/raids', require('./routes/raids'));
 app.use('/api/bot', require('./routes/bot'));
+app.use('/api/bot-testimonials', require('./routes/botTestimonials'));
 app.use('/api/invoices', require('./routes/invoices'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/discount-codes', require('./routes/discountCodes'));
