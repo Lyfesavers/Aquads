@@ -1658,7 +1658,7 @@ export const SkipperAgentMockup = () => (
     <div className="mt-4 flex justify-end">
       <div className="flex items-center gap-2 bg-gradient-to-r from-cyan-600 to-blue-600 text-white text-xs font-semibold px-4 py-2.5 rounded-full shadow-lg border border-cyan-400/40">
         <span className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-[10px]">S</span>
-        Skipper
+        Ask Skipper
       </div>
     </div>
   </MockupContainer>

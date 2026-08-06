@@ -3,10 +3,10 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { fetchProjectAgentEligible } from '../../services/projectAgentApi';
 import ProjectAgentPanel from './ProjectAgentPanel';
 import {
+  SKIPPER_AGENT_FAB_LABEL,
   SKIPPER_AGENT_FAB_TITLE,
   SKIPPER_AGENT_LOGO_SRC,
-  SKIPPER_AGENT_NAME,
-  SKIPPER_AGENT_SHORT
+  SKIPPER_AGENT_NAME
 } from './projectAgentBrand';
 import { getSkipperAuthEpoch, setWarmSkipperPayload, skipperDebugLog } from './projectAgentSession';
 import './ProjectAgent.css';
@@ -119,7 +119,7 @@ export default function ProjectAgentFab({ currentUser, openProjectOnboarding = f
           <span className="project-agent-fab-glow" aria-hidden />
           <SkipperFabIcon />
           <span className="project-agent-fab-label">
-            <span className="project-agent-fab-name">{SKIPPER_AGENT_SHORT}</span>
+            <span className="project-agent-fab-name">{SKIPPER_AGENT_FAB_LABEL}</span>
             <span className="project-agent-fab-role">Agent</span>
           </span>
         </button>
