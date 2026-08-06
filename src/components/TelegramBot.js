@@ -572,21 +572,24 @@ const TelegramBot = ({ currentUser }) => {
 
       {/* Tab Navigation */}
       <div id="features" className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16">
-        <div className="flex justify-center mb-12">
-          <div className="inline-flex p-1 bg-gray-900/80 rounded-2xl border border-gray-800 backdrop-blur-sm">
-            {['features', 'benefits', 'commands', 'boost'].map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`px-5 py-3 rounded-xl font-semibold text-sm md:text-base transition-all duration-300 capitalize ${
-                  activeTab === tab
-                    ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-lg'
-                    : 'text-gray-400 hover:text-white'
-                }`}
-              >
-                {tab === 'boost' ? 'Vote Boost' : tab}
-              </button>
-            ))}
+        <div className="mb-12 -mx-4 px-4 sm:mx-0 sm:px-0">
+          <div className="flex justify-start sm:justify-center overflow-x-auto overscroll-x-contain pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="inline-flex shrink-0 p-1 bg-gray-900/80 rounded-2xl border border-gray-800 backdrop-blur-sm">
+              {['features', 'benefits', 'commands', 'boost'].map((tab) => (
+                <button
+                  key={tab}
+                  type="button"
+                  onClick={() => setActiveTab(tab)}
+                  className={`px-3.5 sm:px-5 py-2.5 sm:py-3 rounded-xl font-semibold text-xs sm:text-sm md:text-base whitespace-nowrap transition-all duration-300 capitalize ${
+                    activeTab === tab
+                      ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-lg'
+                      : 'text-gray-400 hover:text-white'
+                  }`}
+                >
+                  {tab === 'boost' ? 'Vote Boost' : tab}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>
