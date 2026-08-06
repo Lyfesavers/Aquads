@@ -3388,6 +3388,12 @@ function App() {
                         >
                           Claim bubble
                         </Link>
+                        <Link
+                          to="/telegram-bot"
+                          className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
+                        >
+                          Telegram Bot
+                        </Link>
 
                         {currentUser ? (
                           <>
@@ -3479,12 +3485,6 @@ function App() {
                               className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
                             >
                               Login
-                            </button>
-                            <button
-                              onClick={() => setShowCreateAccountModal(true)}
-                              className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
-                            >
-                              Create Account
                             </button>
                           </>
                         )}
@@ -3647,13 +3647,6 @@ function App() {
                                     >
                                       <span className="text-lg">🔑</span>
                                       <span className="font-medium">Login</span>
-                                    </button>
-                                    <button
-                                      onClick={() => { setShowCreateAccountModal(true); setIsMobileMenuOpen(false); }}
-                                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all w-full text-left"
-                                    >
-                                      <span className="text-lg">✨</span>
-                                      <span className="font-medium">Create Account</span>
                                     </button>
                                   </>
                                 )}
