@@ -9,7 +9,6 @@ import NotificationBell from './NotificationBell';
 import LoginModal from './LoginModal';
 import CreateAccountModal from './CreateAccountModal';
 import CreateServiceModal from './CreateServiceModal';
-import CreateBannerModal from './CreateBannerModal';
 import ProfileModal from './ProfileModal';
 import { getDisplayName } from '../utils/nameUtils';
 import { StandardDesktopNavLinks, StandardMobileNavLinks } from './StandardNavLinks';
@@ -70,7 +69,6 @@ const AquaFi = ({ currentUser, showNotification, onLogin, onLogout, onCreateAcco
   const [showCreateAccountModal, setShowCreateAccountModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showBannerModal, setShowBannerModal] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
 
@@ -214,15 +212,13 @@ const AquaFi = ({ currentUser, showNotification, onLogin, onLogout, onCreateAcco
                           >
                             ➕ List Service
                           </button>
-                          <button
-                            onClick={() => {
-                              setShowBannerModal(true);
-                              setShowUserDropdown(false);
-                            }}
-                            className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-blue-600/50 transition-colors"
+                          <Link
+                            to="/advertise"
+                            onClick={() => setShowUserDropdown(false)}
+                            className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-blue-600/50 transition-colors"
                           >
                             🎨 Advertise
-                          </button>
+                          </Link>
                           <button
                             onClick={() => {
                               setShowProfileModal(true);
@@ -300,11 +296,9 @@ const AquaFi = ({ currentUser, showNotification, onLogin, onLogout, onCreateAcco
                     icon="➕"
                     label="List Service"
                   />
-                  <MobileNavButton
-                    onClick={() => {
-                      setShowBannerModal(true);
-                      setIsMobileMenuOpen(false);
-                    }}
+                  <MobileNavLink
+                    to="/advertise"
+                    onClick={() => setIsMobileMenuOpen(false)}
                     icon="🎨"
                     label="Advertise"
                   />
@@ -549,24 +543,11 @@ const AquaFi = ({ currentUser, showNotification, onLogin, onLogout, onCreateAcco
         />
       )}
 
-      {showBannerModal && (
-        <CreateBannerModal
-          isOpen={showBannerModal}
-          onClose={() => setShowBannerModal(false)}
-          currentUser={currentUser}
-          onBannerSubmit={() => {
-            setShowBannerModal(false);
-            showNotification('Banner created successfully!', 'success');
-          }}
-        />
-      )}
-
       {showProfileModal && (
         <ProfileModal
-          isOpen={showProfileModal}
           onClose={() => setShowProfileModal(false)}
           currentUser={currentUser}
-          onUpdate={() => {
+          onProfileUpdate={() => {
             showNotification('Profile updated successfully!', 'success');
           }}
         />

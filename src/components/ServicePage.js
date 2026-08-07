@@ -13,7 +13,6 @@ import LoginModal from './LoginModal';
 import CreateAccountModal from './CreateAccountModal';
 import ProfileModal from './ProfileModal';
 import CreateServiceModal from './CreateServiceModal';
-import CreateBannerModal from './CreateBannerModal';
 import PremiumPaymentModal from './PremiumPaymentModal';
 import CreateJobModal from './CreateJobModal';
 import CVPreview from './CVPreview';
@@ -62,7 +61,6 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
   const [showCreateAccountModal, setShowCreateAccountModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showBannerModal, setShowBannerModal] = useState(false);
   const [showPremiumPaymentModal, setShowPremiumPaymentModal] = useState(false);
   const [showJobModal, setShowJobModal] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -402,15 +400,13 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
                             >
                               ➕ List Service
                             </button>
-                            <button
-                              onClick={() => {
-                                setShowBannerModal(true);
-                                setShowUserDropdown(false);
-                              }}
-                              className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-yellow-400 hover:bg-blue-600/50 transition-colors"
+                            <Link
+                              to="/advertise"
+                              onClick={() => setShowUserDropdown(false)}
+                              className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-yellow-400 hover:bg-blue-600/50 transition-colors"
                             >
                               🎨 Advertise
-                            </button>
+                            </Link>
                             <button
                               onClick={() => {
                                 setShowProfileModal(true);
@@ -491,11 +487,9 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
                       icon="➕"
                       label="List Service"
                     />
-                    <MobileNavButton
-                      onClick={() => {
-                        setShowBannerModal(true);
-                        setIsMobileMenuOpen(false);
-                      }}
+                    <MobileNavLink
+                      to="/advertise"
+                      onClick={() => setIsMobileMenuOpen(false)}
                       icon="🎨"
                       label="Advertise"
                     />
@@ -1112,17 +1106,6 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
               { id: 'consulting', name: 'Consulting', icon: '💡' },
               { id: 'other', name: 'Other', icon: '🔧' }
             ]}
-          />
-        )}
-
-        {/* Create Banner Modal */}
-        {showBannerModal && (
-          <CreateBannerModal
-            onClose={() => setShowBannerModal(false)}
-            onSubmit={(bannerData) => {
-              setShowBannerModal(false);
-              // Handle banner creation success
-            }}
           />
         )}
 

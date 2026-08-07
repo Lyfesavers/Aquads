@@ -10,7 +10,6 @@ import Modal from './Modal';
 import LoginModal from './LoginModal';
 import CreateAccountModal from './CreateAccountModal';
 import CreateAdModal from './CreateAdModal';
-import CreateBannerModal from './CreateBannerModal';
 import BannerDisplay from './BannerDisplay';
 import { Link } from 'react-router-dom';
 import { showToast } from './Toast';
@@ -80,7 +79,6 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunn
   const [gameToEdit, setGameToEdit] = useState(null);
   const [filterOpen, setFilterOpen] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
-  const [showBannerModal, setShowBannerModal] = useState(false);
   const [showProjectModal, setShowProjectModal] = useState(false);
   const [popularCategories, setPopularCategories] = useState([]);
   
@@ -316,15 +314,13 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunn
                            >
                              ➕ List Project
                            </button>
-                           <button
-                             onClick={() => {
-                               setShowBannerModal(true);
-                               setShowUserDropdown(false);
-                             }}
-                             className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-yellow-400 hover:bg-blue-600/50 transition-colors"
+                           <Link
+                             to="/advertise"
+                             onClick={() => setShowUserDropdown(false)}
+                             className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-yellow-400 hover:bg-blue-600/50 transition-colors"
                            >
                              🎨 Advertise
-                           </button>
+                           </Link>
                            <button
                              onClick={() => {
                                setShowCreateModal(true);
@@ -398,11 +394,9 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunn
                     icon="➕"
                     label="List Project"
                   />
-                  <MobileNavButton
-                    onClick={() => {
-                      setShowBannerModal(true);
-                      setFilterOpen(false);
-                    }}
+                  <MobileNavLink
+                    to="/advertise"
+                    onClick={() => setFilterOpen(false)}
                     icon="🎨"
                     label="Advertise"
                   />
@@ -659,14 +653,6 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunn
            onCreateAccount={handleCreateAccountSubmit}
          />
        )}
-
-               {/* Create Banner Modal */}
-        {showBannerModal && currentUser && (
-          <CreateBannerModal
-            onSubmit={() => {}}
-            onClose={() => setShowBannerModal(false)}
-          />
-        )}
 
         {/* Create Project Modal */}
         {showProjectModal && currentUser && (

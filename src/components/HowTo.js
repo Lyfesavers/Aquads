@@ -22,7 +22,6 @@ import FreelancerWorkshop from './FreelancerWorkshop';
 import LoginModal from './LoginModal';
 import CreateAccountModal from './CreateAccountModal';
 import CreateAdModal from './CreateAdModal';
-import CreateBannerModal from './CreateBannerModal';
 import ProfileModal from './ProfileModal';
 import { API_URL, fetchMarketNews, fetchFreeCourses, fetchTutorialVideos } from '../services/api';
 import { getBlogAuthorId } from '../utils/blogEditor';
@@ -182,7 +181,6 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showCreateAccountModal, setShowCreateAccountModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showBannerModal, setShowBannerModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
@@ -870,15 +868,13 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
                            >
                              ➕ List Project
                            </button>
-                           <button
-                             onClick={() => {
-                               setShowBannerModal(true);
-                               setShowUserDropdown(false);
-                             }}
-                             className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-yellow-400 hover:bg-blue-600/50 transition-colors"
+                           <Link
+                             to="/advertise"
+                             onClick={() => setShowUserDropdown(false)}
+                             className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-yellow-400 hover:bg-blue-600/50 transition-colors"
                            >
                              🎨 Advertise
-                           </button>
+                           </Link>
                            <button
                              onClick={() => {
                                setShowProfileModal(true);
@@ -960,11 +956,9 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
                     icon="➕"
                     label="List Project"
                   />
-                  <MobileNavButton
-                    onClick={() => {
-                      setShowBannerModal(true);
-                      setIsMobileMenuOpen(false);
-                    }}
+                  <MobileNavLink
+                    to="/advertise"
+                    onClick={() => setIsMobileMenuOpen(false)}
                     icon="🎨"
                     label="Advertise"
                   />
@@ -1599,14 +1593,6 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
             onClose={() => setShowCreateModal(false)}
             currentUser={currentUser}
             userAds={ads}
-          />
-        )}
-
-        {/* Create Banner Modal */}
-        {showBannerModal && currentUser && (
-          <CreateBannerModal
-            onSubmit={() => {}}
-            onClose={() => setShowBannerModal(false)}
           />
         )}
 

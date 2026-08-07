@@ -52,6 +52,7 @@ export default async (request, context) => {
     { loc: 'https://www.aquads.xyz/aquafi', changefreq: 'weekly', priority: '0.8' },
     { loc: 'https://www.aquads.xyz/partner-rewards', changefreq: 'weekly', priority: '0.7' },
     { loc: 'https://www.aquads.xyz/list-token-free', changefreq: 'monthly', priority: '0.75' },
+    { loc: 'https://www.aquads.xyz/advertise', changefreq: 'monthly', priority: '0.75' },
     { loc: 'https://www.aquads.xyz/freelancer-benefits', changefreq: 'monthly', priority: '0.6' },
     { loc: 'https://www.aquads.xyz/verify-user', changefreq: 'monthly', priority: '0.5' },
     { loc: 'https://www.aquads.xyz/terms', changefreq: 'monthly', priority: '0.4' },

@@ -4,7 +4,6 @@ import { Helmet } from 'react-helmet';
 import { FaRocket, FaUsers, FaChartLine, FaGlobe, FaShieldAlt, FaCog, FaCheckCircle, FaArrowRight, FaBullhorn, FaGamepad, FaHandshake, FaTrophy, FaArrowLeft, FaCreditCard, FaExchangeAlt, FaUsersCog, FaVideo, FaMicrophone, FaNewspaper, FaStar, FaFire, FaGem, FaCrown, FaGift, FaTwitter, FaLightbulb, FaCrosshairs, FaNetworkWired, FaTelegram, FaDiscord, FaRobot } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import CreateAdModal from './CreateAdModal';
-import CreateBannerModal from './CreateBannerModal';
 import { LISTING_GUIDE_POSTS, blogPath } from '../utils/blogRelatedPosts';
 
 const AQUADS_X_HANDLE = '@_Aquads_';
@@ -208,7 +207,6 @@ const ADDON_PACKAGES = [
 
 const ProjectInfo = ({ currentUser, ads = [], onAdPatched }) => {
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showBannerModal, setShowBannerModal] = useState(false);
   const [preSelectedPackage, setPreSelectedPackage] = useState(null);
   const [bumpLoading, setBumpLoading] = useState(false);
 
@@ -247,15 +245,6 @@ const ProjectInfo = ({ currentUser, ads = [], onAdPatched }) => {
       setShowCreateModal(false);
     } catch (error) {
       console.error('Error creating ad:', error);
-    }
-  };
-
-  const handleBannerSubmit = async (bannerData) => {
-    try {
-      // This will be handled by the CreateBannerModal component
-      setShowBannerModal(false);
-    } catch (error) {
-      console.error('Error creating banner:', error);
     }
   };
 
@@ -307,12 +296,6 @@ const ProjectInfo = ({ currentUser, ads = [], onAdPatched }) => {
   const handleListProjectClick = () => {
     if (checkAuthAndOpenModal('create')) {
       setShowCreateModal(true);
-    }
-  };
-
-  const handleBannerAdClick = () => {
-    if (checkAuthAndOpenModal('banner')) {
-      setShowBannerModal(true);
     }
   };
 
@@ -1034,35 +1017,35 @@ const ProjectInfo = ({ currentUser, ads = [], onAdPatched }) => {
           <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-8 border border-gray-700 min-w-0">
             <div className="text-center mb-6">
               <h3 className="text-2xl font-bold text-white mb-2">Banner Ads</h3>
-              <div className="text-4xl font-bold text-blue-400 mb-2">$40-160</div>
+              <div className="text-4xl font-bold text-blue-400 mb-2">$10-40</div>
               <div className="text-gray-400">USDC</div>
             </div>
             <ul className="space-y-3 text-gray-300 text-sm">
               <li className="flex items-start gap-3">
                 <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
-                <span className="min-w-0 flex-1 leading-relaxed">24 Hours: $40 USDC</span>
+                <span className="min-w-0 flex-1 leading-relaxed">24 Hours: $10 USDC</span>
               </li>
               <li className="flex items-start gap-3">
                 <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
-                <span className="min-w-0 flex-1 leading-relaxed">3 Days: $80 USDC</span>
+                <span className="min-w-0 flex-1 leading-relaxed">3 Days: $20 USDC</span>
               </li>
               <li className="flex items-start gap-3">
                 <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
-                <span className="min-w-0 flex-1 leading-relaxed">7 Days: $160 USDC</span>
+                <span className="min-w-0 flex-1 leading-relaxed">7 Days: $40 USDC</span>
               </li>
               <li className="flex items-start gap-3">
                 <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
                 <span className="min-w-0 flex-1 leading-relaxed">Premium placement & high visibility</span>
               </li>
             </ul>
-            <button
-              onClick={handleBannerAdClick}
+            <Link
+              to="/advertise"
               className="mt-6 w-full inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white font-semibold rounded-lg transition-all duration-300 transform hover:scale-[1.02] shadow-lg"
             >
               <FaRocket className="mr-2" />
               Advertise
               <FaArrowRight className="ml-2" />
-            </button>
+            </Link>
           </div>
         </div>
       </div>
@@ -1437,15 +1420,6 @@ const ProjectInfo = ({ currentUser, ads = [], onAdPatched }) => {
           currentUser={currentUser}
           preSelectedPackage={preSelectedPackage}
           userAds={ads}
-        />
-      )}
-
-      {/* Create Banner Modal */}
-      {showBannerModal && (
-        <CreateBannerModal
-          onClose={() => setShowBannerModal(false)}
-          onSubmit={handleBannerSubmit}
-          currentUser={currentUser}
         />
       )}
 

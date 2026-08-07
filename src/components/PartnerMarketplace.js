@@ -6,7 +6,6 @@ import BannerDisplay from './BannerDisplay';
 import LoginModal from './LoginModal';
 import CreateAccountModal from './CreateAccountModal';
 import ProfileModal from './ProfileModal';
-import CreateBannerModal from './CreateBannerModal';
 import NotificationBell from './NotificationBell';
 import { getDisplayName } from '../utils/nameUtils';
 import { StandardMobileNavLinks } from './StandardNavLinks';
@@ -18,7 +17,7 @@ import {
   MobileNavLink,
 } from './MobileNavMenu';
 
-const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBannerSubmit, openMintFunnelPlatform }) => {
+const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnelPlatform }) => {
   const [partners, setPartners] = useState([]);
   const [filteredPartners, setFilteredPartners] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -35,7 +34,6 @@ const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, o
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showCreateAccountModal, setShowCreateAccountModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
-  const [showBannerModal, setShowBannerModal] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
 
@@ -621,13 +619,6 @@ const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, o
         />
       )}
 
-      {showBannerModal && (
-        <CreateBannerModal
-          onClose={() => setShowBannerModal(false)}
-          onSubmit={onBannerSubmit}
-          currentUser={currentUser}
-        />
-      )}
     </div>
   );
 };

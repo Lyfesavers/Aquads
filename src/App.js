@@ -35,7 +35,6 @@ import CreateAdModal from './components/CreateAdModal';
 import CreateAccountModal from './components/CreateAccountModal';
 import EmailVerificationModal from './components/EmailVerificationModal';
 import EditAdModal from './components/EditAdModal';
-import CreateBannerModal from './components/CreateBannerModal';
 import TokenBanner from './components/TokenBanner';
 import TokenList from './components/TokenList';
 import TokenRating from './components/TokenRating';
@@ -68,6 +67,7 @@ import RotatingBanner from './components/RotatingBanner';
 import useUserPresence from './hooks/useUserPresence';
 
 const ProjectInfo = lazy(() => import('./components/ProjectInfo'));
+const Advertise = lazy(() => import('./components/Advertise'));
 const FreelancerBenefits = lazy(() => import('./components/FreelancerBenefits'));
 const BookingConversationPage = lazy(() => import('./components/BookingConversationPage'));
 import { BrowserRouter as Router, Routes, Route, Link, useLocation, useNavigate, Navigate } from 'react-router-dom';
@@ -1129,7 +1129,6 @@ function App() {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showCreateAccountModal, setShowCreateAccountModal] = useState(false);
-  const [showBannerModal, setShowBannerModal] = useState(false);
   const [showEmailVerificationModal, setShowEmailVerificationModal] = useState(false);
   const [pendingVerificationEmail, setPendingVerificationEmail] = useState('');
   const [notifications, setNotifications] = useState([]);
@@ -2553,44 +2552,6 @@ function App() {
     }
   };
 
-  const handleBannerSubmit = async (bannerData) => {
-    try {
-      if (!currentUser) {
-        throw new Error('Please log in first!');
-      }
-
-      const submitData = {
-        ...bannerData,
-        owner: currentUser.userId,
-        status: 'pending'
-      };
-
-      logger.log('Sending to API:', submitData); // Debug log
-
-      const response = await fetch(`${API_URL}/bannerAds`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentUser.token}`
-        },
-        body: JSON.stringify(submitData)
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message);
-      }
-
-      const newBanner = await response.json();
-      showNotification('Banner ad created successfully!', 'success');
-      return newBanner;
-    } catch (error) {
-      logger.error('Error creating banner ad:', error);
-      showNotification(error.message, 'error');
-      throw error;
-    }
-  };
-
   // Bubble enhancement suggestions for App.js
   // Look for the bubble creation/management code and add these improvements:
 
@@ -3215,7 +3176,6 @@ function App() {
               onLogin={handleLogin}
               onLogout={handleLogout}
               onCreateAccount={handleCreateAccount}
-              onBannerSubmit={handleBannerSubmit}
               openMintFunnelPlatform={openMintFunnelPlatform}
             />
           } />
@@ -3238,7 +3198,6 @@ function App() {
               onLogin={handleLogin}
               onLogout={handleLogout}
               onCreateAccount={handleCreateAccount}
-              onBannerSubmit={handleBannerSubmit}
               openMintFunnelPlatform={openMintFunnelPlatform}
             />
           } />
@@ -3438,15 +3397,13 @@ function App() {
                                     >
                                       ➕ List Project
                                     </button>
-                                    <button
-                                      onClick={() => {
-                                        setShowBannerModal(true);
-                                        setShowUserDropdown(false);
-                                      }}
-                                      className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-blue-600/50 transition-colors"
+                                    <Link
+                                      to="/advertise"
+                                      onClick={() => setShowUserDropdown(false)}
+                                      className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-blue-600/50 transition-colors"
                                     >
                                       🎨 Advertise
-                                    </button>
+                                    </Link>
                                     <button
                                       onClick={() => {
                                         setShowProfileModal(true);
@@ -3622,13 +3579,14 @@ function App() {
                                       <span className="text-lg">➕</span>
                                       <span className="font-medium">List Project</span>
                                     </button>
-                                    <button
-                                      onClick={() => { setShowBannerModal(true); setIsMobileMenuOpen(false); }}
+                                    <Link
+                                      to="/advertise"
+                                      onClick={() => setIsMobileMenuOpen(false)}
                                       className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all w-full text-left"
                                     >
                                       <span className="text-lg">🎨</span>
                                       <span className="font-medium">Advertise</span>
-                                    </button>
+                                    </Link>
                                     <div className="h-px bg-white/10 my-2" />
                                     <button
                                       onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }}
@@ -4121,13 +4079,6 @@ function App() {
                   />
                 )}
 
-                {showBannerModal && currentUser && (
-                  <CreateBannerModal
-                    onSubmit={handleBannerSubmit}
-                    onClose={() => setShowBannerModal(false)}
-                  />
-                )}
-
                 {showWelcomeModal && (
                   <WelcomeModal
                     username={currentUser.username}
@@ -4356,6 +4307,16 @@ function App() {
                 />
               }
             />
+            <Route path="/advertise" element={
+              <Advertise
+                currentUser={currentUser}
+                showNotification={showNotification}
+                onLogin={handleLogin}
+                onLogout={handleLogout}
+                onCreateAccount={handleCreateAccount}
+                openMintFunnelPlatform={openMintFunnelPlatform}
+              />
+            } />
             <Route path="/why-list" element={<Navigate to="/list-token-free" replace />} />
             <Route path="/freelancer-benefits" element={<FreelancerBenefits currentUser={currentUser} />} />
             <Route path="/telegram-bot" element={<TelegramBot currentUser={currentUser} />} />

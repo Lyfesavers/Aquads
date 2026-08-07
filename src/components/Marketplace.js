@@ -8,8 +8,6 @@ import { API_URL } from '../services/api';
 import logger from '../utils/logger';
 import ProfileModal from './ProfileModal';
 import BannerDisplay from './BannerDisplay';
-import CreateBannerModal from './CreateBannerModal';
-
 import LoginModal from './LoginModal';
 import CreateAccountModal from './CreateAccountModal';
 import EditServiceModal from './EditServiceModal';
@@ -141,7 +139,7 @@ const ServiceBadgeComponent = ({ badge }) => {
   );
 };
 
-const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBannerSubmit, openMintFunnelPlatform }) => {
+const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnelPlatform }) => {
   const navigate = useNavigate();
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -157,7 +155,6 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
   const [selectedService, setSelectedService] = useState(null);
   const [expandedDescriptions, setExpandedDescriptions] = useState(new Set());
   const [sortOption, setSortOption] = useState('highest-rated');
-  const [showBannerModal, setShowBannerModal] = useState(false);
   const [showHowItWorks, setShowHowItWorks] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showCreateAccountModal, setShowCreateAccountModal] = useState(false);
@@ -766,38 +763,6 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
     });
   };
 
-  const handleBannerSubmit = async (bannerData) => {
-    try {
-      if (!currentUser || !currentUser.token) {
-        throw new Error('Please log in to create a banner ad');
-      }
-
-      const response = await fetch(`${API_URL}/bannerAds`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentUser.token}`
-        },
-        body: JSON.stringify({
-          ...bannerData,
-          owner: currentUser.userId
-        })
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to create banner ad');
-      }
-
-      const newBanner = await response.json();
-      setShowBannerModal(false);
-      return newBanner;
-    } catch (error) {
-      logger.error('Error creating banner ad:', error);
-      throw error;
-    }
-  };
-
   const handleLoginClick = () => {
     setShowLoginModal(true);
   };
@@ -1173,15 +1138,13 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
                           >
                             ➕ List Service
                           </button>
-                          <button
-                            onClick={() => {
-                              setShowBannerModal(true);
-                              setShowUserDropdown(false);
-                            }}
-                            className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-blue-600/50 transition-colors"
+                          <Link
+                            to="/advertise"
+                            onClick={() => setShowUserDropdown(false)}
+                            className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-blue-600/50 transition-colors"
                           >
                             🎨 Advertise
-                          </button>
+                          </Link>
                           <button
                             onClick={() => {
                               setServiceToUpgrade(null);
@@ -1274,11 +1237,9 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
                     icon="➕"
                     label="List Service"
                   />
-                  <MobileNavButton
-                    onClick={() => {
-                      setShowBannerModal(true);
-                      setIsMobileMenuOpen(false);
-                    }}
+                  <MobileNavLink
+                    to="/advertise"
+                    onClick={() => setIsMobileMenuOpen(false)}
                     icon="🎨"
                     label="Advertise"
                   />
@@ -2004,14 +1965,6 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
           showNotification={showNotification}
           onReviewsUpdate={handleReviewsUpdate}
           viewOnly={true}
-        />
-      )}
-
-      {/* Create Banner Modal */}
-      {showBannerModal && (
-        <CreateBannerModal
-          onClose={() => setShowBannerModal(false)}
-          onSubmit={handleBannerSubmit}
         />
       )}
 

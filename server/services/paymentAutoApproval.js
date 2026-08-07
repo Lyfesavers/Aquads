@@ -231,10 +231,10 @@ const paymentAutoApproval = {
     const threeDaysMs = 3 * oneDayMs;
     const sevenDaysMs = 7 * oneDayMs;
 
-    if (duration <= oneDayMs) return 40;
-    if (duration <= threeDaysMs) return 80;
-    if (duration <= sevenDaysMs) return 160;
-    return 160;
+    if (duration <= oneDayMs) return 10;
+    if (duration <= threeDaysMs) return 20;
+    if (duration <= sevenDaysMs) return 40;
+    return 40;
   },
 
   /**
