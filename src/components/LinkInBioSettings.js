@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { updateLinkInBio, socket } from '../services/api';
 import { resolveLinkInBioButtonLook } from '../utils/linkInBioButtonLook';
+import { sanitizeLinkInBioBackgroundVideoUrl, isEmbedPageUrl } from '../utils/linkInBioBackgroundVideo';
 import { BioLinkIcon, LINK_IN_BIO_ICON_PICKER, LINK_IN_BIO_ICON_GROUPS, getEffectiveIconPickerId, getIconPickerLabel } from '../utils/linkInBioIcons';
 import { FaPlus, FaTrash, FaCopy, FaChevronUp, FaChevronDown, FaLink, FaExternalLinkAlt, FaPalette, FaImage, FaBullhorn, FaDollarSign, FaChartBar, FaEye, FaMousePointer } from 'react-icons/fa';
 
@@ -45,7 +46,9 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
   const [buttonShape, setButtonShape] = useState('rounded');
   const [buttonFill, setButtonFill] = useState('bordered');
   const [buttonTranslucent, setButtonTranslucent] = useState(false);
-  const [backgroundImageUrl, setBackgroundImageUrl] = useState('');
+  // One input for both: a direct video file URL is saved as the background
+  // video, anything else as the background image.
+  const [backgroundMediaUrl, setBackgroundMediaUrl] = useState('');
   const [backgroundColor, setBackgroundColor] = useState('');
   const [backgroundColorCustom, setBackgroundColorCustom] = useState('');
   const [adsEnabled, setAdsEnabled] = useState(false);
@@ -91,8 +94,13 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
     setButtonShape(look.shape);
     setButtonFill(look.fill);
     setButtonTranslucent(look.translucent);
-    const bg = currentUser?.linkInBioBackgroundImageUrl;
-    setBackgroundImageUrl(typeof bg === 'string' ? bg : '');
+    const bgVideo = currentUser?.linkInBioBackgroundVideoUrl;
+    const bgImage = currentUser?.linkInBioBackgroundImageUrl;
+    setBackgroundMediaUrl(
+      (typeof bgVideo === 'string' && bgVideo.trim())
+        ? bgVideo
+        : (typeof bgImage === 'string' ? bgImage : '')
+    );
     const bgColor = currentUser?.linkInBioBackgroundColor;
     if (bgColor && /^#[0-9A-Fa-f]{3,6}$/.test(bgColor)) {
       setBackgroundColor(bgColor);
@@ -111,6 +119,7 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
     currentUser?.linkInBioButtonTranslucent,
     currentUser?.linkInBioButtonStyle,
     currentUser?.linkInBioBackgroundImageUrl,
+    currentUser?.linkInBioBackgroundVideoUrl,
     currentUser?.linkInBioBackgroundColor
   ]);
 
@@ -200,6 +209,8 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
     const bgHex = (backgroundColorCustom.trim() && /^#[0-9A-Fa-f]{3,6}$/.test(backgroundColorCustom.trim()))
       ? backgroundColorCustom.trim()
       : (backgroundColor || null);
+    const bgMedia = backgroundMediaUrl.trim();
+    const bgVideo = sanitizeLinkInBioBackgroundVideoUrl(bgMedia);
     const payload = {
       bioLinks: sanitized,
       linkInBioTagline: tagline.trim().slice(0, MAX_TAGLINE) || null,
@@ -209,7 +220,8 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
       linkInBioButtonShape: buttonShape,
       linkInBioButtonFill: buttonFill,
       linkInBioButtonTranslucent: buttonTranslucent,
-      linkInBioBackgroundImageUrl: backgroundImageUrl.trim() || null,
+      linkInBioBackgroundImageUrl: bgVideo ? null : (bgMedia || null),
+      linkInBioBackgroundVideoUrl: bgVideo,
       linkInBioBackgroundColor: bgHex || null,
       linkInBioAdsEnabled: adsEnabled,
       linkInBioAdPricing: {
@@ -392,15 +404,24 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
           </div>
         </div>
 
-        <p className="text-gray-300 text-sm font-medium mb-2">Background image</p>
-        <p className="text-gray-500 text-xs mb-3"><strong>Recommended dimensions:</strong> 1920×1080 or larger (16:9 works on all screens). The image will be scaled to cover the whole screen and cropped if needed. Leave empty to use your background color or the default gradient.</p>
+        <p className="text-gray-300 text-sm font-medium mb-2">Background image or video</p>
+        <p className="text-gray-500 text-xs mb-3">
+          <strong>Recommended dimensions:</strong> 1920×1080 or larger (16:9 works on all screens). It will be scaled to cover the whole screen and cropped if needed. Leave empty to use your background color or the default gradient.
+          <br />
+          Paste a direct <strong>.mp4</strong>, <strong>.webm</strong>, <strong>.m4v</strong>, <strong>.mov</strong> or <strong>.ogv</strong> link to use a silent looping video instead — <strong>keep it under ~5MB</strong> (5–10 seconds, no audio track). YouTube, Vimeo and TikTok page links will not play. Visitors on slow or data-saver connections, and anyone using reduced motion, see your background color instead.
+        </p>
         <input
           type="url"
-          placeholder="https://example.com/your-image.jpg"
-          value={backgroundImageUrl}
-          onChange={(e) => setBackgroundImageUrl(e.target.value)}
+          placeholder="https://example.com/your-image.jpg or your-background.mp4"
+          value={backgroundMediaUrl}
+          onChange={(e) => setBackgroundMediaUrl(e.target.value)}
           className="w-full px-3 py-2.5 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-500 text-sm focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
         />
+        {backgroundMediaUrl.trim() && (
+          sanitizeLinkInBioBackgroundVideoUrl(backgroundMediaUrl)
+            ? <p className="text-cyan-400 text-xs mt-2">Detected a video file — it will loop silently behind your links.</p>
+            : isEmbedPageUrl(backgroundMediaUrl) && <p className="text-red-400 text-xs mt-2">That looks like a video page link, which cannot be played as a background. Use a direct file URL ending in .mp4, .webm, .m4v, .mov or .ogv.</p>
+        )}
       </div>
 
       {/* Color palette & button style */}

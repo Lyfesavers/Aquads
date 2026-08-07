@@ -22,6 +22,7 @@ const LinkInBioBannerAd = require('../models/LinkInBioBannerAd');
 const { validateLogin, validateRegistration } = require('../middleware/inputValidation');
 const { resolveLinkInBioButtonLook, lookToLegacyStyle, LEGACY_STYLE_MAP } = require('../utils/linkInBioButtonLook');
 const { sanitizeBioLinkIconKey, sanitizeBioLinkIconImageUrl } = require('../utils/linkInBioIcons');
+const { sanitizeLinkInBioBackgroundVideoUrl } = require('../utils/linkInBioBackgroundVideo');
 const { cascadeUsernameRename } = require('../utils/usernameRenameCascade');
 const spaces = require('../utils/spaces');
 
@@ -178,7 +179,7 @@ const tempTokenStore = new Map();
 const googleClient = process.env.GOOGLE_CLIENT_ID ? new OAuth2Client(process.env.GOOGLE_CLIENT_ID) : null;
 
 const LINK_IN_BIO_PUBLIC_SELECT =
-  'username image cv.fullName bioLinks linkInBioTagline linkInBioAccentColor linkInBioButtonColor linkInBioButtonStyle linkInBioButtonShape linkInBioButtonFill linkInBioButtonTranslucent linkInBioBackgroundImageUrl linkInBioBackgroundColor linkInBioTextColor linkInBioAdsEnabled linkInBioAdPricing aquaPay.isEnabled aquaPay.paymentSlug aquaPay.wallets emailVerified';
+  'username image cv.fullName bioLinks linkInBioTagline linkInBioAccentColor linkInBioButtonColor linkInBioButtonStyle linkInBioButtonShape linkInBioButtonFill linkInBioButtonTranslucent linkInBioBackgroundImageUrl linkInBioBackgroundVideoUrl linkInBioBackgroundColor linkInBioTextColor linkInBioAdsEnabled linkInBioAdPricing aquaPay.isEnabled aquaPay.paymentSlug aquaPay.wallets emailVerified';
 
 /** Exact URL username first (Mongo usernames are case-sensitive; regex+i can return the wrong row). */
 async function findUserForPublicLinkInBio(usernameParam) {
@@ -562,6 +563,7 @@ router.post('/login', validateLogin, async (req, res) => {
       linkInBioButtonTranslucent: linkBioBtnLook.translucent,
       linkInBioButtonStyle: lookToLegacyStyle(linkBioBtnLook.shape, linkBioBtnLook.fill),
       linkInBioBackgroundImageUrl: user.linkInBioBackgroundImageUrl || null,
+      linkInBioBackgroundVideoUrl: user.linkInBioBackgroundVideoUrl || null,
       linkInBioBackgroundColor: user.linkInBioBackgroundColor || null,
       linkInBioTextColor: user.linkInBioTextColor || null,
       linkInBioTagline: user.linkInBioTagline || null,
@@ -691,6 +693,7 @@ router.post('/login/google', async (req, res) => {
       linkInBioButtonTranslucent: googleLinkBioBtnLook.translucent,
       linkInBioButtonStyle: lookToLegacyStyle(googleLinkBioBtnLook.shape, googleLinkBioBtnLook.fill),
       linkInBioBackgroundImageUrl: user.linkInBioBackgroundImageUrl || null,
+      linkInBioBackgroundVideoUrl: user.linkInBioBackgroundVideoUrl || null,
       linkInBioBackgroundColor: user.linkInBioBackgroundColor || null,
       linkInBioTextColor: user.linkInBioTextColor || null,
       linkInBioTagline: user.linkInBioTagline || null,
@@ -939,6 +942,18 @@ router.patch('/profile/link-in-bio', auth, async (req, res) => {
         }
       }
     }
+    if (req.body.linkInBioBackgroundVideoUrl !== undefined) {
+      const raw = String(req.body.linkInBioBackgroundVideoUrl || '').trim();
+      if (!raw) {
+        update.linkInBioBackgroundVideoUrl = null;
+      } else {
+        const sanitized = sanitizeLinkInBioBackgroundVideoUrl(raw);
+        if (!sanitized) {
+          return res.status(400).json({ error: 'Background video must be a direct link to an .mp4, .webm, .m4v, .mov or .ogv file' });
+        }
+        update.linkInBioBackgroundVideoUrl = sanitized;
+      }
+    }
     if (req.body.linkInBioBackgroundColor !== undefined) {
       const hex = String(req.body.linkInBioBackgroundColor || '').trim();
       update.linkInBioBackgroundColor = hex && /^#[0-9A-Fa-f]{3,6}$/.test(hex) ? hex : null;
@@ -970,7 +985,7 @@ router.patch('/profile/link-in-bio', auth, async (req, res) => {
       req.user.userId,
       { $set: update },
       { new: true }
-    ).select('username bioLinks linkInBioTagline linkInBioAccentColor linkInBioButtonColor linkInBioTextColor linkInBioButtonStyle linkInBioButtonShape linkInBioButtonFill linkInBioButtonTranslucent linkInBioBackgroundImageUrl linkInBioBackgroundColor linkInBioAdsEnabled linkInBioAdPricing').lean();
+    ).select('username bioLinks linkInBioTagline linkInBioAccentColor linkInBioButtonColor linkInBioTextColor linkInBioButtonStyle linkInBioButtonShape linkInBioButtonFill linkInBioButtonTranslucent linkInBioBackgroundImageUrl linkInBioBackgroundVideoUrl linkInBioBackgroundColor linkInBioAdsEnabled linkInBioAdPricing').lean();
 
     const savedLook = resolveLinkInBioButtonLook(updated);
     res.json({
@@ -985,6 +1000,7 @@ router.patch('/profile/link-in-bio', auth, async (req, res) => {
       linkInBioButtonTranslucent: savedLook.translucent,
       linkInBioButtonStyle: lookToLegacyStyle(savedLook.shape, savedLook.fill),
       linkInBioBackgroundImageUrl: updated.linkInBioBackgroundImageUrl || null,
+      linkInBioBackgroundVideoUrl: updated.linkInBioBackgroundVideoUrl || null,
       linkInBioBackgroundColor: updated.linkInBioBackgroundColor || null,
       linkInBioTextColor: updated.linkInBioTextColor || null,
       linkInBioAdsEnabled: Boolean(updated.linkInBioAdsEnabled),
@@ -1119,6 +1135,18 @@ router.put('/profile', auth, async (req, res) => {
           } catch (_) {}
         }
       }
+      if (req.body.linkInBioBackgroundVideoUrl !== undefined) {
+        const raw = String(req.body.linkInBioBackgroundVideoUrl || '').trim();
+        if (!raw) {
+          user.linkInBioBackgroundVideoUrl = null;
+        } else {
+          const sanitized = sanitizeLinkInBioBackgroundVideoUrl(raw);
+          if (!sanitized) {
+            return res.status(400).json({ error: 'Background video must be a direct link to an .mp4, .webm, .m4v, .mov or .ogv file' });
+          }
+          user.linkInBioBackgroundVideoUrl = sanitized;
+        }
+      }
       if (req.body.linkInBioBackgroundColor !== undefined) {
         const hex = String(req.body.linkInBioBackgroundColor || '').trim();
         user.linkInBioBackgroundColor = hex && /^#[0-9A-Fa-f]{3,6}$/.test(hex) ? hex : null;
@@ -1213,6 +1241,7 @@ router.put('/profile', auth, async (req, res) => {
       linkInBioButtonTranslucent: profileBtnLook.translucent,
       linkInBioButtonStyle: lookToLegacyStyle(profileBtnLook.shape, profileBtnLook.fill),
       linkInBioBackgroundImageUrl: user.linkInBioBackgroundImageUrl || null,
+      linkInBioBackgroundVideoUrl: user.linkInBioBackgroundVideoUrl || null,
       linkInBioBackgroundColor: user.linkInBioBackgroundColor || null,
       linkInBioTextColor: user.linkInBioTextColor || null
     };
@@ -1659,6 +1688,7 @@ router.get('/links/:username', async (req, res) => {
     const backgroundImageUrl = (user.linkInBioBackgroundImageUrl && typeof user.linkInBioBackgroundImageUrl === 'string' && user.linkInBioBackgroundImageUrl.trim().length > 0 && /^https?:\/\//i.test(user.linkInBioBackgroundImageUrl.trim()))
       ? user.linkInBioBackgroundImageUrl.trim()
       : null;
+    const backgroundVideoUrl = sanitizeLinkInBioBackgroundVideoUrl(user.linkInBioBackgroundVideoUrl);
     const backgroundColorTrim = typeof user.linkInBioBackgroundColor === 'string' ? user.linkInBioBackgroundColor.trim() : '';
     const backgroundColor = (backgroundColorTrim && /^#[0-9A-Fa-f]{3,6}$/.test(backgroundColorTrim))
       ? backgroundColorTrim
@@ -1690,6 +1720,7 @@ router.get('/links/:username', async (req, res) => {
       linkInBioButtonTranslucent: btnLook.translucent,
       linkInBioButtonStyle: buttonStyle,
       linkInBioBackgroundImageUrl: backgroundImageUrl,
+      linkInBioBackgroundVideoUrl: backgroundVideoUrl,
       linkInBioBackgroundColor: backgroundColor,
       linkInBioTextColor: textColor,
       linkInBioAdsEnabled: adsEnabled,

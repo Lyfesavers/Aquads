@@ -156,6 +156,14 @@ const userSchema = new Schema({
     trim: true,
     maxlength: 2048
   },
+  // Optional looping video background, set from the same dashboard field as
+  // the image above — a direct video file URL lands here instead.
+  linkInBioBackgroundVideoUrl: {
+    type: String,
+    default: null,
+    trim: true,
+    maxlength: 2048
+  },
   linkInBioBackgroundColor: {
     type: String,
     default: null,

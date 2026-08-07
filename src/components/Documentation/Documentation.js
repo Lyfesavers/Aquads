@@ -478,7 +478,7 @@ Build a premium links page for your audience:
 - Add up to 30 social or website links
 - Set accent and button colors
 - Choose button style (rounded, pill, minimal, bordered, filled)
-- Add a full-screen background image via direct URL
+- Add a full-screen background image or looping video via direct URL
 - Copy and share your public page URL instantly
 
 ### User Dropdown Menu Options
@@ -557,7 +557,7 @@ Create a branded social hub page:
 - Add/reorder/remove your links
 - Set accent color and optional button color
 - Choose button style and save live preview updates
-- Add a full-screen background image URL
+- Add a full-screen background image or video URL
 - Share your public page at \`/links/yourusername\`
 
 ### Profile Picture Setup
@@ -631,7 +631,7 @@ The Link in bio tool gives you a premium public page for all your important link
 | **Accent Color** | Main brand color for page accents |
 | **Button Color** | Optional separate color for button visuals |
 | **Button Style** | Rounded, Pill, Minimal, Bordered, Filled |
-| **Background Image URL** | Full-screen image behind your links page |
+| **Background Image or Video URL** | Full-screen image, or looping video, behind your links page |
 
 ### Background Image Best Practices
 
@@ -640,6 +640,16 @@ The Link in bio tool gives you a premium public page for all your important link
 - 16:9 images work best across desktop and mobile
 - The image automatically uses **cover** mode to fill the screen
 
+### Background Video Best Practices
+
+Paste a video link into the same background field and Aquads uses it as a silent looping video instead of an image.
+
+- Use a **direct video file URL** ending in .mp4, .webm, .m4v, .mov or .ogv — YouTube, Vimeo and TikTok page links will not play
+- Keep it **under ~5MB**: 1920x1080, 5-10 seconds, looping seamlessly, with the audio track removed
+- The video only starts loading after the rest of the page has rendered, then fades in, so your links are usable immediately
+- Pick a background color that suits the video — it shows for the moment before the first frame arrives
+- Visitors on slow or data-saver connections, and anyone with reduced motion enabled, see the background color instead
+
 ### Save Behavior
 
 When you click save, Aquads stores:
@@ -647,7 +657,7 @@ When you click save, Aquads stores:
 - Accent color
 - Button color
 - Button style
-- Background image URL
+- Background image or video URL
 
 All updates apply instantly to your public links page.
 

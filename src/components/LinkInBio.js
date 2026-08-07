@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { API_URL } from '../services/api';
 import { resolveLinkInBioButtonLook } from '../utils/linkInBioButtonLook';
 import { BioLinkIcon } from '../utils/linkInBioIcons';
+import { sanitizeLinkInBioBackgroundVideoUrl, shouldLoadBackgroundVideo } from '../utils/linkInBioBackgroundVideo';
 import CreateLinkBioAdModal from './CreateLinkBioAdModal';
 import { FaBullhorn } from 'react-icons/fa';
 
@@ -273,6 +274,11 @@ const LinkInBio = () => {
   const [activeAds, setActiveAds] = useState([]);
   const [currentAdIndex, setCurrentAdIndex] = useState(0);
   const [showAdModal, setShowAdModal] = useState(false);
+  const backgroundVideoRef = useRef(null);
+  const [backgroundVideoMounted, setBackgroundVideoMounted] = useState(false);
+  const [backgroundVideoReady, setBackgroundVideoReady] = useState(false);
+  const [backgroundVideoFailed, setBackgroundVideoFailed] = useState(false);
+  const [allowBackgroundVideo] = useState(shouldLoadBackgroundVideo);
 
   useEffect(() => {
     if (!username) {
@@ -332,6 +338,51 @@ const LinkInBio = () => {
   }, [activeAds.length]);
 
   const currentAd = activeAds.length > 0 ? activeAds[currentAdIndex % activeAds.length] : null;
+
+  const backgroundVideoUrl = allowBackgroundVideo && !backgroundVideoFailed
+    ? sanitizeLinkInBioBackgroundVideoUrl(data?.linkInBioBackgroundVideoUrl)
+    : null;
+
+  // The video is a progressive enhancement on top of the background image, so
+  // it is only mounted once the page itself has painted — it never competes
+  // with the avatar, links or ads for bandwidth on first load.
+  useEffect(() => {
+    if (!backgroundVideoUrl || backgroundVideoMounted) return;
+    let cancelled = false;
+    const mount = () => { if (!cancelled) setBackgroundVideoMounted(true); };
+    const schedule = () => {
+      if (typeof window.requestIdleCallback === 'function') {
+        window.requestIdleCallback(mount, { timeout: 2000 });
+      } else {
+        setTimeout(mount, 300);
+      }
+    };
+    if (document.readyState === 'complete') {
+      schedule();
+      return () => { cancelled = true; };
+    }
+    window.addEventListener('load', schedule, { once: true });
+    return () => {
+      cancelled = true;
+      window.removeEventListener('load', schedule);
+    };
+  }, [backgroundVideoUrl, backgroundVideoMounted]);
+
+  useEffect(() => {
+    const el = backgroundVideoRef.current;
+    if (!backgroundVideoMounted || !el) return;
+    // React assigns `muted` as a property, which can land after the browser has
+    // already judged the autoplay attempt — force it before asking to play.
+    el.muted = true;
+    el.play().catch(() => {});
+    // Stop decoding frames while the tab is in the background.
+    const onVisibilityChange = () => {
+      if (document.hidden) el.pause();
+      else el.play().catch(() => {});
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', onVisibilityChange);
+  }, [backgroundVideoMounted]);
 
   if (loading) {
     return (
@@ -408,8 +459,14 @@ const LinkInBio = () => {
   const accentHex = (linkInBioAccentColor && /^#[0-9A-Fa-f]{3,6}$/.test(linkInBioAccentColor)) ? linkInBioAccentColor : '#22d3ee';
   const buttonHex = (linkInBioButtonColor && /^#[0-9A-Fa-f]{3,6}$/.test(linkInBioButtonColor)) ? linkInBioButtonColor : accentHex;
   const hasBackgroundImage = linkInBioBackgroundImageUrl && typeof linkInBioBackgroundImageUrl === 'string' && linkInBioBackgroundImageUrl.trim().length > 0 && /^https?:\/\//i.test(linkInBioBackgroundImageUrl.trim());
+  const hasBackgroundVideo = Boolean(backgroundVideoUrl);
+  // Tints, orbs and tile contrast all key off "is there full-bleed media",
+  // which a video satisfies just as an image does.
+  const hasBackgroundMedia = hasBackgroundImage || hasBackgroundVideo;
   const backgroundColorHex = (linkInBioBackgroundColor && /^#[0-9A-Fa-f]{3,6}$/.test(linkInBioBackgroundColor)) ? linkInBioBackgroundColor : null;
   const textColorHex = (linkInBioTextColor && /^#[0-9A-Fa-f]{3,6}$/.test(linkInBioTextColor)) ? linkInBioTextColor : null;
+  // A video-only background keeps the gradient/color underneath so the page is
+  // never blank while the first frames stream in.
   const pageBackground = hasBackgroundImage
     ? 'transparent'
     : backgroundColorHex
@@ -426,7 +483,7 @@ const LinkInBio = () => {
     buttonHex,
     buttonTheme,
     theme,
-    hasBackgroundImage
+    hasBackgroundImage: hasBackgroundMedia
   });
   const labelColor = textColorHex
     ? textColorHex
@@ -439,7 +496,7 @@ const LinkInBio = () => {
     translucent: btnLook.translucent,
     buttonHex,
     accentHex,
-    hasBackgroundImage
+    hasBackgroundImage: hasBackgroundMedia
   });
   const tileFrame = getTilePremiumFrame(accentHex, btnLook.shape);
   const advertiseBtnStyle = (() => {
@@ -458,7 +515,7 @@ const LinkInBio = () => {
     }
     if (btnLook.fill === 'minimal') {
       return {
-        background: hasBackgroundImage ? 'rgba(0, 0, 0, 0.28)' : 'rgba(0, 0, 0, 0.18)',
+        background: hasBackgroundMedia ? 'rgba(0, 0, 0, 0.28)' : 'rgba(0, 0, 0, 0.18)',
         color: textColor,
         border: `2px solid ${hexToRgba(accent, 0.92)}`,
         backdropFilter: btnLook.translucent ? 'blur(10px)' : 'none'
@@ -466,8 +523,8 @@ const LinkInBio = () => {
     }
     return {
       background: btnLook.translucent
-        ? hexToRgba(btn, hasBackgroundImage ? 0.35 : 0.28)
-        : hexToRgba(btn, hasBackgroundImage ? 0.42 : 0.22),
+        ? hexToRgba(btn, hasBackgroundMedia ? 0.35 : 0.28)
+        : hexToRgba(btn, hasBackgroundMedia ? 0.42 : 0.22),
       color: textColor,
       border: `1px solid ${hexToRgba(accent, 0.55)}`,
       backdropFilter: btnLook.translucent ? 'blur(12px)' : 'none',
@@ -486,16 +543,36 @@ const LinkInBio = () => {
         fontFamily: "'DM Sans', sans-serif"
       }}
     >
-      {/* Full-screen background: image layer (absolute so it stays behind content; img tag avoids CSS url escaping issues) */}
-      {hasBackgroundImage && (
+      {/* Full-screen background: image and/or looping video layer (absolute so it stays behind content; img tag avoids CSS url escaping issues) */}
+      {hasBackgroundMedia && (
         <div className="absolute inset-0 w-full min-h-full pointer-events-none" style={{ zIndex: 0 }}>
-          <img
-            src={linkInBioBackgroundImageUrl.trim()}
-            alt=""
-            referrerPolicy="no-referrer"
-            className="absolute inset-0 w-full h-full object-cover object-center"
-            style={{ minHeight: '100vh', minWidth: '100%' }}
-          />
+          {hasBackgroundImage && (
+            <img
+              src={linkInBioBackgroundImageUrl.trim()}
+              alt=""
+              referrerPolicy="no-referrer"
+              className="absolute inset-0 w-full h-full object-cover object-center"
+              style={{ minHeight: '100vh', minWidth: '100%' }}
+            />
+          )}
+          {hasBackgroundVideo && backgroundVideoMounted && (
+            <video
+              ref={backgroundVideoRef}
+              src={backgroundVideoUrl}
+              poster={hasBackgroundImage ? linkInBioBackgroundImageUrl.trim() : undefined}
+              autoPlay
+              muted
+              loop
+              playsInline
+              disablePictureInPicture
+              aria-hidden="true"
+              tabIndex={-1}
+              className="absolute inset-0 w-full h-full object-cover object-center transition-opacity duration-700"
+              style={{ minHeight: '100vh', minWidth: '100%', opacity: backgroundVideoReady ? 1 : 0 }}
+              onCanPlay={() => setBackgroundVideoReady(true)}
+              onError={() => setBackgroundVideoFailed(true)}
+            />
+          )}
           {/* Stronger tint overlay so text/buttons stay readable */}
           <div
             className="absolute inset-0 w-full h-full"
@@ -505,8 +582,8 @@ const LinkInBio = () => {
           />
         </div>
       )}
-      {/* Layered background orbs — theme colors (hidden when custom background image is set) */}
-      {!hasBackgroundImage && (
+      {/* Layered background orbs — theme colors (hidden when custom background media is set) */}
+      {!hasBackgroundMedia && (
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/3 w-[140%] h-[90%] rounded-full blur-[100px]" style={{ background: theme.orb1 }} />
           <div className="absolute bottom-0 right-0 w-[90%] h-[60%] rounded-full blur-[120px] translate-y-1/4" style={{ background: theme.orb2 }} />
@@ -534,7 +611,7 @@ const LinkInBio = () => {
           <motion.div
             className="absolute inset-x-[-8%] top-[10%] bottom-[-10%] pointer-events-none"
             style={{
-              background: `radial-gradient(ellipse 75% 55% at 50% 38%, ${hexToRgba(accentHex, hasBackgroundImage ? 0.28 : 0.42)} 0%, transparent 72%)`,
+              background: `radial-gradient(ellipse 75% 55% at 50% 38%, ${hexToRgba(accentHex, hasBackgroundMedia ? 0.28 : 0.42)} 0%, transparent 72%)`,
               filter: 'blur(28px)'
             }}
             animate={{ opacity: [0.55, 0.85, 0.55] }}
@@ -543,7 +620,7 @@ const LinkInBio = () => {
           <div
             className="absolute inset-x-0 bottom-0 h-1/2 pointer-events-none"
             style={{
-              background: hasBackgroundImage
+              background: hasBackgroundMedia
                 ? 'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.35) 100%)'
                 : backgroundColorHex
                   ? `linear-gradient(to bottom, transparent 0%, ${hexToRgba(backgroundColorHex, 0.55)} 100%)`
