@@ -45,10 +45,10 @@ const BANNER_PRICING = [
 ];
 
 const PLATFORM_STATS = [
-  { value: '1,000+', label: 'Tokens tracked' },
-  { value: '60+', label: 'Blockchains supported' },
+  { value: '750+', label: 'Monthly active users' },
+  { value: '16 min', label: 'Average time on site' },
   { value: '#1', label: 'Google page one rankings' },
-  { value: '100+', label: 'Daily active users & growing' }
+  { value: '60+', label: 'Blockchains supported' }
 ];
 
 /* ---------------------------------------------------------------------------
@@ -635,6 +635,12 @@ const Advertise = ({
             </div>
           ))}
         </div>
+
+        <p className="mx-auto mt-5 max-w-2xl text-center text-sm text-gray-500">
+          Real Google Analytics figures from the last 28 days — no inflated numbers. We&apos;re
+          early and growing, and our pricing reflects that: $10 gets you all six placements for a
+          day.
+        </p>
       </section>
 
       {/* Placements */}
@@ -731,6 +737,12 @@ const Advertise = ({
                 );
               })}
             </div>
+
+            <p className="mt-6 text-center text-sm text-gray-400">
+              Your banner rotates into view every 10 seconds across all six placements, and the
+              average visitor spends close to 16 minutes on Aquads — so a single booking is seen
+              repeatedly, not just once.
+            </p>
           </div>
         </div>
       </section>
