@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import TokenSparkline from './TokenSparkline';
 import TokenRating from './TokenRating';
-import { FaGlobe, FaTwitter, FaTelegram, FaDiscord, FaGithub, FaReddit } from 'react-icons/fa';
+import { FaGlobe, FaTwitter, FaTelegram, FaDiscord, FaGithub, FaReddit, FaSearch, FaTimes } from 'react-icons/fa';
 import { Helmet } from 'react-helmet';
 import TokenDetails from './TokenDetails';
 import TokenReviews from './TokenReviews';
@@ -76,6 +76,30 @@ const formatFullCurrency = (value) => {
   if (!value) return 'N/A';
   return `$${Math.round(value).toLocaleString('en-US')}`;
 };
+
+/** Keeps sub-cent tokens readable instead of collapsing them all to "$0.00". */
+const formatPrice = (value) => {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return 'N/A';
+  if (n === 0) return '$0.00';
+  if (n >= 1) {
+    return `$${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  }
+  if (n >= 0.01) {
+    return `$${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}`;
+  }
+  return `$${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 8 })}`;
+};
+
+/** Full-bleed page shell so the table uses the entire viewport width on every breakpoint. */
+const SHELL_CLASS = 'w-full px-3 sm:px-4 lg:px-6 xl:px-8 py-4';
+
+/** Column count of the desktop table — the expanded details row must span all of them. */
+const DESKTOP_COLUMN_COUNT = 9;
+
+const TH_BASE =
+  'px-3 lg:px-4 py-3.5 text-[11px] font-semibold uppercase tracking-wider whitespace-nowrap select-none';
+const TD_BASE = 'px-3 lg:px-4 py-3.5';
 
 /**
  * Live market-sentiment badge that replaces the old inaccurate global sparklines.
@@ -342,12 +366,23 @@ const TokenList = ({
 
 
 
+  const sortArrow = (key) =>
+    sortConfig.key === key ? (
+      <span className="ml-1 text-blue-400">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
+    ) : null;
+
+  const thTone = (key) =>
+    sortConfig.key === key ? 'text-blue-300' : 'text-gray-400 hover:text-white';
+
   // Render loading state
   if (tokensLoading && tokens.length === 0) {
     return (
-      <div className="container mx-auto p-4">
-        <div className="flex justify-center items-center h-64">
-          <div className="text-white">Loading tokens...</div>
+      <div className={SHELL_CLASS}>
+        <div className="rounded-2xl border border-white/10 bg-gray-900/60 backdrop-blur-xl p-6">
+          <div className="flex flex-col justify-center items-center h-64 gap-3">
+            <div className="h-8 w-8 rounded-full border-2 border-blue-500/30 border-t-blue-400 animate-spin" />
+            <div className="text-gray-300 text-sm">Loading tokens…</div>
+          </div>
         </div>
       </div>
     );
@@ -356,9 +391,11 @@ const TokenList = ({
   // Render error state
   if (tokensError && tokens.length === 0) {
     return (
-      <div className="container mx-auto p-4">
-        <div className="flex justify-center items-center h-64">
-          <div className="text-red-500">Error: {tokensError}</div>
+      <div className={SHELL_CLASS}>
+        <div className="rounded-2xl border border-red-500/20 bg-red-500/[0.06] backdrop-blur-xl p-6">
+          <div className="flex justify-center items-center h-64">
+            <div className="text-red-300 text-sm">Error: {tokensError}</div>
+          </div>
         </div>
       </div>
     );
@@ -366,7 +403,7 @@ const TokenList = ({
 
   // Rest of your component code...
   return (
-    <div className="container mx-auto p-4">
+    <div className={SHELL_CLASS}>
       <Helmet>
         <title>List your token free | Aquads bubble map — launch stack</title>
         <meta
@@ -391,22 +428,44 @@ const TokenList = ({
         <meta name="twitter:image" content="https://www.aquads.xyz/metalogo.png" />
       </Helmet>
 
-      <div className="mb-6 bg-gray-800/50 backdrop-blur-sm rounded-lg p-4">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1">
+      <div className="mb-4 rounded-2xl border border-white/10 bg-gray-900/60 backdrop-blur-xl shadow-lg shadow-black/20 p-3 sm:p-4">
+        <div className="flex flex-col lg:flex-row lg:items-center gap-3 lg:gap-6">
+          <div className="flex-1 min-w-0">
             {viewMode === 'tokens' ? (
-              <div className="space-y-2">
-                <input
-                  type="text"
-                  placeholder="Search tokens..."
-                  value={searchTerm}
-                  onChange={(e) => handleSearch(e.target.value)}
-                  className="w-full px-4 py-2 bg-gray-700 rounded text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+                <div className="relative flex-1 min-w-0 sm:max-w-md">
+                  <FaSearch className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-500" />
+                  <input
+                    type="text"
+                    placeholder="Search tokens..."
+                    value={searchTerm}
+                    onChange={(e) => handleSearch(e.target.value)}
+                    className="w-full pl-10 pr-10 py-2.5 bg-gray-800/70 border border-white/10 rounded-xl text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/40 transition-colors"
+                  />
+                  {searchTerm && (
+                    <button
+                      type="button"
+                      onClick={() => handleSearch('')}
+                      aria-label="Clear search"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors"
+                    >
+                      <FaTimes className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
                 {/* Connection status indicator */}
-                <div className="flex items-center gap-2 text-xs">
-                  <div className={`w-2 h-2 rounded-full ${tokensSocketConnected ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
-                  <span className="text-gray-300">
+                <div className="flex items-center gap-2 shrink-0 rounded-full border border-white/10 bg-gray-800/50 px-3 py-1.5 text-xs">
+                  <span className="relative flex h-2 w-2">
+                    {tokensSocketConnected && (
+                      <span className="absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-60 animate-ping" />
+                    )}
+                    <span
+                      className={`relative inline-flex h-2 w-2 rounded-full ${
+                        tokensSocketConnected ? 'bg-green-500' : 'bg-yellow-500'
+                      }`}
+                    />
+                  </span>
+                  <span className="text-gray-300 whitespace-nowrap">
                     {tokensSocketConnected ? 'Live updates' : 'Fallback mode'}
                   </span>
                 </div>
@@ -418,35 +477,35 @@ const TokenList = ({
             )}
           </div>
 
-          <div className="flex flex-wrap gap-2 justify-end">
+          <div className="flex flex-wrap items-center gap-2 lg:justify-end">
             {/* View Mode Toggle */}
-            <div className="flex bg-gray-700 rounded-md overflow-hidden">
+            <div className="flex items-center gap-1 rounded-xl border border-white/10 bg-gray-800/60 p-1">
               <button
                 onClick={() => setViewMode('tokens')}
-                className={`px-3 py-2 text-xs sm:text-sm font-medium ${
-                  viewMode === 'tokens' 
-                    ? 'bg-blue-600 text-white' 
-                    : 'bg-transparent text-gray-300 hover:bg-gray-600'
+                className={`rounded-lg px-3 py-1.5 text-xs sm:text-sm font-medium transition-all ${
+                  viewMode === 'tokens'
+                    ? 'bg-blue-600 text-white shadow-sm shadow-blue-900/40'
+                    : 'text-gray-400 hover:text-white hover:bg-white/5'
                 }`}
               >
                 Tokens
               </button>
               <button
                 onClick={() => setViewMode('raids')}
-                className={`px-3 py-2 text-xs sm:text-sm font-medium ${
-                  viewMode === 'raids' 
-                    ? 'bg-blue-600 text-white' 
-                    : 'bg-transparent text-gray-300 hover:bg-gray-600'
+                className={`rounded-lg px-3 py-1.5 text-xs sm:text-sm font-medium transition-all ${
+                  viewMode === 'raids'
+                    ? 'bg-blue-600 text-white shadow-sm shadow-blue-900/40'
+                    : 'text-gray-400 hover:text-white hover:bg-white/5'
                 }`}
               >
                 Twitter Raids
               </button>
               <button
                 onClick={() => setViewMode('facebook-raids')}
-                className={`px-3 py-2 text-xs sm:text-sm font-medium ${
+                className={`rounded-lg px-3 py-1.5 text-xs sm:text-sm font-medium transition-all ${
                   viewMode === 'facebook-raids'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-transparent text-gray-300 hover:bg-gray-600'
+                    ? 'bg-blue-600 text-white shadow-sm shadow-blue-900/40'
+                    : 'text-gray-400 hover:text-white hover:bg-white/5'
                 }`}
               >
                 Facebook Raids
@@ -454,7 +513,7 @@ const TokenList = ({
             </div>
 
             {viewMode === 'tokens' && (
-              <>
+              <div className="flex items-center gap-2">
                 <select
                   value={sortConfig.key}
                   onChange={(e) => {
@@ -464,13 +523,15 @@ const TokenList = ({
                     setDisplayCount(20);
                     setFilteredTokens((prev) => sortTokenList(prev, k, dir));
                   }}
-                  className="bg-gray-700 text-white rounded px-2 py-2 text-xs sm:text-sm"
+                  className="rounded-xl border border-white/10 bg-gray-800/60 px-3 py-2 text-xs sm:text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
                 >
                   <option value="marketCapRank">Rank</option>
+                  <option value="name">Name</option>
                   <option value="marketCap">Market Cap</option>
                   <option value="currentPrice">Price</option>
                   <option value="priceChangePercentage24h">24h Change</option>
                   <option value="totalVolume">Volume</option>
+                  <option value="fullyDilutedValuation">FDV</option>
                 </select>
 
                 <button
@@ -480,60 +541,67 @@ const TokenList = ({
                     setDisplayCount(20);
                     setFilteredTokens((prev) => sortTokenList(prev, sortConfig.key, newOrder));
                   }}
-                  className="bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded"
+                  aria-label={`Sort ${sortConfig.direction === 'asc' ? 'descending' : 'ascending'}`}
+                  className="rounded-xl border border-white/10 bg-gray-800/60 px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-white/5 transition-colors"
                 >
                   {sortConfig.direction === 'asc' ? '↑' : '↓'}
                 </button>
-              </>
+              </div>
             )}
           </div>
         </div>
       </div>
 
-      <div className="bg-gray-900/50 backdrop-blur-sm rounded-lg overflow-hidden">
+      <div className="rounded-2xl border border-white/10 bg-gray-900/60 backdrop-blur-xl shadow-2xl shadow-black/30 overflow-hidden">
         {viewMode === 'tokens' ? (
           <>
             {/* Global market stats */}
-            <div className="p-4 md:p-6 border-b border-gray-700/30">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="bg-gray-800/40 rounded-lg border border-gray-700/30 p-4 flex items-center justify-between gap-4">
+            <div className="p-3 sm:p-4 lg:p-5 border-b border-white/10">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
+                <div className="rounded-xl border border-white/10 bg-gradient-to-br from-white/[0.06] to-transparent p-4 flex items-center justify-between gap-4">
                   <div className="min-w-0">
-                    <div className="text-lg sm:text-xl md:text-2xl font-bold text-white truncate">
+                    <div className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">
+                      Global Market Cap
+                    </div>
+                    <div className="mt-1 text-xl sm:text-2xl xl:text-3xl font-bold text-white tabular-nums truncate">
                       {globalStats ? formatFullCurrency(globalStats.totalMarketCap) : '—'}
                     </div>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-sm text-gray-400">Global Market Cap</span>
-                      {globalStats && (
+                    {globalStats && (
+                      <div className="flex items-center gap-2 mt-1">
                         <span className={`text-sm font-medium ${
                           globalStats.marketCapChangePercentage24h >= 0 ? 'text-green-400' : 'text-red-400'
                         }`}>
                           {globalStats.marketCapChangePercentage24h >= 0 ? '▲' : '▼'}{' '}
                           {Math.abs(globalStats.marketCapChangePercentage24h).toFixed(1)}%
                         </span>
-                      )}
-                    </div>
+                        <span className="text-xs text-gray-500">past 24h</span>
+                      </div>
+                    )}
                   </div>
                   {globalStats?.marketSignal && (
                     <MarketSignalBadge signal={globalStats.marketSignal} />
                   )}
                 </div>
 
-                <div className="bg-gray-800/40 rounded-lg border border-gray-700/30 p-4 flex items-center justify-between gap-4">
+                <div className="rounded-xl border border-white/10 bg-gradient-to-br from-white/[0.06] to-transparent p-4 flex items-center justify-between gap-4">
                   <div className="min-w-0">
-                    <div className="text-lg sm:text-xl md:text-2xl font-bold text-white truncate">
+                    <div className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">
+                      Global 24h Trading Volume
+                    </div>
+                    <div className="mt-1 text-xl sm:text-2xl xl:text-3xl font-bold text-white tabular-nums truncate">
                       {globalStats ? formatFullCurrency(globalStats.totalVolume24h) : '—'}
                     </div>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-sm text-gray-400">Global 24h Trading Volume</span>
-                      {globalStats && typeof globalStats.volumeChangePercentage24h === 'number' && Number.isFinite(globalStats.volumeChangePercentage24h) && (
+                    {globalStats && typeof globalStats.volumeChangePercentage24h === 'number' && Number.isFinite(globalStats.volumeChangePercentage24h) && (
+                      <div className="flex items-center gap-2 mt-1">
                         <span className={`text-sm font-medium ${
                           globalStats.volumeChangePercentage24h >= 0 ? 'text-green-400' : 'text-red-400'
                         }`}>
                           {globalStats.volumeChangePercentage24h >= 0 ? '▲' : '▼'}{' '}
                           {Math.abs(globalStats.volumeChangePercentage24h).toFixed(1)}%
                         </span>
-                      )}
-                    </div>
+                        <span className="text-xs text-gray-500">past 24h</span>
+                      </div>
+                    )}
                   </div>
                   <VolumeTrendBadge volumeChange={globalStats?.volumeChangePercentage24h} />
                 </div>
@@ -541,13 +609,17 @@ const TokenList = ({
             </div>
 
             {/* Token list header */}
-            <div className="p-4 md:p-6 border-b border-gray-700/30">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg md:text-xl font-semibold text-white">
-                  Token List
-                </h2>
-                <span className="text-sm text-gray-400">
-                  Showing {displayedTokens.length} of {filteredTokens.length} tokens
+            <div className="px-3 sm:px-4 lg:px-5 py-3.5 border-b border-white/10 bg-white/[0.02]">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2.5">
+                  <span className="h-4 w-1 rounded-full bg-gradient-to-b from-blue-400 to-cyan-400" />
+                  <h2 className="text-base md:text-lg font-semibold text-white tracking-tight">
+                    Token List
+                  </h2>
+                </div>
+                <span className="text-xs sm:text-sm text-gray-500 tabular-nums">
+                  Showing <span className="text-gray-300 font-medium">{displayedTokens.length}</span> of{' '}
+                  <span className="text-gray-300 font-medium">{filteredTokens.length}</span> tokens
                 </span>
               </div>
             </div>
@@ -556,229 +628,282 @@ const TokenList = ({
             {filteredTokens.length > 0 ? (
               <>
                 {/* Desktop/Tablet Table View (hidden on mobile) */}
-                <div className="w-full hidden md:block">
-                  <table className="w-full table-fixed">
+                <div className="w-full hidden md:block overflow-x-auto">
+                  <table className="w-full table-fixed min-w-[820px]">
                     <thead>
-                      <tr className="border-b border-gray-700/30">
-                        <th 
-                          className="w-12 px-2 py-3 text-left text-xs font-medium text-white uppercase tracking-wider bg-gray-800/30 cursor-pointer hover:text-white"
+                      <tr className="border-b border-white/10 bg-white/[0.03]">
+                        <th
+                          className={`${TH_BASE} w-[56px] text-left cursor-pointer ${thTone('marketCapRank')}`}
                           onClick={() => handleColumnSort('marketCapRank')}
                         >
-                          # {sortConfig.key === 'marketCapRank' && (
-                            <span className="ml-1">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
-                          )}
+                          #{sortArrow('marketCapRank')}
                         </th>
-                        <th 
-                          className="w-1/4 px-2 py-3 text-left text-xs font-medium text-white uppercase tracking-wider bg-gray-800/30 cursor-pointer hover:text-white"
+                        <th
+                          className={`${TH_BASE} w-[20%] text-left cursor-pointer ${thTone('name')}`}
                           onClick={() => handleColumnSort('name')}
                         >
-                          Token {sortConfig.key === 'name' && (
-                            <span className="ml-1">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
-                          )}
+                          Token{sortArrow('name')}
                         </th>
-                        <th className="w-1/6 px-2 py-3 text-left text-xs font-medium text-white uppercase tracking-wider bg-gray-800/30 cursor-pointer hover:text-white"
-                            onClick={() => handleColumnSort('currentPrice')}>
-                          Price
+                        <th
+                          className={`${TH_BASE} w-[12%] text-right cursor-pointer ${thTone('currentPrice')}`}
+                          onClick={() => handleColumnSort('currentPrice')}
+                        >
+                          Price{sortArrow('currentPrice')}
                         </th>
-                        <th className="w-1/6 px-2 py-3 text-left text-xs font-medium text-white uppercase tracking-wider bg-gray-800/30 cursor-pointer hover:text-white"
-                            onClick={() => handleColumnSort('priceChangePercentage24h')}>
-                          24h %
+                        <th
+                          className={`${TH_BASE} w-[10%] text-right cursor-pointer ${thTone('priceChangePercentage24h')}`}
+                          onClick={() => handleColumnSort('priceChangePercentage24h')}
+                        >
+                          24h %{sortArrow('priceChangePercentage24h')}
                         </th>
-                        <th className="w-1/6 px-2 py-3 text-left text-xs font-medium text-white uppercase tracking-wider bg-gray-800/30 cursor-pointer hover:text-white"
-                            onClick={() => handleColumnSort('marketCap')}>
-                          Market Cap
+                        <th
+                          className={`${TH_BASE} w-[13%] text-right cursor-pointer ${thTone('marketCap')}`}
+                          onClick={() => handleColumnSort('marketCap')}
+                        >
+                          Market Cap{sortArrow('marketCap')}
                         </th>
-                        <th className="w-1/6 px-2 py-3 text-left text-xs font-medium text-white uppercase tracking-wider bg-gray-800/30 cursor-pointer hover:text-white"
-                            onClick={() => handleColumnSort('totalVolume')}>
-                          Volume
+                        <th
+                          className={`${TH_BASE} w-[13%] text-right cursor-pointer ${thTone('totalVolume')}`}
+                          onClick={() => handleColumnSort('totalVolume')}
+                        >
+                          Volume 24h{sortArrow('totalVolume')}
                         </th>
-                        <th scope="col" className="w-24 px-2 py-3 text-center text-xs font-medium text-gray-400 uppercase tracking-wider">
-                          7d
+                        <th
+                          scope="col"
+                          className={`${TH_BASE} hidden xl:table-cell w-[11%] text-right cursor-pointer ${thTone('fullyDilutedValuation')}`}
+                          onClick={() => handleColumnSort('fullyDilutedValuation')}
+                        >
+                          FDV{sortArrow('fullyDilutedValuation')}
                         </th>
-                        <th scope="col" className="w-1/6 px-2 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">
+                        <th scope="col" className={`${TH_BASE} hidden lg:table-cell w-[130px] text-center text-gray-400`}>
+                          Last 7d
+                        </th>
+                        <th scope="col" className={`${TH_BASE} w-[15%] text-right text-gray-400`}>
                           Rating
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-700/30">
-                      {displayedTokens.map((token, index) => (
-                        <React.Fragment key={token.id}>
-                          <tr 
-                            className="hover:bg-gray-800/40 cursor-pointer"
-                            onClick={() => handleTokenClick(token)}
-                          >
-                            <td className="px-2 py-4 text-sm text-gray-300">{token.marketCapRank || index + 1}</td>
-                            <td className="px-2 py-4">
-                              <div className="flex items-center min-w-0">
-                                <img
-                                  src={token.image}
-                                  alt={token.name}
-                                  className="h-6 w-6 rounded-full flex-shrink-0"
-                                  onError={(e) => {
-                                    e.target.onerror = null;
-                                    e.target.src = '/placeholder.png';
-                                  }}
-                                />
-                                <div className="ml-2 min-w-0 flex-1">
-                                  <div className="text-sm font-medium text-white truncate">{token.name}</div>
-                                  <div className="text-xs text-gray-400 truncate">{token.symbol}</div>
+                    <tbody className="divide-y divide-white/[0.06]">
+                      {displayedTokens.map((token, index) => {
+                        const isOpen = Boolean(selectedToken && showDetails && selectedToken.id === token.id);
+                        const change = Number(token.priceChangePercentage24h) || 0;
+                        const isUp = change >= 0;
+
+                        return (
+                          <React.Fragment key={token.id}>
+                            <tr
+                              className={`group cursor-pointer transition-colors ${
+                                isOpen ? 'bg-blue-500/[0.08]' : 'hover:bg-white/[0.04]'
+                              }`}
+                              onClick={() => handleTokenClick(token)}
+                            >
+                              <td className={`${TD_BASE} text-sm text-gray-500 tabular-nums`}>
+                                {token.marketCapRank || index + 1}
+                              </td>
+                              <td className={TD_BASE}>
+                                <div className="flex items-center gap-3 min-w-0">
+                                  <img
+                                    src={token.image}
+                                    alt={token.name}
+                                    className="h-8 w-8 rounded-full flex-shrink-0 bg-gray-800 ring-1 ring-white/10"
+                                    onError={(e) => {
+                                      e.target.onerror = null;
+                                      e.target.src = '/placeholder.png';
+                                    }}
+                                  />
+                                  <div className="min-w-0 flex-1">
+                                    <div className="text-sm font-semibold text-white truncate group-hover:text-blue-300 transition-colors">
+                                      {token.name}
+                                    </div>
+                                    <div className="text-[11px] font-medium uppercase tracking-wide text-gray-500 truncate">
+                                      {token.symbol}
+                                    </div>
+                                  </div>
                                 </div>
-                              </div>
-                            </td>
-                            <td className="px-2 py-4 text-sm text-gray-300">
-                              ${token.currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
-                            </td>
-                            <td className={`px-2 py-4 text-sm ${
-                              token.priceChangePercentage24h > 0 ? 'text-green-400' : 'text-red-400'
-                            }`}>
-                              {token.priceChangePercentage24h.toFixed(2)}%
-                            </td>
-                            <td className="px-2 py-4 text-sm text-gray-300">
-                              {formatCurrency(token.marketCap)}
-                            </td>
-                            <td className="px-2 py-4 text-sm text-gray-300">
-                              {formatCurrency(token.totalVolume)}
-                            </td>
-                            <td className="px-2 py-4 text-center" onClick={(e) => e.stopPropagation()}>
-                              <div className="flex justify-center">
-                                <TokenSparkline prices={token.sparklineIn7d} />
-                              </div>
-                            </td>
-                            <td className="px-2 py-4 text-right">
-                              <div className="flex items-center justify-end gap-1">
-                                <span className="text-yellow-400 text-xs">★</span>
-                                <TokenRating symbol={token.symbol} />
-                                <button
-                                  onClick={(e) => handleReviewClick(e, token)}
-                                  className="text-blue-400 hover:text-blue-300 text-xs"
+                              </td>
+                              <td className={`${TD_BASE} text-right text-sm font-medium text-white tabular-nums`}>
+                                {formatPrice(token.currentPrice)}
+                              </td>
+                              <td className={`${TD_BASE} text-right`}>
+                                <span
+                                  className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold tabular-nums ${
+                                    isUp
+                                      ? 'bg-emerald-500/10 text-emerald-400'
+                                      : 'bg-rose-500/10 text-rose-400'
+                                  }`}
                                 >
-                                  Reviews
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                          {selectedToken && showDetails && selectedToken.id === token.id && (
-                                                    <TokenDetails
-                          token={selectedToken}
-                          showReviews={showReviews}
-                          onClose={handleCloseDetails}
-                          currentUser={currentUser}
-                          showNotification={showNotification}
-                          showDexFrame={showDexFrame}
-                          selectedDex={selectedDex}
-                          onDexClick={handleDexClick}
-                          setShowDexFrame={setShowDexFrame}
-                          isMobile={false}
-                        />
-                          )}
-                        </React.Fragment>
-                      ))}
+                                  <span className="text-[8px] leading-none">{isUp ? '▲' : '▼'}</span>
+                                  {Math.abs(change).toFixed(2)}%
+                                </span>
+                              </td>
+                              <td className={`${TD_BASE} text-right text-sm text-gray-300 tabular-nums`}>
+                                {formatCurrency(token.marketCap)}
+                              </td>
+                              <td className={`${TD_BASE} text-right text-sm text-gray-300 tabular-nums`}>
+                                {formatCurrency(token.totalVolume)}
+                              </td>
+                              <td className={`${TD_BASE} hidden xl:table-cell text-right text-sm text-gray-400 tabular-nums`}>
+                                {formatCurrency(token.fullyDilutedValuation)}
+                              </td>
+                              <td
+                                className={`${TD_BASE} hidden lg:table-cell text-center`}
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <div className="flex justify-center">
+                                  <TokenSparkline prices={token.sparklineIn7d} width={110} height={30} />
+                                </div>
+                              </td>
+                              <td className={`${TD_BASE} text-right`}>
+                                <div className="flex items-center justify-end gap-2">
+                                  <span className="inline-flex items-center gap-1 rounded-md bg-white/[0.05] px-2 py-1 text-xs font-semibold text-white tabular-nums">
+                                    <span className="text-amber-400">★</span>
+                                    <TokenRating symbol={token.symbol} />
+                                  </span>
+                                  <button
+                                    onClick={(e) => handleReviewClick(e, token)}
+                                    className="rounded-md border border-blue-500/30 bg-blue-500/10 px-2.5 py-1 text-xs font-medium text-blue-300 hover:bg-blue-500/20 hover:text-blue-200 transition-colors"
+                                  >
+                                    Reviews
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                            {isOpen && (
+                              <TokenDetails
+                                token={selectedToken}
+                                showReviews={showReviews}
+                                onClose={handleCloseDetails}
+                                currentUser={currentUser}
+                                showNotification={showNotification}
+                                showDexFrame={showDexFrame}
+                                selectedDex={selectedDex}
+                                onDexClick={handleDexClick}
+                                setShowDexFrame={setShowDexFrame}
+                                isMobile={false}
+                                colSpan={DESKTOP_COLUMN_COUNT}
+                              />
+                            )}
+                          </React.Fragment>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
 
                 {/* Mobile Card View (visible only on mobile) */}
-                <div className="w-full md:hidden space-y-3 p-4">
-                  {displayedTokens.map((token, index) => (
-                    <React.Fragment key={token.id}>
-                      <div 
-                        className="bg-gray-800/40 rounded-lg p-4 border border-gray-700/30 hover:bg-gray-800/60 cursor-pointer transition-colors"
-                        onClick={() => handleTokenClick(token)}
-                      >
-                        {/* Token Header */}
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center space-x-3">
-                            <span className="inline-flex items-center justify-center w-8 h-8 bg-gray-700 rounded text-xs font-bold text-gray-300">
-                              #{token.marketCapRank || index + 1}
-                            </span>
-                            <img
-                              src={token.image}
-                              alt={token.name}
-                              className="h-8 w-8 rounded-full flex-shrink-0"
-                              onError={(e) => {
-                                e.target.onerror = null;
-                                e.target.src = '/placeholder.png';
-                              }}
-                            />
-                            <div>
-                              <div className="text-sm font-medium text-white">{token.name}</div>
-                              <div className="text-xs text-gray-400">{token.symbol}</div>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <TokenSparkline prices={token.sparklineIn7d} width={72} height={24} />
-                            <div className="flex items-center gap-1">
-                              <span className="text-yellow-400 text-xs">★</span>
-                              <TokenRating symbol={token.symbol} />
-                            </div>
-                          </div>
-                        </div>
+                <div className="w-full md:hidden space-y-2.5 p-3 sm:p-4">
+                  {displayedTokens.map((token, index) => {
+                    const isOpen = Boolean(selectedToken && showDetails && selectedToken.id === token.id);
+                    const change = Number(token.priceChangePercentage24h) || 0;
+                    const isUp = change >= 0;
 
-                        {/* Token Data Grid */}
-                        <div className="grid grid-cols-2 gap-3">
-                          <div>
-                            <div className="text-xs text-gray-400 uppercase tracking-wider">Price</div>
-                            <div className="text-sm text-white font-medium">
-                              ${token.currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
+                    return (
+                      <React.Fragment key={token.id}>
+                        <div
+                          className={`rounded-xl border p-3.5 cursor-pointer transition-colors ${
+                            isOpen
+                              ? 'border-blue-500/40 bg-blue-500/[0.08]'
+                              : 'border-white/10 bg-white/[0.03] hover:bg-white/[0.06]'
+                          }`}
+                          onClick={() => handleTokenClick(token)}
+                        >
+                          {/* Token Header */}
+                          <div className="flex items-center justify-between gap-3 mb-3">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <span className="inline-flex items-center justify-center min-w-[28px] h-6 px-1.5 rounded-md bg-white/[0.06] text-[11px] font-semibold text-gray-400 tabular-nums">
+                                {token.marketCapRank || index + 1}
+                              </span>
+                              <img
+                                src={token.image}
+                                alt={token.name}
+                                className="h-8 w-8 rounded-full flex-shrink-0 bg-gray-800 ring-1 ring-white/10"
+                                onError={(e) => {
+                                  e.target.onerror = null;
+                                  e.target.src = '/placeholder.png';
+                                }}
+                              />
+                              <div className="min-w-0">
+                                <div className="text-sm font-semibold text-white truncate">{token.name}</div>
+                                <div className="text-[11px] font-medium uppercase tracking-wide text-gray-500 truncate">
+                                  {token.symbol}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                              <TokenSparkline prices={token.sparklineIn7d} width={64} height={24} />
+                              <span className="inline-flex items-center gap-1 rounded-md bg-white/[0.05] px-1.5 py-1 text-[11px] font-semibold text-white tabular-nums">
+                                <span className="text-amber-400">★</span>
+                                <TokenRating symbol={token.symbol} />
+                              </span>
                             </div>
                           </div>
-                          <div>
-                            <div className="text-xs text-gray-400 uppercase tracking-wider">24h %</div>
-                            <div className={`text-sm font-medium ${
-                              token.priceChangePercentage24h > 0 ? 'text-green-400' : 'text-red-400'
-                            }`}>
-                              {token.priceChangePercentage24h.toFixed(2)}%
-                            </div>
-                          </div>
-                          <div>
-                            <div className="text-xs text-gray-400 uppercase tracking-wider">Market Cap</div>
-                            <div className="text-sm text-white">
-                              {formatCurrency(token.marketCap)}
-                            </div>
-                          </div>
-                          <div>
-                            <div className="text-xs text-gray-400 uppercase tracking-wider">Volume</div>
-                            <div className="text-sm text-white">
-                              {formatCurrency(token.totalVolume)}
-                            </div>
-                          </div>
-                        </div>
 
-                        {/* Reviews Button */}
-                        <div className="mt-3 pt-3 border-t border-gray-700/30">
-                          <button
-                            onClick={(e) => handleReviewClick(e, token)}
-                            className="text-blue-400 hover:text-blue-300 text-xs font-medium"
-                          >
-                            View Reviews
-                          </button>
+                          {/* Token Data Grid */}
+                          <div className="grid grid-cols-2 gap-2">
+                            <div className="rounded-lg bg-white/[0.03] px-2.5 py-2">
+                              <div className="text-[10px] text-gray-500 uppercase tracking-wider">Price</div>
+                              <div className="text-sm text-white font-semibold tabular-nums truncate">
+                                {formatPrice(token.currentPrice)}
+                              </div>
+                            </div>
+                            <div className="rounded-lg bg-white/[0.03] px-2.5 py-2">
+                              <div className="text-[10px] text-gray-500 uppercase tracking-wider">24h %</div>
+                              <div className={`text-sm font-semibold tabular-nums ${
+                                isUp ? 'text-emerald-400' : 'text-rose-400'
+                              }`}>
+                                {isUp ? '▲' : '▼'} {Math.abs(change).toFixed(2)}%
+                              </div>
+                            </div>
+                            <div className="rounded-lg bg-white/[0.03] px-2.5 py-2">
+                              <div className="text-[10px] text-gray-500 uppercase tracking-wider">Market Cap</div>
+                              <div className="text-sm text-white tabular-nums truncate">
+                                {formatCurrency(token.marketCap)}
+                              </div>
+                            </div>
+                            <div className="rounded-lg bg-white/[0.03] px-2.5 py-2">
+                              <div className="text-[10px] text-gray-500 uppercase tracking-wider">Volume 24h</div>
+                              <div className="text-sm text-white tabular-nums truncate">
+                                {formatCurrency(token.totalVolume)}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Reviews Button */}
+                          <div className="mt-3 pt-3 border-t border-white/[0.06]">
+                            <button
+                              onClick={(e) => handleReviewClick(e, token)}
+                              className="rounded-md border border-blue-500/30 bg-blue-500/10 px-2.5 py-1 text-xs font-medium text-blue-300 hover:bg-blue-500/20 hover:text-blue-200 transition-colors"
+                            >
+                              View Reviews
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                      {selectedToken && showDetails && selectedToken.id === token.id && (
-                        <TokenDetails
-                          token={selectedToken}
-                          showReviews={showReviews}
-                          onClose={handleCloseDetails}
-                          currentUser={currentUser}
-                          showNotification={showNotification}
-                          showDexFrame={showDexFrame}
-                          selectedDex={selectedDex}
-                          onDexClick={handleDexClick}
-                          setShowDexFrame={setShowDexFrame}
-                          isMobile={true}
-                        />
-                      )}
-                    </React.Fragment>
-                  ))}
+                        {isOpen && (
+                          <TokenDetails
+                            token={selectedToken}
+                            showReviews={showReviews}
+                            onClose={handleCloseDetails}
+                            currentUser={currentUser}
+                            showNotification={showNotification}
+                            showDexFrame={showDexFrame}
+                            selectedDex={selectedDex}
+                            onDexClick={handleDexClick}
+                            setShowDexFrame={setShowDexFrame}
+                            isMobile={true}
+                          />
+                        )}
+                      </React.Fragment>
+                    );
+                  })}
                 </div>
 
                 {/* Load More Button */}
                 {hasMoreTokens && (
-                  <div className="p-4 md:p-6 border-t border-gray-700/30">
+                  <div className="p-3 sm:p-4 lg:p-5 border-t border-white/10">
                     <button
                       onClick={handleLoadMore}
                       disabled={isLoadingMore}
-                      className="w-full py-3 px-6 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 disabled:from-gray-600 disabled:to-gray-700 text-white font-semibold rounded-lg transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-blue-500/25"
+                      className="w-full py-3 px-6 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 disabled:from-gray-700 disabled:to-gray-700 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-blue-900/20 hover:shadow-blue-500/25"
                     >
                       {isLoadingMore ? (
                         <>
@@ -799,8 +924,19 @@ const TokenList = ({
                 )}
               </>
             ) : filteredTokens.length === 0 ? (
-              <div className="text-center text-gray-400 py-8">
-                {isSearchLoading ? 'Loading tokens...' : 'No tokens found'}
+              <div className="flex flex-col items-center justify-center gap-2 py-16 px-4 text-center">
+                {isSearchLoading ? (
+                  <>
+                    <div className="h-7 w-7 rounded-full border-2 border-blue-500/30 border-t-blue-400 animate-spin" />
+                    <div className="text-sm text-gray-400">Loading tokens…</div>
+                  </>
+                ) : (
+                  <>
+                    <FaSearch className="h-6 w-6 text-gray-600" />
+                    <div className="text-sm font-medium text-gray-300">No tokens found</div>
+                    <div className="text-xs text-gray-500">Try a different name or symbol.</div>
+                  </>
+                )}
               </div>
             ) : null}
           </>

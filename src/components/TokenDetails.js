@@ -3,6 +3,44 @@ import { FaGlobe, FaTwitter, FaTelegram, FaDiscord, FaGithub, FaReddit } from 'r
 import TokenSentiment from './TokenSentiment';
 // TradingViewChart removed in token details as requested
 
+const formatUsd = (value, { compactBelowOne = false } = {}) => {
+  const n = Number(value);
+  if (!Number.isFinite(n) || n === 0) return 'N/A';
+  if (compactBelowOne && n < 1) {
+    return `$${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 8 })}`;
+  }
+  return `$${n.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+};
+
+const formatAmount = (value) => {
+  const n = Number(value);
+  if (!Number.isFinite(n) || n === 0) return 'N/A';
+  return n.toLocaleString(undefined, { maximumFractionDigits: 0 });
+};
+
+const StatCard = ({ label, value, sub, subClassName = 'text-gray-500' }) => (
+  <div className="rounded-xl border border-white/[0.07] bg-white/[0.03] px-3 py-2.5 transition-colors hover:border-white/15 hover:bg-white/[0.05]">
+    <div className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">{label}</div>
+    <div className="mt-1 text-sm lg:text-base font-semibold text-white tabular-nums truncate" title={String(value)}>
+      {value}
+    </div>
+    {sub ? <div className={`mt-0.5 text-[11px] tabular-nums truncate ${subClassName}`}>{sub}</div> : null}
+  </div>
+);
+
+const SocialLink = ({ href, icon: Icon, label }) => (
+  <a
+    href={href}
+    target="_blank"
+    rel="noopener noreferrer"
+    onClick={(e) => e.stopPropagation()}
+    className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-medium text-gray-300 transition-colors hover:border-white/20 hover:bg-white/[0.08] hover:text-white"
+  >
+    <Icon className="h-3.5 w-3.5" />
+    {label}
+  </a>
+);
+
 const TokenDetails = ({
   token,
   showReviews,
@@ -13,210 +51,151 @@ const TokenDetails = ({
   selectedDex,
   onDexClick,
   setShowDexFrame,
-  isMobile = false
+  isMobile = false,
+  colSpan = 9
 }) => {
+  const change24h = Number(token.priceChangePercentage24h) || 0;
+  const isUp = change24h >= 0;
 
+  const stats = [
+    { label: 'Market Cap', value: formatUsd(token.marketCap) },
+    { label: 'Volume 24h', value: formatUsd(token.totalVolume) },
+    { label: 'Fully Diluted Val.', value: formatUsd(token.fullyDilutedValuation) },
+    { label: '24h High', value: formatUsd(token.high24h, { compactBelowOne: true }) },
+    { label: '24h Low', value: formatUsd(token.low24h, { compactBelowOne: true }) },
+    {
+      label: 'All Time High',
+      value: formatUsd(token.ath, { compactBelowOne: true }),
+      sub:
+        typeof token.athChangePercentage === 'number'
+          ? `${token.athChangePercentage.toFixed(2)}% from ATH`
+          : null,
+      subClassName: 'text-rose-400'
+    },
+    { label: 'Market Cap Rank', value: token.marketCapRank ? `#${token.marketCapRank}` : 'N/A' },
+    {
+      label: 'Circulating Supply',
+      value: formatAmount(token.circulatingSupply),
+      sub: token.maxSupply ? `Max ${formatAmount(token.maxSupply)}` : null
+    },
+    { label: 'Total Supply', value: formatAmount(token.totalSupply) },
+    {
+      label: 'Price',
+      value: formatUsd(token.currentPrice, { compactBelowOne: true }),
+      sub: `${change24h.toFixed(2)}% (24h)`,
+      subClassName: isUp ? 'text-emerald-400' : 'text-rose-400'
+    }
+  ];
 
-  // Common content component
-  const TokenDetailsContent = () => (
-    <div className="p-4 md:p-6">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center">
+  const links = [
+    token.links?.homepage && { href: token.links.homepage, icon: FaGlobe, label: 'Website' },
+    token.links?.twitter_screen_name && {
+      href: `https://twitter.com/${token.links.twitter_screen_name}`,
+      icon: FaTwitter,
+      label: 'Twitter'
+    },
+    token.links?.telegram_channel_identifier && {
+      href: `https://t.me/${token.links.telegram_channel_identifier}`,
+      icon: FaTelegram,
+      label: 'Telegram'
+    },
+    token.links?.discord && { href: token.links.discord, icon: FaDiscord, label: 'Discord' },
+    token.links?.github && { href: token.links.github, icon: FaGithub, label: 'Github' },
+    token.links?.subreddit_url && { href: token.links.subreddit_url, icon: FaReddit, label: 'Reddit' }
+  ].filter(Boolean);
+
+  const content = (
+    <div className="p-4 lg:p-6">
+      {/* Header: identity, live price and primary action */}
+      <div className="flex flex-wrap items-start justify-between gap-4 pb-4 mb-5 border-b border-white/[0.08]">
+        <div className="flex items-center gap-3 md:gap-4 min-w-0">
           <img
             src={token.image}
             alt={token.name}
-            className="w-10 h-10 md:w-12 md:h-12 rounded-full mr-3 md:mr-4"
+            className="w-11 h-11 md:w-14 md:h-14 rounded-full bg-gray-800 ring-1 ring-white/10"
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = '/placeholder.png';
+            }}
           />
-          <div>
-            <h3 className="text-lg md:text-2xl font-bold text-white">
-              {token.name} ({token.symbol.toUpperCase()})
-            </h3>
-            <p className="text-gray-400 text-sm md:text-base">
-              Rank #{token.marketCapRank}
-            </p>
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="text-lg md:text-2xl font-bold text-white truncate">{token.name}</h3>
+              <span className="rounded-md bg-white/[0.06] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-gray-300">
+                {token.symbol?.toUpperCase()}
+              </span>
+              {token.marketCapRank ? (
+                <span className="rounded-md bg-blue-500/10 px-2 py-0.5 text-[11px] font-semibold text-blue-300">
+                  Rank #{token.marketCapRank}
+                </span>
+              ) : null}
+            </div>
+            <div className="mt-1.5 flex items-baseline gap-2">
+              <span className="text-xl md:text-2xl font-bold text-white tabular-nums">
+                {formatUsd(token.currentPrice, { compactBelowOne: true })}
+              </span>
+              <span
+                className={`text-sm font-semibold tabular-nums ${
+                  isUp ? 'text-emerald-400' : 'text-rose-400'
+                }`}
+              >
+                {isUp ? '▲' : '▼'} {Math.abs(change24h).toFixed(2)}%
+              </span>
+            </div>
           </div>
         </div>
-        <button
-          onClick={onClose}
-          className="text-gray-400 hover:text-white focus:outline-none"
-        >
-          <span className="sr-only">Close</span>
-          <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 mb-4 md:mb-6">
-        <div className="bg-gray-700/50 p-3 md:p-4 rounded-lg">
-          <h4 className="text-xs md:text-sm font-medium text-gray-400 mb-2">Price</h4>
-          <p className="text-lg md:text-xl font-bold text-white">
-            ${token.currentPrice.toLocaleString(undefined, {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 6
-            })}
-          </p>
-          <p className={`text-sm ${
-            token.priceChangePercentage24h >= 0 ? 'text-green-400' : 'text-red-400'
-          }`}>
-            {token.priceChangePercentage24h.toFixed(2)}% (24h)
-          </p>
-        </div>
-
-        <div className="bg-gray-700/50 p-3 md:p-4 rounded-lg">
-          <h4 className="text-xs md:text-sm font-medium text-gray-400 mb-2">Market Cap</h4>
-          <p className="text-lg md:text-xl font-bold text-white">
-            ${token.marketCap.toLocaleString()}
-          </p>
-          <p className="text-sm text-gray-400">
-            Volume: ${token.totalVolume.toLocaleString()}
-          </p>
+        <div className="flex items-center gap-2 ml-auto">
+          <a
+            href={`/aquaswap?symbol=${encodeURIComponent(token.symbol)}`}
+            onClick={(e) => e.stopPropagation()}
+            className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-cyan-600 px-3.5 py-2 text-xs md:text-sm font-semibold text-white shadow-lg shadow-blue-900/25 transition-all hover:from-blue-500 hover:to-cyan-500 hover:shadow-blue-500/25"
+          >
+            Buy / Trade on AquaSwap
+          </a>
+          <button
+            onClick={onClose}
+            className="rounded-lg border border-white/10 bg-white/[0.04] p-2 text-gray-400 transition-colors hover:bg-white/[0.08] hover:text-white focus:outline-none"
+          >
+            <span className="sr-only">Close</span>
+            <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
       </div>
 
-      <div className="mb-4 md:mb-6">
-        <TokenSentiment 
-          tokenId={token.id} 
-          currentUser={currentUser}
-          showNotification={showNotification}
-        />
-      </div>
+      {/* Metrics fill the wide column, sentiment sits alongside instead of leaving dead space */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 lg:gap-5">
+        <div className="xl:col-span-2 space-y-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 lg:gap-3">
+            {stats.map((stat) => (
+              <StatCard
+                key={stat.label}
+                label={stat.label}
+                value={stat.value}
+                sub={stat.sub}
+                subClassName={stat.subClassName}
+              />
+            ))}
+          </div>
 
-      {/* Chart section removed per request */}
-
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mb-4 md:mb-6">
-        <div className="bg-gray-700/50 p-3 md:p-4 rounded-lg">
-          <h4 className="text-xs font-medium text-gray-400 mb-1 md:mb-2">24h High</h4>
-          <p className="text-sm md:text-lg font-bold text-white">
-            ${token.high24h?.toLocaleString() || 'N/A'}
-          </p>
-        </div>
-
-        <div className="bg-gray-700/50 p-3 md:p-4 rounded-lg">
-          <h4 className="text-xs font-medium text-gray-400 mb-1 md:mb-2">24h Low</h4>
-          <p className="text-sm md:text-lg font-bold text-white">
-            ${token.low24h?.toLocaleString() || 'N/A'}
-          </p>
-        </div>
-
-        <div className="bg-gray-700/50 p-3 md:p-4 rounded-lg">
-          <h4 className="text-xs font-medium text-gray-400 mb-1 md:mb-2">All Time High</h4>
-          <p className="text-sm md:text-lg font-bold text-white">
-            ${token.ath?.toLocaleString() || 'N/A'}
-          </p>
-          <p className="text-xs md:text-sm text-red-400">
-            {token.athChangePercentage?.toFixed(2)}%
-          </p>
-        </div>
-
-        <div className="bg-gray-700/50 p-3 md:p-4 rounded-lg">
-          <h4 className="text-xs font-medium text-gray-400 mb-1 md:mb-2">Circulating Supply</h4>
-          <p className="text-sm md:text-lg font-bold text-white">
-            {token.circulatingSupply?.toLocaleString() || 'N/A'}
-          </p>
-          {token.maxSupply && (
-            <p className="text-xs md:text-sm text-gray-400">
-              Max: {token.maxSupply.toLocaleString()}
-            </p>
+          {links.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {links.map((link) => (
+                <SocialLink key={link.label} href={link.href} icon={link.icon} label={link.label} />
+              ))}
+            </div>
           )}
         </div>
-      </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mb-4 md:mb-6">
-        <div className="bg-gray-700/50 p-3 md:p-4 rounded-lg">
-          <h4 className="text-xs font-medium text-gray-400 mb-1 md:mb-2">Market Cap Rank</h4>
-          <p className="text-sm md:text-lg font-bold text-white">#{token.marketCapRank || 'N/A'}</p>
+        <div className="xl:col-span-1" onClick={(e) => e.stopPropagation()}>
+          <TokenSentiment
+            tokenId={token.id}
+            currentUser={currentUser}
+            showNotification={showNotification}
+          />
         </div>
-
-        <div className="bg-gray-700/50 p-3 md:p-4 rounded-lg">
-          <h4 className="text-xs font-medium text-gray-400 mb-1 md:mb-2">Total Supply</h4>
-          <p className="text-sm md:text-lg font-bold text-white">
-            {token.totalSupply?.toLocaleString() || 'N/A'}
-          </p>
-        </div>
-
-        <div className="bg-gray-700/50 p-3 md:p-4 rounded-lg">
-          <h4 className="text-xs font-medium text-gray-400 mb-1 md:mb-2">Fully Diluted Valuation</h4>
-          <p className="text-sm md:text-lg font-bold text-white">
-            ${token.fullyDilutedValuation?.toLocaleString() || 'N/A'}
-          </p>
-        </div>
-
-        <div className="bg-gray-700/50 p-3 md:p-4 rounded-lg">
-          <h4 className="text-xs font-medium text-gray-400 mb-1 md:mb-2">Total Volume</h4>
-          <p className="text-sm md:text-lg font-bold text-white">
-            ${token.totalVolume?.toLocaleString() || 'N/A'}
-          </p>
-        </div>
-      </div>
-
-      <div className="flex flex-wrap gap-2 md:gap-4 mb-4 md:mb-6">
-        {token.links?.homepage && (
-          <a
-            href={token.links.homepage}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center px-3 md:px-4 py-2 bg-gray-700 rounded-lg text-gray-300 hover:text-white hover:bg-gray-600 transition-colors text-sm"
-          >
-            <FaGlobe className="mr-2" />
-            Website
-          </a>
-        )}
-        {token.links?.twitter_screen_name && (
-          <a
-            href={`https://twitter.com/${token.links.twitter_screen_name}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center px-3 md:px-4 py-2 bg-gray-700 rounded-lg text-gray-300 hover:text-white hover:bg-gray-600 transition-colors text-sm"
-          >
-            <FaTwitter className="mr-2" />
-            Twitter
-          </a>
-        )}
-        {token.links?.telegram_channel_identifier && (
-          <a
-            href={`https://t.me/${token.links.telegram_channel_identifier}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center px-3 md:px-4 py-2 bg-gray-700 rounded-lg text-gray-300 hover:text-white hover:bg-gray-600 transition-colors text-sm"
-          >
-            <FaTelegram className="mr-2" />
-            Telegram
-          </a>
-        )}
-        {token.links?.discord && (
-          <a
-            href={token.links.discord}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center px-3 md:px-4 py-2 bg-gray-700 rounded-lg text-gray-300 hover:text-white hover:bg-gray-600 transition-colors text-sm"
-          >
-            <FaDiscord className="mr-2" />
-            Discord
-          </a>
-        )}
-        {token.links?.github && (
-          <a
-            href={token.links.github}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center px-3 md:px-4 py-2 bg-gray-700 rounded-lg text-gray-300 hover:text-white hover:bg-gray-600 transition-colors text-sm"
-          >
-            <FaGithub className="mr-2" />
-            Github
-          </a>
-        )}
-        {token.links?.subreddit_url && (
-          <a
-            href={token.links.subreddit_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center px-3 md:px-4 py-2 bg-gray-700 rounded-lg text-gray-300 hover:text-white hover:bg-gray-600 transition-colors text-sm"
-          >
-            <FaReddit className="mr-2" />
-            Reddit
-          </a>
-        )}
       </div>
     </div>
   );
@@ -224,27 +203,19 @@ const TokenDetails = ({
   // Conditional rendering based on mobile vs desktop
   if (isMobile) {
     return (
-      <div className="bg-gray-800/90 backdrop-blur-sm border border-gray-700/50 rounded-lg mt-3">
-        <TokenDetailsContent />
+      <div className="rounded-xl border border-blue-500/25 bg-gray-900/80 backdrop-blur-sm shadow-xl shadow-black/30">
+        {content}
       </div>
     );
   }
 
   return (
-    <tr className="bg-gray-800/90 backdrop-blur-sm border-t border-b border-gray-700/50">
-      <td colSpan="7" className="p-0">
-        <TokenDetailsContent />
-        <div className="flex items-center justify-end px-4 pb-4">
-          <a
-            href={`/aquaswap?symbol=${encodeURIComponent(token.symbol)}`}
-            className="inline-flex items-center px-3 py-1.5 md:px-4 md:py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs md:text-sm"
-          >
-            Buy / Trade on AquaSwap
-          </a>
-        </div>
+    <tr className="bg-gray-900/80 backdrop-blur-sm border-t border-b border-blue-500/25">
+      <td colSpan={colSpan} className="p-0">
+        {content}
       </td>
     </tr>
   );
 };
 
-export default TokenDetails; 
+export default TokenDetails;
