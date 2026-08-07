@@ -278,6 +278,7 @@ const LinkInBio = () => {
   const [backgroundVideoMounted, setBackgroundVideoMounted] = useState(false);
   const [backgroundVideoReady, setBackgroundVideoReady] = useState(false);
   const [backgroundVideoFailed, setBackgroundVideoFailed] = useState(false);
+  const [backgroundImageFailed, setBackgroundImageFailed] = useState(false);
   const [allowBackgroundVideo] = useState(shouldLoadBackgroundVideo);
 
   useEffect(() => {
@@ -458,7 +459,10 @@ const LinkInBio = () => {
   const taglineText = typeof linkInBioTagline === 'string' ? linkInBioTagline.trim() : '';
   const accentHex = (linkInBioAccentColor && /^#[0-9A-Fa-f]{3,6}$/.test(linkInBioAccentColor)) ? linkInBioAccentColor : '#22d3ee';
   const buttonHex = (linkInBioButtonColor && /^#[0-9A-Fa-f]{3,6}$/.test(linkInBioButtonColor)) ? linkInBioButtonColor : accentHex;
-  const hasBackgroundImage = linkInBioBackgroundImageUrl && typeof linkInBioBackgroundImageUrl === 'string' && linkInBioBackgroundImageUrl.trim().length > 0 && /^https?:\/\//i.test(linkInBioBackgroundImageUrl.trim());
+  // A URL that never loads (a video page link pasted into the shared background
+  // field, a dead host) must fall back to the gradient and orbs rather than
+  // leaving a bare tint over an empty page.
+  const hasBackgroundImage = !backgroundImageFailed && linkInBioBackgroundImageUrl && typeof linkInBioBackgroundImageUrl === 'string' && linkInBioBackgroundImageUrl.trim().length > 0 && /^https?:\/\//i.test(linkInBioBackgroundImageUrl.trim());
   const hasBackgroundVideo = Boolean(backgroundVideoUrl);
   // Tints, orbs and tile contrast all key off "is there full-bleed media",
   // which a video satisfies just as an image does.
@@ -543,16 +547,19 @@ const LinkInBio = () => {
         fontFamily: "'DM Sans', sans-serif"
       }}
     >
-      {/* Full-screen background: image and/or looping video layer (absolute so it stays behind content; img tag avoids CSS url escaping issues) */}
+      {/* Full-screen background: image and/or looping video layer. Fixed to the
+          viewport, not the page box — sizing it to the full scroll height would
+          make `object-cover` crop a 16:9 source down to a narrow vertical strip.
+          The img tag (rather than a CSS url) avoids url-escaping issues. */}
       {hasBackgroundMedia && (
-        <div className="absolute inset-0 w-full min-h-full pointer-events-none" style={{ zIndex: 0 }}>
+        <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 0 }}>
           {hasBackgroundImage && (
             <img
               src={linkInBioBackgroundImageUrl.trim()}
               alt=""
               referrerPolicy="no-referrer"
               className="absolute inset-0 w-full h-full object-cover object-center"
-              style={{ minHeight: '100vh', minWidth: '100%' }}
+              onError={() => setBackgroundImageFailed(true)}
             />
           )}
           {hasBackgroundVideo && backgroundVideoMounted && (
@@ -568,7 +575,7 @@ const LinkInBio = () => {
               aria-hidden="true"
               tabIndex={-1}
               className="absolute inset-0 w-full h-full object-cover object-center transition-opacity duration-700"
-              style={{ minHeight: '100vh', minWidth: '100%', opacity: backgroundVideoReady ? 1 : 0 }}
+              style={{ opacity: backgroundVideoReady ? 1 : 0 }}
               onCanPlay={() => setBackgroundVideoReady(true)}
               onError={() => setBackgroundVideoFailed(true)}
             />
