@@ -3445,7 +3445,7 @@ function App() {
                                       }}
                                       className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-blue-600/50 transition-colors"
                                     >
-                                      🎨 Create Banner Ad
+                                      🎨 Advertise
                                     </button>
                                     <button
                                       onClick={() => {
@@ -3627,7 +3627,7 @@ function App() {
                                       className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all w-full text-left"
                                     >
                                       <span className="text-lg">🎨</span>
-                                      <span className="font-medium">Create Banner Ad</span>
+                                      <span className="font-medium">Advertise</span>
                                     </button>
                                     <div className="h-px bg-white/10 my-2" />
                                     <button

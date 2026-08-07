@@ -221,7 +221,7 @@ const AquaFi = ({ currentUser, showNotification, onLogin, onLogout, onCreateAcco
                             }}
                             className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-blue-600/50 transition-colors"
                           >
-                            🎨 Create Banner Ad
+                            🎨 Advertise
                           </button>
                           <button
                             onClick={() => {
@@ -306,7 +306,7 @@ const AquaFi = ({ currentUser, showNotification, onLogin, onLogout, onCreateAcco
                       setIsMobileMenuOpen(false);
                     }}
                     icon="🎨"
-                    label="Create Banner Ad"
+                    label="Advertise"
                   />
                   <MobileNavButton
                     onClick={() => {

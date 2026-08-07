@@ -460,7 +460,7 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
                              }}
                              className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-yellow-400 hover:bg-blue-600/50 transition-colors"
                            >
-                             🎨 Create Banner Ad
+                             🎨 Advertise
                            </button>
                            <button
                              onClick={() => {
@@ -549,7 +549,7 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
                       setIsMobileMenuOpen(false);
                     }}
                     icon="🎨"
-                    label="Create Banner Ad"
+                    label="Advertise"
                   />
                   <MobileNavButton
                     onClick={() => {

@@ -1060,7 +1060,7 @@ const ProjectInfo = ({ currentUser, ads = [], onAdPatched }) => {
               className="mt-6 w-full inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white font-semibold rounded-lg transition-all duration-300 transform hover:scale-[1.02] shadow-lg"
             >
               <FaRocket className="mr-2" />
-              Create Banner Ad
+              Advertise
               <FaArrowRight className="ml-2" />
             </button>
           </div>

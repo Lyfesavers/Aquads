@@ -559,7 +559,7 @@ export const UserDropdownMockup = () => (
               ➕ List Project
             </button>
             <button className="w-full text-left px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-600/50 text-sm flex items-center gap-2">
-              🎨 Create Banner Ad
+              🎨 Advertise
             </button>
             <button className="w-full text-left px-4 py-2 text-gray-300 hover:text-white hover:bg-purple-600/50 text-sm flex items-center gap-2">
               ⚙️ Edit Profile

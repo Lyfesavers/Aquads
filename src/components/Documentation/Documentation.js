@@ -489,7 +489,7 @@ When clicking your username, you'll see:
 |--------|----------|
 | 📊 Dashboard | Open main dashboard |
 | ➕ List Project | Create new token listing |
-| 🎨 Create Banner Ad | Create banner advertisement |
+| 🎨 Advertise | Create banner advertisement |
 | ⚙️ Edit Profile | Open profile settings |
 | 🚪 Logout | Sign out of account |
 
@@ -1295,7 +1295,7 @@ Banner ads provide premium visibility across the Aquads platform.
 ### Creating a Banner
 
 **Step 1: Access Banner Creation**
-- Dashboard > Create Banner Ad
+- Dashboard > Advertise
 - Or Navigation > Paid Ads
 
 **Step 2: Design Your Banner**

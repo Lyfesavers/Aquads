@@ -1180,7 +1180,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
                             }}
                             className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-blue-600/50 transition-colors"
                           >
-                            🎨 Create Banner Ad
+                            🎨 Advertise
                           </button>
                           <button
                             onClick={() => {
@@ -1280,7 +1280,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
                       setIsMobileMenuOpen(false);
                     }}
                     icon="🎨"
-                    label="Create Banner Ad"
+                    label="Advertise"
                   />
                   <MobileNavButton
                     onClick={() => {
