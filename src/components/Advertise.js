@@ -44,6 +44,9 @@ const BANNER_PRICING = [
   { duration: '7 Days', price: 40, note: 'Best value for sustained reach' }
 ];
 
+/** Real screenshot of the home page placement; falls back to the wireframe if absent. */
+const HERO_SCREENSHOT = '/advertise-hero.jpeg';
+
 const PLATFORM_STATS = [
   { value: '750+', label: 'Monthly active users' },
   { value: '16 min', label: 'Average time on site' },
@@ -56,56 +59,83 @@ const PLATFORM_STATS = [
    can see exactly where their banner lands before they buy.
 --------------------------------------------------------------------------- */
 
-const Wire = ({ className = '' }) => <div className={`rounded-[2px] bg-white/10 ${className}`} />;
+const Wire = ({ className = '' }) => (
+  <div className={`rounded-[2px] bg-gradient-to-r from-white/[0.16] to-white/[0.06] ${className}`} />
+);
 
-const MockScreen = ({ children }) => (
-  <div className="relative w-full aspect-[16/11] overflow-hidden rounded-lg border border-white/10 bg-[#0a0f1d]">
-    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(56,189,248,0.08),_transparent_60%)]" />
-    <div className="relative flex h-full flex-col">{children}</div>
+/**
+ * Browser frame around each page mockup. Hovering the parent card dims the
+ * page chrome via the overlay so only the ad slot stays lit — the ad slot
+ * sits above the overlay on z-20.
+ */
+const MockScreen = ({ url, glow = 'rgba(56,189,248,0.12)', children }) => (
+  <div className="w-full overflow-hidden rounded-lg border border-white/10 bg-[#0a0f1d] shadow-lg shadow-black/40">
+    <div className="flex items-center gap-1.5 border-b border-white/10 bg-white/[0.06] px-2 py-1.5">
+      <div className="flex gap-1">
+        <div className="h-1.5 w-1.5 rounded-full bg-red-400/50" />
+        <div className="h-1.5 w-1.5 rounded-full bg-yellow-400/50" />
+        <div className="h-1.5 w-1.5 rounded-full bg-green-400/50" />
+      </div>
+      <div className="ml-1 flex-1 truncate rounded-full bg-black/40 px-2 py-[2px] text-[7px] font-medium text-gray-500">
+        aquads.xyz{url}
+      </div>
+    </div>
+
+    <div className="relative aspect-[16/10]">
+      <div
+        className="absolute inset-0"
+        style={{ background: `radial-gradient(ellipse at top, ${glow}, transparent 62%)` }}
+      />
+      <div className="relative flex h-full flex-col">{children}</div>
+      <div className="pointer-events-none absolute inset-0 z-10 transition-colors duration-500 group-hover:bg-black/60" />
+    </div>
   </div>
 );
 
 const MockNav = () => (
-  <div className="flex shrink-0 items-center gap-1.5 border-b border-white/10 bg-white/[0.04] px-2 py-1.5">
-    <div className="h-2 w-2 rounded-full bg-cyan-400/80" />
+  <div className="flex shrink-0 items-center gap-1.5 border-b border-white/10 bg-white/[0.05] px-2 py-1.5">
+    <div className="h-2 w-2 rounded-full bg-gradient-to-br from-cyan-300 to-blue-500" />
     <Wire className="h-1.5 w-6" />
-    <div className="ml-auto flex gap-1">
+    <div className="ml-auto flex items-center gap-1">
       <Wire className="h-1.5 w-4" />
       <Wire className="h-1.5 w-4" />
       <Wire className="h-1.5 w-4" />
-      <div className="h-1.5 w-5 rounded-[2px] bg-yellow-400/40" />
+      <div className="h-1.5 w-5 rounded-[2px] bg-gradient-to-r from-yellow-400/60 to-amber-500/50" />
     </div>
   </div>
 );
 
 const MockAdSlot = ({ className = '' }) => (
   <div
-    className={`flex items-center justify-center rounded bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 shadow-lg shadow-blue-500/40 ring-1 ring-white/25 ${className}`}
+    className={`relative z-20 flex items-center justify-center overflow-hidden rounded bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-400 shadow-lg shadow-blue-500/50 ring-1 ring-white/30 transition-all duration-500 group-hover:shadow-xl group-hover:shadow-cyan-400/60 group-hover:ring-white/70 ${className}`}
   >
-    <span className="text-[8px] font-extrabold tracking-[0.18em] text-white">YOUR AD</span>
+    <div className="absolute inset-0 -translate-x-full bg-[linear-gradient(110deg,transparent_30%,rgba(255,255,255,0.45)_50%,transparent_70%)] transition-transform duration-1000 group-hover:translate-x-full" />
+    <span className="relative text-[8px] font-extrabold tracking-[0.18em] text-white drop-shadow">
+      YOUR AD
+    </span>
   </div>
 );
 
 /** Home page: banner sits between the live bubble map and the token list. */
 const BubbleMapMock = () => (
-  <MockScreen>
+  <MockScreen url="/" glow="rgba(56,189,248,0.14)">
     <MockNav />
-    <div className="flex shrink-0 gap-1.5 px-2 py-1">
-      {['w-4', 'w-3', 'w-5', 'w-3', 'w-4'].map((w, i) => (
-        <div key={i} className="flex items-center gap-0.5">
-          <div className="h-1 w-1 rounded-full bg-emerald-400/70" />
+    <div className="flex shrink-0 gap-1 px-2 py-1">
+      {['w-4', 'w-3', 'w-5', 'w-3'].map((w, i) => (
+        <div key={i} className="flex items-center gap-0.5 rounded-full bg-white/[0.06] px-1 py-[2px]">
+          <div className="h-1 w-1 rounded-full bg-emerald-400/80" />
           <Wire className={`h-1 ${w}`} />
         </div>
       ))}
     </div>
     <div className="relative flex-1 px-2">
-      <div className="absolute left-[8%] top-[18%] h-7 w-7 rounded-full bg-gradient-to-br from-blue-400/50 to-blue-600/30 ring-1 ring-white/20" />
-      <div className="absolute left-[30%] top-[8%] h-9 w-9 rounded-full bg-gradient-to-br from-purple-400/50 to-purple-600/30 ring-1 ring-white/20" />
-      <div className="absolute left-[54%] top-[22%] h-6 w-6 rounded-full bg-gradient-to-br from-cyan-400/50 to-cyan-600/30 ring-1 ring-white/20" />
-      <div className="absolute left-[72%] top-[6%] h-8 w-8 rounded-full bg-gradient-to-br from-emerald-400/50 to-emerald-600/30 ring-1 ring-white/20" />
-      <div className="absolute left-[20%] top-[52%] h-5 w-5 rounded-full bg-gradient-to-br from-pink-400/50 to-pink-600/30 ring-1 ring-white/20" />
-      <div className="absolute left-[45%] top-[56%] h-6 w-6 rounded-full bg-gradient-to-br from-amber-400/50 to-amber-600/30 ring-1 ring-white/20" />
-      <div className="absolute left-[66%] top-[54%] h-4 w-4 rounded-full bg-gradient-to-br from-sky-400/50 to-sky-600/30 ring-1 ring-white/20" />
+      <div className="absolute left-[8%] top-[16%] h-7 w-7 rounded-full bg-gradient-to-br from-blue-300/70 to-blue-600/30 shadow-md shadow-blue-500/20 ring-1 ring-white/25" />
+      <div className="absolute left-[30%] top-[6%] h-9 w-9 rounded-full bg-gradient-to-br from-purple-300/70 to-purple-600/30 shadow-md shadow-purple-500/20 ring-1 ring-white/25" />
+      <div className="absolute left-[54%] top-[20%] h-6 w-6 rounded-full bg-gradient-to-br from-cyan-300/70 to-cyan-600/30 shadow-md shadow-cyan-500/20 ring-1 ring-white/25" />
+      <div className="absolute left-[73%] top-[5%] h-8 w-8 rounded-full bg-gradient-to-br from-emerald-300/70 to-emerald-600/30 shadow-md shadow-emerald-500/20 ring-1 ring-white/25" />
+      <div className="absolute left-[19%] top-[52%] h-5 w-5 rounded-full bg-gradient-to-br from-pink-300/70 to-pink-600/30 ring-1 ring-white/25" />
+      <div className="absolute left-[44%] top-[56%] h-6 w-6 rounded-full bg-gradient-to-br from-amber-300/70 to-amber-600/30 ring-1 ring-white/25" />
+      <div className="absolute left-[67%] top-[54%] h-4 w-4 rounded-full bg-gradient-to-br from-sky-300/70 to-sky-600/30 ring-1 ring-white/25" />
     </div>
     <div className="shrink-0 px-2 pb-1">
       <MockAdSlot className="h-5" />
@@ -113,10 +143,12 @@ const BubbleMapMock = () => (
     <div className="shrink-0 space-y-[3px] px-2 pb-2">
       {[0, 1, 2].map((i) => (
         <div key={i} className="flex items-center gap-1.5">
-          <div className="h-2 w-2 rounded-full bg-white/15" />
+          <div className="h-2 w-2 rounded-full bg-gradient-to-br from-white/30 to-white/10" />
           <Wire className="h-1.5 flex-1" />
           <Wire className="h-1.5 w-5" />
-          <div className="h-1.5 w-4 rounded-[2px] bg-emerald-400/40" />
+          <div
+            className={`h-1.5 w-4 rounded-[2px] ${i === 1 ? 'bg-rose-400/60' : 'bg-emerald-400/60'}`}
+          />
         </div>
       ))}
     </div>
@@ -125,20 +157,37 @@ const BubbleMapMock = () => (
 
 /** Freelancer Hub: banner is the first thing above search and service cards. */
 const MarketplaceMock = () => (
-  <MockScreen>
+  <MockScreen url="/marketplace" glow="rgba(129,140,248,0.14)">
     <MockNav />
     <div className="shrink-0 px-2 py-1.5">
       <MockAdSlot className="h-5" />
     </div>
-    <div className="shrink-0 px-2 pb-1.5">
-      <div className="h-2 w-full rounded-full bg-white/[0.07]" />
+    <div className="flex shrink-0 items-center gap-1 px-2 pb-1.5">
+      <div className="flex h-2.5 flex-1 items-center gap-1 rounded-full bg-white/[0.07] px-1.5">
+        <div className="h-1 w-1 rounded-full ring-1 ring-white/30" />
+        <Wire className="h-1 w-10" />
+      </div>
+      <div className="h-2.5 w-6 rounded-full bg-gradient-to-r from-blue-500/50 to-cyan-500/40" />
     </div>
     <div className="grid flex-1 grid-cols-3 gap-1.5 px-2 pb-2">
       {[0, 1, 2, 3, 4, 5].map((i) => (
-        <div key={i} className="flex flex-col gap-1 rounded border border-white/10 bg-white/[0.04] p-1">
-          <div className="h-1/2 rounded-[2px] bg-white/10" />
-          <Wire className="h-1 w-full" />
-          <Wire className="h-1 w-2/3" />
+        <div
+          key={i}
+          className="flex flex-col gap-1 rounded border border-white/10 bg-white/[0.05] p-1"
+        >
+          <div className="h-1/2 rounded-[2px] bg-gradient-to-br from-white/15 to-white/[0.04]" />
+          <div className="flex items-center gap-0.5">
+            <div className="h-1.5 w-1.5 rounded-full bg-gradient-to-br from-cyan-300/70 to-blue-500/40" />
+            <Wire className="h-1 flex-1" />
+          </div>
+          <div className="flex items-center justify-between">
+            <div className="flex gap-[1px]">
+              {[0, 1, 2].map((s) => (
+                <div key={s} className="h-[3px] w-[3px] rounded-[1px] bg-amber-400/70" />
+              ))}
+            </div>
+            <div className="h-1 w-3 rounded-[1px] bg-emerald-400/50" />
+          </div>
         </div>
       ))}
     </div>
@@ -147,19 +196,34 @@ const MarketplaceMock = () => (
 
 /** GameHub: banner sits directly under the nav, above the arcade hero. */
 const GameHubMock = () => (
-  <MockScreen>
+  <MockScreen url="/games" glow="rgba(168,85,247,0.16)">
     <MockNav />
     <div className="shrink-0 px-2 py-1.5">
       <MockAdSlot className="h-5" />
     </div>
     <div className="shrink-0 px-2 pb-1.5">
-      <div className="flex h-6 items-center justify-center rounded bg-gradient-to-r from-indigo-500/30 to-purple-500/30 ring-1 ring-white/10">
+      <div className="flex h-6 items-center justify-center gap-1 rounded bg-gradient-to-r from-indigo-500/40 via-purple-500/30 to-fuchsia-500/30 ring-1 ring-white/15">
         <Wire className="h-1.5 w-12" />
       </div>
     </div>
     <div className="grid flex-1 grid-cols-4 gap-1.5 px-2 pb-2">
-      {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
-        <div key={i} className="rounded border border-white/10 bg-white/[0.05]" />
+      {[
+        'from-rose-400/50 to-rose-600/20',
+        'from-sky-400/50 to-sky-600/20',
+        'from-emerald-400/50 to-emerald-600/20',
+        'from-amber-400/50 to-amber-600/20',
+        'from-violet-400/50 to-violet-600/20',
+        'from-cyan-400/50 to-cyan-600/20',
+        'from-pink-400/50 to-pink-600/20',
+        'from-lime-400/50 to-lime-600/20'
+      ].map((tone, i) => (
+        <div
+          key={i}
+          className="flex flex-col items-center justify-center gap-1 rounded border border-white/10 bg-white/[0.05] p-1"
+        >
+          <div className={`h-3 w-3 rounded-[3px] bg-gradient-to-br ${tone}`} />
+          <Wire className="h-1 w-4/5" />
+        </div>
       ))}
     </div>
   </MockScreen>
@@ -167,17 +231,25 @@ const GameHubMock = () => (
 
 /** AquaSwap: banner sits above the swap card on mobile, below it on desktop. */
 const AquaSwapMock = () => (
-  <MockScreen>
+  <MockScreen url="/aquaswap" glow="rgba(34,211,238,0.16)">
     <MockNav />
     <div className="flex flex-1 items-center justify-center px-2 py-2">
-      <div className="w-3/5 space-y-1 rounded-lg border border-white/10 bg-white/[0.05] p-1.5">
+      <div className="w-3/5 space-y-1 rounded-lg border border-white/10 bg-white/[0.06] p-1.5 shadow-lg shadow-black/30">
         <Wire className="h-1.5 w-8" />
-        <div className="h-5 rounded bg-white/[0.08]" />
-        <div className="flex justify-center">
-          <div className="h-3 w-3 rounded-full bg-cyan-400/40" />
+        <div className="flex h-5 items-center gap-1 rounded bg-white/[0.09] px-1">
+          <div className="h-2.5 w-2.5 rounded-full bg-gradient-to-br from-amber-300/80 to-orange-500/50" />
+          <Wire className="h-1 w-5" />
+          <Wire className="ml-auto h-1 w-4" />
         </div>
-        <div className="h-5 rounded bg-white/[0.08]" />
-        <div className="h-3 rounded bg-gradient-to-r from-blue-500/50 to-cyan-500/50" />
+        <div className="flex justify-center">
+          <div className="h-3 w-3 rounded-full bg-gradient-to-br from-cyan-300/70 to-blue-500/50 ring-1 ring-white/20" />
+        </div>
+        <div className="flex h-5 items-center gap-1 rounded bg-white/[0.09] px-1">
+          <div className="h-2.5 w-2.5 rounded-full bg-gradient-to-br from-violet-300/80 to-purple-500/50" />
+          <Wire className="h-1 w-5" />
+          <Wire className="ml-auto h-1 w-4" />
+        </div>
+        <div className="h-3 rounded bg-gradient-to-r from-blue-500/60 to-cyan-500/60" />
       </div>
     </div>
     <div className="shrink-0 px-2 pb-2">
@@ -188,25 +260,30 @@ const AquaSwapMock = () => (
 
 /** AquaFi: banner runs above the savings pools and portfolio analytics. */
 const AquaFiMock = () => (
-  <MockScreen>
+  <MockScreen url="/aquafi" glow="rgba(45,212,191,0.15)">
     <MockNav />
     <div className="shrink-0 px-2 py-1.5">
       <MockAdSlot className="h-5" />
     </div>
     <div className="grid shrink-0 grid-cols-3 gap-1.5 px-2 pb-1.5">
-      {[0, 1, 2].map((i) => (
-        <div key={i} className="space-y-1 rounded border border-white/10 bg-white/[0.04] p-1">
+      {['from-cyan-400/50', 'from-teal-400/50', 'from-blue-400/50'].map((tone, i) => (
+        <div key={i} className="space-y-1 rounded border border-white/10 bg-white/[0.05] p-1">
           <Wire className="h-1 w-6" />
-          <div className="h-2 rounded-[2px] bg-cyan-400/30" />
+          <div className={`h-2 rounded-[2px] bg-gradient-to-r ${tone} to-transparent`} />
         </div>
       ))}
     </div>
     <div className="flex-1 space-y-1 px-2 pb-2">
       {[0, 1, 2].map((i) => (
-        <div key={i} className="flex items-center gap-1.5 rounded border border-white/10 bg-white/[0.03] px-1 py-1">
-          <div className="h-2 w-2 rounded-full bg-blue-400/40" />
+        <div
+          key={i}
+          className="flex items-center gap-1.5 rounded border border-white/10 bg-white/[0.04] px-1 py-1"
+        >
+          <div className="h-2 w-2 rounded-full bg-gradient-to-br from-blue-300/70 to-blue-600/40" />
           <Wire className="h-1 flex-1" />
-          <div className="h-1.5 w-5 rounded-[2px] bg-emerald-400/40" />
+          <div className="rounded-[2px] bg-emerald-400/25 px-1 py-[1px]">
+            <div className="h-1 w-4 rounded-[1px] bg-emerald-300/70" />
+          </div>
         </div>
       ))}
     </div>
@@ -215,15 +292,19 @@ const AquaFiMock = () => (
 
 /** Partner Store: banner leads the verified partner directory. */
 const PartnerStoreMock = () => (
-  <MockScreen>
+  <MockScreen url="/partner-rewards" glow="rgba(217,70,239,0.14)">
     <MockNav />
     <div className="shrink-0 px-2 py-1.5">
       <MockAdSlot className="h-5" />
     </div>
     <div className="grid flex-1 grid-cols-3 gap-1.5 px-2 pb-2">
       {[0, 1, 2, 3, 4, 5].map((i) => (
-        <div key={i} className="flex flex-col items-center justify-center gap-1 rounded border border-white/10 bg-white/[0.04] p-1">
-          <div className="h-3 w-3 rounded-full bg-purple-400/40" />
+        <div
+          key={i}
+          className="relative flex flex-col items-center justify-center gap-1 rounded border border-white/10 bg-white/[0.05] p-1"
+        >
+          <div className="absolute right-[3px] top-[3px] h-1 w-1 rounded-full bg-emerald-400/80" />
+          <div className="h-3 w-3 rounded-full bg-gradient-to-br from-fuchsia-300/70 to-purple-600/40 ring-1 ring-white/20" />
           <Wire className="h-1 w-2/3" />
         </div>
       ))}
@@ -311,6 +392,7 @@ const Advertise = ({
   const [showBannerModal, setShowBannerModal] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const [heroShotMissing, setHeroShotMissing] = useState(false);
 
   const handleLoginClick = () => setShowLoginModal(true);
   const handleCreateAccountClick = () => setShowCreateAccountModal(true);
@@ -615,9 +697,18 @@ const Advertise = ({
           <div className="relative">
             <div className="absolute -inset-4 rounded-3xl bg-gradient-to-tr from-blue-600/20 via-cyan-500/10 to-transparent blur-2xl" />
             <div className="relative rounded-2xl border border-gray-700/60 bg-gray-900/70 p-3 shadow-2xl backdrop-blur-sm sm:p-4">
-              <BubbleMapMock />
+              {heroShotMissing ? (
+                <BubbleMapMock />
+              ) : (
+                <img
+                  src={HERO_SCREENSHOT}
+                  alt="Illustration of banner ad placements across crypto site layouts"
+                  className="w-full rounded-lg border border-white/10"
+                  onError={() => setHeroShotMissing(true)}
+                />
+              )}
               <p className="mt-3 text-center text-xs text-gray-500">
-                Your banner on the Aquads home page, between the bubble map and the token list
+                Banner placements at a glance — see the six real Aquads slots below
               </p>
             </div>
           </div>
@@ -669,14 +760,16 @@ const Advertise = ({
             return (
               <div
                 key={placement.id}
-                className="group overflow-hidden rounded-2xl border border-gray-700/60 bg-gray-800/40 backdrop-blur-sm transition-all duration-300 hover:border-blue-400/50 hover:shadow-2xl hover:shadow-blue-500/10"
+                className="group overflow-hidden rounded-2xl border border-gray-700/60 bg-gray-800/40 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-blue-400/60 hover:shadow-2xl hover:shadow-blue-500/20"
               >
-                <div className="border-b border-gray-700/40 bg-black/30 p-3">
+                <div className="border-b border-gray-700/40 bg-gradient-to-b from-black/50 to-black/20 p-3">
                   <Mock />
                 </div>
                 <div className="p-5">
                   <div className="flex items-center gap-2">
-                    <Icon className="h-4 w-4 text-blue-400" />
+                    <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-500/10 ring-1 ring-blue-400/20 transition-colors group-hover:bg-blue-500/20">
+                      <Icon className="h-3.5 w-3.5 text-blue-400" />
+                    </span>
                     <h3 className="font-semibold text-white">{placement.title}</h3>
                   </div>
                   <p className="mt-2 text-sm leading-relaxed text-gray-400">{placement.description}</p>
