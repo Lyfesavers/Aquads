@@ -17,6 +17,7 @@ import {
   FaWater,
   FaArrowRight,
   FaGlobe,
+  FaGoogle,
   FaSearchDollar
 } from 'react-icons/fa';
 import NotificationBell from './NotificationBell';
@@ -42,6 +43,13 @@ const BANNER_PRICING = [
   { duration: '24 Hours', price: 10, note: 'Best for launch day and AMAs' },
   { duration: '3 Days', price: 20, note: 'Covers a full listing push', popular: true },
   { duration: '7 Days', price: 40, note: 'Best value for sustained reach' }
+];
+
+/** Search terms Aquads is cited for in Google AI Overviews; listed in the badge when set. */
+const AI_OVERVIEW_TERMS = [
+  'best free listing platforms 2026',
+  'best telegram raid bots to use for raiding',
+  'how to launch a token on base'
 ];
 
 /** Real screenshot of the home page placement; falls back to the wireframe if absent. */
@@ -727,7 +735,26 @@ const Advertise = ({
           ))}
         </div>
 
-        <p className="mx-auto mt-5 max-w-2xl text-center text-sm text-gray-500">
+        <div className="mt-6 flex flex-col items-center gap-2.5">
+          <span className="inline-flex items-center gap-2 rounded-full border border-gray-700/60 bg-gray-800/50 px-4 py-1.5 text-xs text-gray-300 backdrop-blur-sm">
+            <FaGoogle className="h-3 w-3 shrink-0 text-cyan-400" />
+            Cited in Google AI Overviews for searches like
+          </span>
+          {AI_OVERVIEW_TERMS.length > 0 && (
+            <div className="flex flex-wrap justify-center gap-1.5">
+              {AI_OVERVIEW_TERMS.map((term) => (
+                <span
+                  key={term}
+                  className="rounded-full border border-gray-700/50 bg-gray-800/30 px-2.5 py-1 text-[11px] text-gray-400"
+                >
+                  “{term}”
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <p className="mx-auto mt-4 max-w-2xl text-center text-sm text-gray-500">
           Real Google Analytics figures from the last 28 days — no inflated numbers. We&apos;re
           early and growing, and our pricing reflects that: $10 gets you all six placements for a
           day.
