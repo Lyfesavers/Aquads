@@ -508,7 +508,7 @@ const Advertise = ({
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             <Link to="/home" className="flex items-center">
-              <img src="/alogo.png" alt="AQUADS" className="aquads-nav-logo" />
+              <img src="/alogo.png" alt="Aquads" className="aquads-nav-logo" />
             </Link>
 
             <MobileHamburgerButton

@@ -65,7 +65,7 @@ const DashboardPage = ({
             <Link to="/home" className="flex items-center hover:opacity-80 transition-opacity">
               <img 
                 src="/alogo.png" 
-                alt="AQUADS" 
+                alt="Aquads" 
                 className="aquads-nav-logo"
               />
             </Link>

@@ -4491,7 +4491,7 @@ const LandingPage = () => {
       style={{ scrollBehavior: 'smooth', maxWidth: '100vw' }}
     >
       <Helmet>
-        <title>Aquads — The launch stack for new crypto projects</title>
+        <title>Aquads | The launch stack for new crypto projects</title>
         <meta
           name="description"
           content="After your token launches: list on the bubble map, grow with raids and PR, hire Web3 freelancers, and get paid with AquaPay—all in one launch stack. Free listing."
@@ -4537,20 +4537,12 @@ const LandingPage = () => {
             }
           })}
         </script>
-        <script type="application/ld+json">
-          {JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "WebSite",
-            "name": "Aquads",
-            "url": "https://www.aquads.xyz",
-            "description": "The launch stack for new crypto projects—list, grow, hire, and get paid after token launch.",
-            "potentialAction": {
-              "@type": "SearchAction",
-              "target": "https://www.aquads.xyz/marketplace?search={search_term_string}",
-              "query-input": "required name=search_term_string"
-            }
-          })}
-        </script>
+        {/*
+          WebSite schema (the Google "site name" signal) is NOT emitted here on
+          purpose — it ships statically in public/index.html so crawlers get it
+          without rendering this bundle, and Google requires exactly one WebSite
+          block on the home page.
+        */}
         {/*
           WebApplication schema — tells AI engines (Perplexity, ChatGPT search,
           Claude, Google AI Overview) that Aquads is a finance/crypto web tool,
@@ -4562,7 +4554,6 @@ const LandingPage = () => {
             "@context": "https://schema.org",
             "@type": "WebApplication",
             "name": "Aquads",
-            "alternateName": "Aquads.xyz",
             "url": "https://www.aquads.xyz",
             "description":
               "All-in-one launch stack for new crypto projects: free bubble-map listings, community raids, marketing & PR, freelancer marketplace, AquaPay multi-chain payments, AquaSwap cross-chain swap, and AquaFi DeFi savings.",
@@ -4789,7 +4780,7 @@ const LandingPage = () => {
           >
             <img 
               src="/alogo.png" 
-              alt="AQUADS" 
+              alt="Aquads" 
               className="aquads-nav-logo"
             />
           </motion.div>
@@ -5327,7 +5318,7 @@ const LandingPage = () => {
             <div className="flex items-center gap-2 md:gap-3">
               <img 
                 src="/alogo.png" 
-                alt="AQUADS" 
+                alt="Aquads" 
                 className="h-6 md:h-8 w-auto"
               />
               <span className="text-gray-400 text-xs md:text-sm">© {new Date().getFullYear()} Aquads</span>

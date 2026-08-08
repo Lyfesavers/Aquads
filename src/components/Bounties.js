@@ -451,7 +451,7 @@ const Bounties = ({ currentUser, onLogin, onLogout, onCreateAccount, showNotific
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
               <Link to="/home" className="flex items-center">
-                <img src="/alogo.png" alt="AQUADS" className="aquads-nav-logo" />
+                <img src="/alogo.png" alt="Aquads" className="aquads-nav-logo" />
               </Link>
             </div>
 

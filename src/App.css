@@ -40,6 +40,9 @@
 /* Mobile optimization */
 @media (max-width: 768px) {
   /* Logo mobile responsiveness */
+  /* Matches both casings: nav/footer logos use alt="Aquads" (brand-consistent
+     for SEO), older screens may still use the all-caps form. */
+  .flex img[alt="Aquads"],
   .flex img[alt="AQUADS"] {
     height: 3rem !important; /* h-12 equivalent - large for mobile visibility */
     max-width: 180px;

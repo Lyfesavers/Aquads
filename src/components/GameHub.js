@@ -263,7 +263,7 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunn
                <Link to="/home">
                  <img 
                    src="/alogo.png" 
-                   alt="AQUADS" 
+                   alt="Aquads" 
                    className="aquads-nav-logo hover:opacity-90 transition-opacity"
                  />
                </Link>

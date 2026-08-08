@@ -322,7 +322,7 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
   return (
     <>
       <Helmet>
-        <title>{service.title} - {getDisplayName(service.seller)} | AQUADS</title>
+        <title>{service.title} - {getDisplayName(service.seller)} | Aquads</title>
         <meta name="description" content={service.description?.slice(0, 160)} />
         <meta property="og:title" content={`${service.title} - ${getDisplayName(service.seller)}`} />
         <meta property="og:description" content={service.description?.slice(0, 160)} />
@@ -345,7 +345,7 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
                 <Link to="/home" className="flex items-center">
                   <img
                     src="/alogo.png"
-                    alt="AQUADS"
+                    alt="Aquads"
                     className="aquads-nav-logo"
                   />
                 </Link>

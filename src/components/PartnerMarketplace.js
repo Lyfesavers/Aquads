@@ -186,7 +186,7 @@ const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, o
               <Link to="/home" className="flex items-center">
                 <img 
                   src="/alogo.png" 
-                  alt="AQUADS" 
+                  alt="Aquads" 
                   className="aquads-nav-logo"
                 />
               </Link>

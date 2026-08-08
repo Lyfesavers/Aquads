@@ -1040,7 +1040,7 @@ const AquaPayPage = ({ currentUser }) => {
   if (loading) return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center">
       <div className="text-center">
-        <img src="/alogo.png" alt="AQUADS" className="h-10 w-auto mx-auto mb-4" style={{ filter: 'drop-shadow(0 0 10px rgba(59, 130, 246, 0.6))' }} />
+        <img src="/alogo.png" alt="Aquads" className="h-10 w-auto mx-auto mb-4" style={{ filter: 'drop-shadow(0 0 10px rgba(59, 130, 246, 0.6))' }} />
         <div className="w-8 h-8 mx-auto mb-4 border-2 border-cyan-500/30 border-t-cyan-400 rounded-full animate-spin" />
         <p className="text-slate-400 text-sm">Loading payment...</p>
       </div>
@@ -1174,7 +1174,7 @@ const AquaPayPage = ({ currentUser }) => {
       <header className="border-b border-slate-800/50 bg-slate-900/50 backdrop-blur-xl sticky top-0 z-40">
         <div className="max-w-6xl mx-auto px-4 py-2 flex items-center justify-between min-h-16">
           <a href="https://aquads.xyz" className="flex items-center gap-2">
-            <img src="/alogo.png" alt="AQUADS" className="aquads-nav-logo" />
+            <img src="/alogo.png" alt="Aquads" className="aquads-nav-logo" />
             <span className="text-slate-400 text-sm font-medium">Pay</span>
           </a>
           <div className="flex items-center gap-3">

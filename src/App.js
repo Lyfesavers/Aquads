@@ -3090,7 +3090,12 @@ function App() {
             prevents duplicate og:* / twitter:* tags appearing in prerendered HTML
             served to search/social crawlers.
           */}
-          <title>Aquads — The launch stack for new crypto projects</title>
+          {/*
+            Pipe (not em dash) separates the brand from the description: Google's
+            title/site-name parsing treats "|" as a reliable delimiter, so
+            "Aquads" is read as the brand rather than part of one long phrase.
+          */}
+          <title>Aquads | The launch stack for new crypto projects</title>
           <meta name="description" content="Aquads is the launch stack for new crypto projects: list on the bubble map, grow with raids and PR, hire Web3 freelancers, and get paid with AquaPay. Free listing." />
           <meta property="og:title" content="Aquads — The launch stack for new crypto projects" />
           <meta property="og:description" content="After your token launches: list, grow, hire, and get paid in one place. Bubble map, raids, marketplace, AquaPay — your first 30 days." />
@@ -3270,7 +3275,7 @@ function App() {
                         <Link to="/" className="flex items-center">
                           <img 
                             src="/alogo.png" 
-                            alt="AQUADS" 
+                            alt="Aquads" 
                             className="aquads-nav-logo"
                           />
                         </Link>
