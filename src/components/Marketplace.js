@@ -26,6 +26,7 @@ import SkillBadges from './SkillBadges';
 import CVPreview from './CVPreview';
 import RiskGauge from './RiskGauge';
 import { getDisplayName } from '../utils/nameUtils';
+import { PAGE_SEO } from '../utils/pageSeoCore';
 import { StandardDesktopNavLinks, StandardMobileNavLinks } from './StandardNavLinks';
 import {
   MobileHamburgerButton,
@@ -1061,10 +1062,12 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
       onScroll={handleMarketplaceScroll}
       className="h-screen overflow-y-auto bg-gradient-to-br from-gray-900 to-black text-white"
     >
+      {/* Values shared with the page-seo edge function so the tags in the
+          first HTML response match the ones Helmet writes after mount. */}
       <Helmet>
-        <title>Hire launch help — Web3 freelancers | Aquads</title>
-        <meta name="description" content="Hire launch help on Aquads: logos, social content, community mods, dev, and marketing for new crypto projects. Book and pay in crypto with escrow." />
-        <link rel="canonical" href="https://www.aquads.xyz/marketplace" />
+        <title>{PAGE_SEO['/marketplace'].title}</title>
+        <meta name="description" content={PAGE_SEO['/marketplace'].description} />
+        <link rel="canonical" href={PAGE_SEO['/marketplace'].canonical} />
       </Helmet>
 
       {/* Fixed Background */}

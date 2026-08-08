@@ -5,6 +5,7 @@ import { FaRocket, FaUsers, FaChartLine, FaGlobe, FaShieldAlt, FaCog, FaCheckCir
 import { Link } from 'react-router-dom';
 import CreateAdModal from './CreateAdModal';
 import { LISTING_GUIDE_POSTS, blogPath } from '../utils/blogRelatedPosts';
+import { PAGE_SEO } from '../utils/pageSeoCore';
 
 const AQUADS_X_HANDLE = '@_Aquads_';
 const AQUADS_X_URL = 'https://x.com/_Aquads_';
@@ -307,28 +308,22 @@ const ProjectInfo = ({ currentUser, ads = [], onAdPatched }) => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900">
+      {/* Head metadata is shared with the page-seo edge function so the tags in
+          the first HTML response match the ones Helmet writes after mount. The
+          JSON-LD below stays client-side. */}
       <Helmet>
-        <title>List your token free on Aquads — no-fee bubble map listings</title>
-        <meta
-          name="description"
-          content="How to list your token or crypto project free on Aquads: Starter has no listing fee, live bubble map, community votes, bumps, AquaSwap routing, and raids. Skipper Agent on all verified accounts (pay-as-you-go). Paid Premium adds 1-hour fast-track review, a $5 Skipper AI credit, plus the full launch stack."
-        />
-        <link rel="canonical" href="https://www.aquads.xyz/list-token-free" />
-        <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://www.aquads.xyz/list-token-free" />
-        <meta property="og:title" content="List your token free on Aquads — bubble map listings" />
-        <meta
-          property="og:description"
-          content="No-fee Starter listing on the interactive bubble map: votes, bumps, AquaSwap, and growth tools. Optional paid PR packages."
-        />
-        <meta property="og:image" content="https://www.aquads.xyz/metalogo.png" />
+        <title>{PAGE_SEO['/list-token-free'].title}</title>
+        <meta name="description" content={PAGE_SEO['/list-token-free'].description} />
+        <link rel="canonical" href={PAGE_SEO['/list-token-free'].canonical} />
+        <meta property="og:type" content={PAGE_SEO['/list-token-free'].ogType} />
+        <meta property="og:url" content={PAGE_SEO['/list-token-free'].canonical} />
+        <meta property="og:title" content={PAGE_SEO['/list-token-free'].ogTitle} />
+        <meta property="og:description" content={PAGE_SEO['/list-token-free'].ogDescription} />
+        <meta property="og:image" content={PAGE_SEO['/list-token-free'].ogImage} />
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="List your token free on Aquads — bubble map listings" />
-        <meta
-          name="twitter:description"
-          content="No-fee Starter listing on the interactive bubble map: votes, bumps, AquaSwap, and growth tools. Optional paid PR packages."
-        />
-        <meta name="twitter:image" content="https://www.aquads.xyz/metalogo.png" />
+        <meta name="twitter:title" content={PAGE_SEO['/list-token-free'].ogTitle} />
+        <meta name="twitter:description" content={PAGE_SEO['/list-token-free'].ogDescription} />
+        <meta name="twitter:image" content={PAGE_SEO['/list-token-free'].ogImage} />
 
         {/*
           Service schema for the free Starter listing — anchors this page as

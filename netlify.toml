@@ -118,15 +118,36 @@
   function = "learn-blog"
   path = "/learn/*"
 
+# Per-page <head> metadata for the main product / marketing routes. Runs for
+# ALL clients and injects title, description, canonical and OG tags from
+# src/utils/pageSeoCore.js — the same module the components pass to Helmet.
+#
+# These routes previously used bot-only redirects gated on
+# `conditions = {User-Agent = ...}`. Netlify only supports Country, Language,
+# Role and Cookie conditions, so those rules never matched and the prerender
+# functions behind them were never invoked — every one of these paths served an
+# identical copy of the homepage's HTML. The /aquafi and /aquaswap rules that
+# used to sit below have been removed as part of this replacement.
+#
+# NOTE: never add /learn/* here — blog URLs belong to the learn-blog function.
+[[edge_functions]]
+  function = "page-seo"
+  path = "/marketplace"
+
+[[edge_functions]]
+  function = "page-seo"
+  path = "/list-token-free"
+
+[[edge_functions]]
+  function = "page-seo"
+  path = "/aquaswap"
+
+[[edge_functions]]
+  function = "page-seo"
+  path = "/aquafi"
+
 # Bot-only SEO prerender — humans skip these redirects and get the SPA instantly.
 # Crawlers only: lightweight HTML with meta tags (no API call on human page loads).
-[[redirects]]
-  from = "/aquafi"
-  to = "/.netlify/functions/prerender-seo-static"
-  status = 200
-  force = true
-  conditions = {User-Agent = "*bot*,*Bot*,*crawler*,*spider*,facebookexternalhit*,Twitterbot*,TelegramBot*,LinkedInBot*,Slackbot*,Discordbot*,WhatsApp*,Googlebot*"}
-
 [[redirects]]
   from = "/freelancer-benefits"
   to = "/.netlify/functions/prerender-seo-static"
@@ -182,13 +203,6 @@
   status = 200
   force = true
   conditions = {User-Agent = "*bot*,*Bot*,*crawler*,*spider*,facebookexternalhit*,Twitterbot*,TelegramBot*,LinkedInBot*,Slackbot*,Discordbot*,WhatsApp*,Googlebot*"}
-
-[[redirects]]
-  from = "/aquaswap"
-  to = "/.netlify/functions/prerender-aquaswap"
-  status = 200
-  force = true
-  conditions = {User-Agent = "*bot*,*Bot*,*crawler*,*spider*,facebookexternalhit*,Twitterbot*,LinkedInBot*,Slackbot*,Discordbot*,WhatsApp*,TelegramBot*,Googlebot*"}
 
 # Canonical bounty URLs (/bounties/{id}): inject OG metadata + wanted-poster image
 [[edge_functions]]

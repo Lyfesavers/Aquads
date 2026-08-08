@@ -11,6 +11,7 @@ import { Markdown } from 'tiptap-markdown';
 import logger from '../utils/logger';
 import { getQualifyingSwapPointsPayload } from '../utils/swapPointsQualification';
 import { isValidDeepDiveIntroVideoUrl, normalizeDeepDiveVideoUrlCandidate } from '../utils/deepDiveVideoUrl';
+import { PAGE_SEO, hasAquaSwapTokenDeepLink } from '../utils/pageSeoCore';
 import BannerDisplay from './BannerDisplay';
 import EmbedCodeGenerator from './EmbedCodeGenerator';
 import BuyCryptoModal from './BuyCryptoModal';
@@ -202,12 +203,12 @@ const AquaSwap = ({
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const hasTokenDeepLink = useMemo(() => {
-    const params = new URLSearchParams(location.search);
-    return Boolean(
-      (params.get('token') && params.get('blockchain')) || params.get('symbol')
-    );
-  }, [location.search]);
+  // Shared with the page-seo edge function so the noindex hint on token deep
+  // links is applied identically before and after hydration.
+  const hasTokenDeepLink = useMemo(
+    () => hasAquaSwapTokenDeepLink(new URLSearchParams(location.search)),
+    [location.search]
+  );
   const [chartProvider, setChartProvider] = useState('tradingview');
   const [tokenSearch, setTokenSearch] = useState('');
   const [selectedChain, setSelectedChain] = useState('ether');
@@ -1894,21 +1895,21 @@ const AquaSwap = ({
   return (
     <div className="aquaswap-page">
       <Helmet>
-        <title>AquaSwap - Swap Crypto Tokens Instantly | Aquads DEX</title>
-        <meta name="description" content="Swap tokens across multiple blockchains with live charts, real-time prices, and low fees. Trade on Ethereum, Solana, BSC, Base, Arbitrum, and more on AquaSwap." />
+        <title>{PAGE_SEO['/aquaswap'].title}</title>
+        <meta name="description" content={PAGE_SEO['/aquaswap'].description} />
         {hasTokenDeepLink && <meta name="robots" content="noindex, follow" />}
-        <link rel="canonical" href="https://www.aquads.xyz/aquaswap" />
+        <link rel="canonical" href={PAGE_SEO['/aquaswap'].canonical} />
 
-        <meta property="og:title" content="AquaSwap - Swap Crypto Tokens Instantly | Aquads DEX" />
-        <meta property="og:description" content="Swap tokens across multiple blockchains with live charts, real-time prices, and low fees on AquaSwap." />
-        <meta property="og:image" content="https://www.aquads.xyz/metalogo.png" />
-        <meta property="og:url" content="https://www.aquads.xyz/aquaswap" />
-        <meta property="og:type" content="website" />
+        <meta property="og:title" content={PAGE_SEO['/aquaswap'].ogTitle} />
+        <meta property="og:description" content={PAGE_SEO['/aquaswap'].ogDescription} />
+        <meta property="og:image" content={PAGE_SEO['/aquaswap'].ogImage} />
+        <meta property="og:url" content={PAGE_SEO['/aquaswap'].canonical} />
+        <meta property="og:type" content={PAGE_SEO['/aquaswap'].ogType} />
 
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="AquaSwap - Swap Crypto Tokens Instantly | Aquads DEX" />
-        <meta name="twitter:description" content="Swap tokens across multiple blockchains with live charts, real-time prices, and low fees on AquaSwap." />
-        <meta name="twitter:image" content="https://www.aquads.xyz/metalogo.png" />
+        <meta name="twitter:title" content={PAGE_SEO['/aquaswap'].ogTitle} />
+        <meta name="twitter:description" content={PAGE_SEO['/aquaswap'].ogDescription} />
+        <meta name="twitter:image" content={PAGE_SEO['/aquaswap'].ogImage} />
       </Helmet>
       {/* Header Section */}
       <div className="header-section">

@@ -11,6 +11,7 @@ import CreateAccountModal from './CreateAccountModal';
 import CreateServiceModal from './CreateServiceModal';
 import ProfileModal from './ProfileModal';
 import { getDisplayName } from '../utils/nameUtils';
+import { PAGE_SEO } from '../utils/pageSeoCore';
 import { StandardDesktopNavLinks, StandardMobileNavLinks } from './StandardNavLinks';
 import {
   MobileHamburgerButton,
@@ -125,21 +126,23 @@ const AquaFi = ({ currentUser, showNotification, onLogin, onLogout, onCreateAcco
 
   return (
     <div className="h-screen overflow-y-auto bg-gradient-to-br from-slate-900 via-gray-900 to-black text-white">
+      {/* Values shared with the page-seo edge function so the tags in the
+          first HTML response match the ones Helmet writes after mount. */}
       <Helmet>
-        <title>AquaFi - DeFi Savings Pools & Crypto Yields | Aquads</title>
-        <meta name="description" content="Earn passive crypto income with AquaFi savings pools. Stake your tokens, earn competitive DeFi yields, and track your portfolio analytics on Aquads." />
-        <link rel="canonical" href="https://www.aquads.xyz/aquafi" />
+        <title>{PAGE_SEO['/aquafi'].title}</title>
+        <meta name="description" content={PAGE_SEO['/aquafi'].description} />
+        <link rel="canonical" href={PAGE_SEO['/aquafi'].canonical} />
 
-        <meta property="og:title" content="AquaFi - DeFi Savings Pools & Crypto Yields | Aquads" />
-        <meta property="og:description" content="Earn passive crypto income with AquaFi savings pools. Stake tokens and earn competitive DeFi yields." />
-        <meta property="og:image" content="https://www.aquads.xyz/metalogo.png" />
-        <meta property="og:url" content="https://www.aquads.xyz/aquafi" />
-        <meta property="og:type" content="website" />
+        <meta property="og:title" content={PAGE_SEO['/aquafi'].ogTitle} />
+        <meta property="og:description" content={PAGE_SEO['/aquafi'].ogDescription} />
+        <meta property="og:image" content={PAGE_SEO['/aquafi'].ogImage} />
+        <meta property="og:url" content={PAGE_SEO['/aquafi'].canonical} />
+        <meta property="og:type" content={PAGE_SEO['/aquafi'].ogType} />
 
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="AquaFi - DeFi Savings Pools & Crypto Yields | Aquads" />
-        <meta name="twitter:description" content="Earn passive crypto income with AquaFi savings pools. Stake tokens and earn competitive DeFi yields." />
-        <meta name="twitter:image" content="https://www.aquads.xyz/metalogo.png" />
+        <meta name="twitter:title" content={PAGE_SEO['/aquafi'].ogTitle} />
+        <meta name="twitter:description" content={PAGE_SEO['/aquafi'].ogDescription} />
+        <meta name="twitter:image" content={PAGE_SEO['/aquafi'].ogImage} />
       </Helmet>
 
       {/* Enhanced Fixed Background */}
