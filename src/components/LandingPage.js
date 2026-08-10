@@ -979,6 +979,572 @@ const OnChainResumePhoneScreen = () => (
   </div>
 );
 
+const CarouselPhoneVisual = ({ glow, children }) => (
+  <motion.div
+    className="flex-shrink-0 w-full max-w-[260px] sm:max-w-[280px] md:max-w-[300px] mockup-card-container"
+    initial={{ opacity: 0, y: 28 }}
+    whileInView={{ opacity: 1, y: 0 }}
+    viewport={{ once: true }}
+    transition={{ delay: 0.25, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+  >
+    <PremiumPhoneMockup glow={glow}>{children}</PremiumPhoneMockup>
+  </motion.div>
+);
+
+const phoneChip = (label, className) => (
+  <span key={label} className={`rounded-md border px-2 py-1 text-[10px] font-medium ${className}`}>
+    {label}
+  </span>
+);
+
+const AquaFiPhoneScreen = () => (
+  <div className="flex h-full flex-col text-left">
+    <div className="mb-3 flex items-center gap-2.5">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-green-400 to-emerald-700 text-[11px] font-bold text-white shadow-[0_0_0_2px_rgba(34,197,94,0.25)]">
+        $
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="truncate text-[13px] font-semibold text-white">USDC Premium Vault</div>
+        <div className="text-[10px] text-slate-400">Ethereum · Low risk</div>
+      </div>
+      <span className="rounded-md bg-green-500/15 px-1.5 py-0.5 text-[9px] font-semibold text-green-400">Live</span>
+    </div>
+    <div className="mb-3 grid grid-cols-2 gap-2">
+      <div className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-2.5">
+        <div className="text-[9px] uppercase tracking-wider text-slate-500">APY</div>
+        <div className="mt-0.5 text-xl font-bold tabular-nums text-green-400">4.2%</div>
+      </div>
+      <div className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-2.5">
+        <div className="text-[9px] uppercase tracking-wider text-slate-500">TVL</div>
+        <div className="mt-0.5 text-lg font-bold tabular-nums text-emerald-300">$1.25B</div>
+      </div>
+    </div>
+    <div className="mb-3 space-y-1.5 rounded-xl border border-white/[0.08] bg-white/[0.03] p-2.5 text-[10px]">
+      {[
+        ['Min deposit', '1 USDC'],
+        ['Chain', 'Ethereum'],
+        ['Strategy', 'Auto-optimize']
+      ].map(([k, v]) => (
+        <div key={k} className="flex justify-between gap-2">
+          <span className="text-slate-500">{k}</span>
+          <span className="font-medium text-slate-200">{v}</span>
+        </div>
+      ))}
+    </div>
+    <div className="mb-3 rounded-xl border border-green-500/25 bg-green-500/10 p-2.5">
+      <div className="text-[9px] uppercase tracking-wider text-green-400/80">Projected · 1 year</div>
+      <div className="mt-0.5 text-xl font-bold tabular-nums text-green-300">$4,200</div>
+      <div className="text-[9px] text-slate-500">On $100K deposit</div>
+    </div>
+    <div className="mt-auto rounded-xl bg-gradient-to-r from-green-500 to-emerald-500 py-2.5 text-center text-[12px] font-bold text-white">
+      Deposit Now
+    </div>
+  </div>
+);
+
+const JobBoardPhoneScreen = () => (
+  <div className="flex h-full flex-col text-left">
+    <div className="mb-1 text-[10px] font-medium uppercase tracking-[0.12em] text-slate-500">Matched for you</div>
+    <div className="mb-3 text-[14px] font-semibold leading-snug text-white">Senior Web3 Developer</div>
+    <div className="mb-3 flex items-center gap-2">
+      <span className="rounded-md border border-amber-500/30 bg-amber-500/15 px-2 py-1 text-[10px] font-semibold text-amber-300">$120/hr</span>
+      <span className="rounded-md border border-white/10 bg-white/[0.04] px-2 py-1 text-[10px] text-slate-300">Remote</span>
+      <span className="ml-auto text-[11px] font-bold text-green-400">85% match</span>
+    </div>
+    <div className="mb-3 h-1.5 overflow-hidden rounded-full bg-white/10">
+      <div className="h-full w-[85%] rounded-full bg-gradient-to-r from-amber-400 to-green-400" />
+    </div>
+    <div className="mb-3 flex flex-wrap gap-1.5">
+      {['Solidity', 'React', 'Web3'].map((s) =>
+        phoneChip(s, 'border-amber-500/25 bg-amber-500/10 text-amber-200')
+      )}
+    </div>
+    <div className="mb-3 space-y-2 rounded-xl border border-white/[0.08] bg-white/[0.03] p-2.5 text-[10px]">
+      {[
+        ['Posted', '2 hours ago'],
+        ['Applicants', '12'],
+        ['Budget', 'Long-term']
+      ].map(([k, v]) => (
+        <div key={k} className="flex justify-between">
+          <span className="text-slate-500">{k}</span>
+          <span className="text-slate-200">{v}</span>
+        </div>
+      ))}
+    </div>
+    <div className="mt-auto rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 py-2.5 text-center text-[12px] font-bold text-slate-950">
+      Apply Now
+    </div>
+  </div>
+);
+
+const MarketDataPhoneScreen = () => (
+  <div className="flex h-full flex-col text-left">
+    <div className="mb-3 flex items-center gap-2.5">
+      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-orange-400 to-amber-700 text-[11px] font-bold text-white">
+        ₿
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="text-[13px] font-semibold text-white">Bitcoin</div>
+        <div className="text-[10px] text-slate-400">BTC · Live</div>
+      </div>
+      <span className="rounded-md bg-rose-500/15 px-1.5 py-0.5 text-[9px] font-semibold text-rose-300">Hot</span>
+    </div>
+    <div className="mb-1 text-2xl font-bold tabular-nums tracking-tight text-white">$43,250</div>
+    <div className="mb-3 text-[12px] font-semibold text-emerald-400">+2.5% · 24h</div>
+    <div className="mb-3 grid grid-cols-2 gap-2 text-[10px]">
+      {[
+        ['Market cap', '$847B'],
+        ['24h high', '$44,120'],
+        ['24h low', '$41,980'],
+        ['Volume', '$28.4B']
+      ].map(([k, v]) => (
+        <div key={k} className="rounded-lg border border-white/[0.07] bg-white/[0.03] p-2">
+          <div className="text-slate-500">{k}</div>
+          <div className="mt-0.5 font-semibold tabular-nums text-slate-200">{v}</div>
+        </div>
+      ))}
+    </div>
+    <div className="mb-3 flex items-center justify-between rounded-xl border border-white/[0.08] bg-white/[0.03] px-2.5 py-2 text-[10px]">
+      <span className="text-slate-400">Community</span>
+      <span className="font-semibold text-amber-300">★★★★☆ 4.6</span>
+    </div>
+    <div className="mt-auto rounded-xl bg-gradient-to-r from-rose-500 to-pink-500 py-2.5 text-center text-[12px] font-bold text-white">
+      Trade on AquaSwap
+    </div>
+  </div>
+);
+
+const TrustScorePhoneScreen = () => (
+  <div className="flex h-full flex-col text-left">
+    <div className="mb-2 text-[10px] font-medium uppercase tracking-[0.12em] text-slate-500">Booking safety</div>
+    <div className="mb-3 flex flex-col items-center rounded-xl border border-white/[0.08] bg-gradient-to-b from-white/[0.06] to-transparent p-3">
+      <div className="relative mb-2 h-24 w-24">
+        <svg className="h-full w-full -rotate-90" viewBox="0 0 100 100" aria-hidden="true">
+          <circle cx="50" cy="50" r="40" fill="none" stroke="rgba(168,85,247,0.15)" strokeWidth="7" />
+          <circle
+            cx="50"
+            cy="50"
+            r="40"
+            fill="none"
+            stroke="url(#trustRing)"
+            strokeWidth="7"
+            strokeLinecap="round"
+            strokeDasharray={`${2 * Math.PI * 40 * 0.92} ${2 * Math.PI * 40}`}
+          />
+          <defs>
+            <linearGradient id="trustRing" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#c084fc" />
+              <stop offset="100%" stopColor="#34d399" />
+            </linearGradient>
+          </defs>
+        </svg>
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <span className="text-2xl font-bold text-white">92</span>
+          <span className="text-[8px] uppercase tracking-wider text-slate-500">score</span>
+        </div>
+      </div>
+      <div className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-[10px] font-semibold text-emerald-300">
+        Safe to book
+      </div>
+    </div>
+    <div className="mb-3 space-y-1.5 text-[10px]">
+      {[
+        ['Rating', '4.9'],
+        ['Completion', '97%'],
+        ['Response', '< 1h'],
+        ['Disputes', '0']
+      ].map(([k, v]) => (
+        <div key={k} className="flex justify-between rounded-lg border border-white/[0.06] bg-white/[0.03] px-2.5 py-1.5">
+          <span className="text-slate-500">{k}</span>
+          <span className="font-semibold text-slate-200">{v}</span>
+        </div>
+      ))}
+    </div>
+    <div className="mt-auto rounded-xl border border-purple-500/25 bg-purple-500/10 py-2 text-center text-[11px] font-semibold text-purple-200">
+      AI-verified reputation
+    </div>
+  </div>
+);
+
+const AquaSwapPhoneScreen = () => (
+  <div className="flex h-full flex-col text-left">
+    <div className="mb-3 flex items-center justify-between">
+      <div className="text-[13px] font-semibold text-white">AquaSwap</div>
+      <span className="rounded-md border border-teal-500/30 bg-teal-500/10 px-1.5 py-0.5 text-[9px] font-semibold text-teal-300">0.5% fee</span>
+    </div>
+    <div className="mb-2 rounded-xl border border-white/[0.08] bg-white/[0.04] p-2.5">
+      <div className="mb-1 text-[9px] uppercase tracking-wider text-slate-500">You pay</div>
+      <div className="flex items-center justify-between">
+        <span className="text-lg font-bold tabular-nums text-white">1.25</span>
+        <span className="rounded-lg bg-white/10 px-2 py-1 text-[11px] font-semibold text-slate-100">ETH</span>
+      </div>
+    </div>
+    <div className="relative z-10 -my-1 flex justify-center">
+      <div className="rounded-full border border-white/10 bg-slate-900 px-2 py-0.5 text-[10px] text-teal-300">↓</div>
+    </div>
+    <div className="mb-3 rounded-xl border border-white/[0.08] bg-white/[0.04] p-2.5">
+      <div className="mb-1 text-[9px] uppercase tracking-wider text-slate-500">You receive</div>
+      <div className="flex items-center justify-between">
+        <span className="text-lg font-bold tabular-nums text-white">3,842.10</span>
+        <span className="rounded-lg bg-white/10 px-2 py-1 text-[11px] font-semibold text-slate-100">USDC</span>
+      </div>
+    </div>
+    <div className="mb-3 flex flex-wrap gap-1.5">
+      {['50+ chains', 'Charts', 'Signals'].map((s) =>
+        phoneChip(s, 'border-teal-500/20 bg-teal-500/10 text-teal-200')
+      )}
+    </div>
+    <div className="mb-2 text-center text-[9px] text-slate-500">Earn Aquads points on qualifying swaps</div>
+    <div className="mt-auto rounded-xl bg-gradient-to-r from-teal-500 to-emerald-500 py-2.5 text-center text-[12px] font-bold text-white">
+      Swap Tokens
+    </div>
+  </div>
+);
+
+const BubblesPhoneScreen = () => (
+  <div className="flex h-full flex-col text-left">
+    <div className="mb-3 flex items-center gap-2.5">
+      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-cyan-400 to-teal-700 text-xs font-bold text-white shadow-[0_0_16px_rgba(34,211,238,0.35)]">
+        AQ
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="text-[13px] font-semibold text-white">Aquads Token</div>
+        <div className="text-[10px] text-cyan-300/90">Rank #3 · Trending</div>
+      </div>
+    </div>
+    <div className="mb-3 grid grid-cols-2 gap-2">
+      <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-2.5 text-center">
+        <div className="text-[9px] text-emerald-400/80">Bullish</div>
+        <div className="text-lg font-bold tabular-nums text-emerald-300">1,284</div>
+      </div>
+      <div className="rounded-xl border border-rose-500/20 bg-rose-500/10 p-2.5 text-center">
+        <div className="text-[9px] text-rose-400/80">Bearish</div>
+        <div className="text-lg font-bold tabular-nums text-rose-300">312</div>
+      </div>
+    </div>
+    <div className="mb-3 rounded-xl border border-white/[0.08] bg-white/[0.03] p-2.5 text-[10px]">
+      <div className="mb-1.5 flex justify-between">
+        <span className="text-slate-500">Status</span>
+        <span className="font-semibold text-cyan-300">Bumped</span>
+      </div>
+      <div className="flex justify-between">
+        <span className="text-slate-500">Votes to auto-bump</span>
+        <span className="font-semibold text-slate-200">100</span>
+      </div>
+    </div>
+    <div className="mb-3 grid grid-cols-2 gap-2">
+      <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/15 py-2 text-center text-[11px] font-semibold text-emerald-200">Bullish</div>
+      <div className="rounded-xl border border-rose-500/30 bg-rose-500/15 py-2 text-center text-[11px] font-semibold text-rose-200">Bearish</div>
+    </div>
+    <div className="mt-auto text-center text-[9px] text-slate-500">Earn points when you vote</div>
+  </div>
+);
+
+const TwitterRaidsPhoneScreen = () => (
+  <div className="flex h-full flex-col text-left">
+    <div className="mb-3 flex items-center justify-between">
+      <div className="text-[13px] font-semibold text-white">Raid campaign</div>
+      <span className="rounded-md bg-sky-500/15 px-1.5 py-0.5 text-[9px] font-semibold text-sky-300">Active</span>
+    </div>
+    <div className="mb-3 grid grid-cols-2 gap-2">
+      <div className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-2.5">
+        <div className="text-[9px] text-slate-500">Reward</div>
+        <div className="text-lg font-bold text-sky-300">20 pts</div>
+      </div>
+      <div className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-2.5">
+        <div className="text-[9px] text-slate-500">Free raids</div>
+        <div className="text-lg font-bold text-white">1–10</div>
+      </div>
+    </div>
+    <div className="mb-3 flex flex-wrap gap-1.5">
+      {['Like', 'Retweet', 'Comment'].map((s) =>
+        phoneChip(s, 'border-sky-500/25 bg-sky-500/10 text-sky-200')
+      )}
+    </div>
+    <div className="mb-3 space-y-1.5 rounded-xl border border-white/[0.08] bg-white/[0.03] p-2.5 text-[10px]">
+      {[
+        ['Engagements', '1.2K'],
+        ['After free', 'Points cost'],
+        ['Status', 'Live now']
+      ].map(([k, v]) => (
+        <div key={k} className="flex justify-between">
+          <span className="text-slate-500">{k}</span>
+          <span className="font-medium text-slate-200">{v}</span>
+        </div>
+      ))}
+    </div>
+    <div className="mt-auto rounded-xl bg-gradient-to-r from-sky-500 to-blue-500 py-2.5 text-center text-[12px] font-bold text-white">
+      Create Raid
+    </div>
+  </div>
+);
+
+const HyperSpacePhoneScreen = () => (
+  <div className="flex h-full flex-col text-left">
+    <div className="mb-2 flex items-center gap-2">
+      <span className="relative flex h-2 w-2">
+        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-purple-400 opacity-60" />
+        <span className="relative inline-flex h-2 w-2 rounded-full bg-purple-400" />
+      </span>
+      <span className="text-[10px] font-semibold uppercase tracking-wider text-purple-300">Live Space</span>
+    </div>
+    <div className="mb-3 text-[14px] font-semibold leading-snug text-white">Web3 Founders AMA</div>
+    <div className="mb-3 flex items-end justify-between rounded-xl border border-white/[0.08] bg-white/[0.04] p-2.5">
+      <div>
+        <div className="text-[9px] text-slate-500">Listeners</div>
+        <div className="text-xl font-bold tabular-nums text-purple-200">2,500</div>
+      </div>
+      <div className="text-right">
+        <div className="text-[9px] text-slate-500">Remaining</div>
+        <div className="text-sm font-semibold text-slate-200">1h 04m</div>
+      </div>
+    </div>
+    <div className="mb-3 flex -space-x-2">
+      {['#a78bfa', '#f472b6', '#22d3ee', '#34d399', '#fbbf24'].map((c, i) => (
+        <div key={i} className="h-7 w-7 rounded-full border-2 border-slate-950" style={{ background: c }} />
+      ))}
+      <div className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-slate-950 bg-white/10 text-[9px] text-slate-300">
+        +99
+      </div>
+    </div>
+    <div className="mb-3 flex flex-wrap gap-1.5">
+      {['100', '500', '1K', '5K'].map((s) =>
+        phoneChip(`${s} listeners`, 'border-purple-500/25 bg-purple-500/10 text-purple-200')
+      )}
+    </div>
+    <div className="mt-auto rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 py-2.5 text-center text-[12px] font-bold text-white">
+      Get Listeners
+    </div>
+  </div>
+);
+
+const GameHubPhoneScreen = () => (
+  <div className="flex h-full flex-col text-left">
+    <div
+      className="mb-3 flex h-24 items-center justify-center rounded-xl border border-orange-500/20"
+      style={{ background: 'linear-gradient(145deg, rgba(249,115,22,0.25), rgba(120,53,15,0.55))' }}
+    >
+      <div className="text-center">
+        <div className="text-[11px] font-semibold uppercase tracking-[0.15em] text-orange-200/80">Featured</div>
+        <div className="mt-1 text-sm font-bold text-white">Blockchain RPG</div>
+      </div>
+    </div>
+    <div className="mb-3 flex flex-wrap gap-1.5">
+      {['RPG', 'Solana', 'Play-to-Earn'].map((s) =>
+        phoneChip(s, 'border-orange-500/25 bg-orange-500/10 text-orange-200')
+      )}
+    </div>
+    <div className="mb-3 flex items-center justify-between rounded-xl border border-white/[0.08] bg-white/[0.03] px-2.5 py-2 text-[10px]">
+      <span className="text-slate-400">Community votes</span>
+      <span className="font-bold tabular-nums text-amber-300">428</span>
+    </div>
+    <div className="mb-3 grid grid-cols-2 gap-2">
+      <div className="rounded-xl border border-white/10 bg-white/[0.04] py-2 text-center text-[11px] font-semibold text-slate-200">Vote</div>
+      <div className="rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 py-2 text-center text-[11px] font-bold text-white">Play</div>
+    </div>
+    <div className="mt-auto text-[9px] leading-relaxed text-slate-500">
+      Discover Web3 games, vote for favorites, and jump in from the hub.
+    </div>
+  </div>
+);
+
+const MarketplacePhoneScreen = () => (
+  <div className="flex h-full flex-col text-left">
+    <div className="mb-3 flex items-center gap-2.5">
+      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-violet-400 to-purple-700 text-[11px] font-bold text-white">
+        SC
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="truncate text-[13px] font-semibold text-white">Smart Contract Dev</div>
+        <div className="text-[10px] text-slate-400">Trust 92 · 4.9★ (120)</div>
+      </div>
+    </div>
+    <div className="mb-3 grid grid-cols-2 gap-2">
+      <div className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-2.5">
+        <div className="text-[9px] text-slate-500">From</div>
+        <div className="text-sm font-bold text-violet-300">0.5 ETH</div>
+      </div>
+      <div className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-2.5">
+        <div className="text-[9px] text-slate-500">Delivery</div>
+        <div className="text-sm font-bold text-slate-100">7 days</div>
+      </div>
+    </div>
+    <div className="mb-3 flex flex-wrap gap-1.5">
+      {['Solidity', 'Web3', 'React'].map((s) =>
+        phoneChip(s, 'border-violet-500/25 bg-violet-500/10 text-violet-200')
+      )}
+    </div>
+    <div className="mb-3 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-2 text-[10px] font-semibold text-emerald-300">
+      Escrow protected · Gold seller
+    </div>
+    <div className="mt-auto rounded-xl bg-gradient-to-r from-violet-500 to-purple-500 py-2.5 text-center text-[12px] font-bold text-white">
+      Book Service
+    </div>
+  </div>
+);
+
+const TelegramBotPhoneScreen = () => (
+  <div className="flex h-full flex-col text-left">
+    <div className="mb-3 text-[10px] font-medium uppercase tracking-[0.12em] text-slate-500">Aquads Bot</div>
+    <div className="mb-2 max-w-[92%] rounded-2xl rounded-tl-md border border-indigo-500/25 bg-indigo-500/15 px-2.5 py-2">
+      <div className="text-[11px] font-semibold text-indigo-200">Twitter Raid Available</div>
+      <div className="mt-0.5 text-[10px] text-slate-300">Reward: 5–20 pts · tap /raids</div>
+    </div>
+    <div className="mb-3 ml-auto max-w-[70%] rounded-2xl rounded-tr-md border border-cyan-500/25 bg-cyan-500/15 px-2.5 py-2 text-right">
+      <div className="text-[11px] font-semibold text-cyan-200">/raids</div>
+    </div>
+    <div className="mb-3 rounded-xl border border-white/[0.08] bg-white/[0.04] p-2.5">
+      <div className="text-[9px] text-slate-500">Your points</div>
+      <div className="text-xl font-bold tabular-nums text-indigo-200">2,450</div>
+      <div className="text-[9px] text-slate-500">+5–20 from raid</div>
+    </div>
+    <div className="mb-3 space-y-1.5 text-[10px]">
+      {['Twitter Raids', 'Facebook Raids', 'Bubble Ranking', 'Custom Branding'].map((row) => (
+        <div key={row} className="rounded-lg border border-white/[0.06] bg-white/[0.03] px-2.5 py-1.5 text-slate-300">
+          {row}
+        </div>
+      ))}
+    </div>
+    <div className="mt-auto text-center text-[9px] font-semibold uppercase tracking-wider text-indigo-300/90">Free to use</div>
+  </div>
+);
+
+const AquaPayPhoneScreen = () => (
+  <div className="flex h-full flex-col text-left">
+    <div className="mb-3 text-[10px] font-medium uppercase tracking-[0.12em] text-slate-500">Payment link</div>
+    <div className="mb-3 truncate rounded-xl border border-blue-500/25 bg-blue-500/10 px-2.5 py-2 font-mono text-[10px] text-blue-200">
+      aquads.xyz/pay/yourname
+    </div>
+    <div className="mb-3">
+      <div className="mb-1.5 text-[9px] uppercase tracking-wider text-slate-500">Network</div>
+      <div className="grid grid-cols-4 gap-1.5">
+        {['SOL', 'ETH', 'BASE', 'BNB'].map((c, i) => (
+          <div
+            key={c}
+            className={`rounded-lg border py-1.5 text-center text-[9px] font-semibold ${
+              i === 0
+                ? 'border-cyan-400/40 bg-cyan-500/20 text-cyan-200'
+                : 'border-white/10 bg-white/[0.03] text-slate-400'
+            }`}
+          >
+            {c}
+          </div>
+        ))}
+      </div>
+    </div>
+    <div className="mb-3 rounded-xl border border-white/[0.08] bg-white/[0.04] p-3 text-center">
+      <div className="text-[9px] text-slate-500">Amount due</div>
+      <div className="mt-1 text-2xl font-bold tabular-nums text-white">0.5 SOL</div>
+    </div>
+    <div className="mb-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 py-1.5 text-center text-[10px] font-semibold text-emerald-300">
+      Verified merchant
+    </div>
+    <div className="mt-auto rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500 py-2.5 text-center text-[12px] font-bold text-white">
+      Connect Wallet & Pay
+    </div>
+  </div>
+);
+
+const LinkInBioPhoneScreen = () => (
+  <div className="relative -mx-0.5 -mt-0.5 flex h-full flex-col overflow-hidden rounded-xl text-left">
+    <div
+      className="absolute inset-0"
+      style={{
+        backgroundImage: "url('/images/link-in-bio-mockup-bg.webp')",
+        backgroundSize: 'cover',
+        backgroundPosition: 'center'
+      }}
+    />
+    <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/45 to-black/65" />
+    <div className="relative z-10 flex h-full flex-col px-1 pt-1">
+      <div className="mb-4 flex flex-col items-center">
+        <div className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-yellow-400/70 bg-[#2d1e59] text-sm font-bold text-yellow-300 shadow-[0_0_20px_rgba(250,204,21,0.35)]">
+          A
+        </div>
+        <div className="mt-2 text-[13px] font-semibold text-white">Aquads</div>
+        <div className="text-[9px] text-slate-300/80">Link in bio</div>
+      </div>
+      <div className="space-y-2">
+        {['WEBSITE', 'TWITTER', 'DISCORD', 'STORE'].map((label) => (
+          <div
+            key={label}
+            className="flex items-center justify-between rounded-full border border-purple-400/60 bg-purple-500/40 px-3 py-2.5 backdrop-blur-sm"
+          >
+            <span className="text-[11px] font-semibold tracking-wide text-white">{label}</span>
+            <span className="text-[10px] text-yellow-300">↗</span>
+          </div>
+        ))}
+      </div>
+      <div className="mt-auto pb-1 text-center text-[9px] font-medium text-yellow-200/80">Monetize with banner ads</div>
+    </div>
+  </div>
+);
+
+const MarketingPhoneScreen = () => (
+  <div className="flex h-full flex-col text-left">
+    <div className="mb-1 text-[10px] font-medium uppercase tracking-[0.12em] text-slate-500">Growth package</div>
+    <div className="mb-1 text-[14px] font-semibold text-white">AquaFlow</div>
+    <div className="mb-3 flex items-baseline gap-2">
+      <span className="text-2xl font-bold text-pink-300">$2,754</span>
+      <span className="text-[11px] text-slate-500 line-through">$2,899</span>
+    </div>
+    <div className="mb-3 space-y-1.5 text-[10px]">
+      {[
+        '125+ media pickups',
+        'Tier-1 site coverage',
+        'SEO optimization',
+        'Timed distribution'
+      ].map((row) => (
+        <div key={row} className="flex items-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.03] px-2.5 py-1.5 text-slate-300">
+          <span className="text-pink-400">✓</span>
+          {row}
+        </div>
+      ))}
+    </div>
+    <div className="mb-3 rounded-xl border border-pink-500/25 bg-pink-500/10 px-2.5 py-2 text-center text-[10px] font-semibold text-pink-200">
+      75+ outlets · Forbes, Yahoo, CT…
+    </div>
+    <div className="mt-auto text-center text-[9px] text-slate-500">Powered by Coinbound / Mintfunnel</div>
+  </div>
+);
+
+const BountiesPhoneScreen = () => (
+  <div className="flex h-full flex-col text-left">
+    <div className="mb-2 text-center text-[10px] font-bold uppercase tracking-[0.2em] text-amber-400">Wanted</div>
+    <div className="mb-3 text-center text-[13px] font-semibold leading-snug text-white">
+      Build a Solana Staking Widget
+    </div>
+    <div className="mb-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-center">
+      <div className="text-[9px] uppercase tracking-wider text-amber-400/80">Escrowed reward</div>
+      <div className="mt-0.5 text-2xl font-bold tabular-nums text-amber-200">1,500 USDC</div>
+    </div>
+    <div className="mb-3 space-y-1.5 text-[10px]">
+      {[
+        ['Status', 'Open'],
+        ['Hunters', '7 active'],
+        ['Deadline', '5 days left']
+      ].map(([k, v]) => (
+        <div key={k} className="flex justify-between rounded-lg border border-white/[0.06] bg-white/[0.03] px-2.5 py-1.5">
+          <span className="text-slate-500">{k}</span>
+          <span className="font-medium text-slate-200">{v}</span>
+        </div>
+      ))}
+    </div>
+    <div className="mt-auto rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 py-2.5 text-center text-[12px] font-bold text-slate-950">
+      Approve & Pay Winner
+    </div>
+  </div>
+);
+
+const DefaultFeaturePhoneScreen = ({ featureTitle }) => (
+  <div className="flex h-full flex-col">
+    <div className="mb-2 truncate text-[12px] font-semibold text-white">{featureTitle}</div>
+    <div className="min-h-0 flex-1 overflow-hidden rounded-xl border border-white/[0.08] bg-white/[0.03] p-1">
+      <FeaturePreviewSVG featureTitle={featureTitle} />
+    </div>
+  </div>
+);
+
 // Carousel Card Component - Redesigned to match AquaPay section style
 const CarouselCard = ({ feature, index }) => {
   // Get gradient colors based on feature gradient
@@ -1148,18 +1714,10 @@ const CarouselCard = ({ feature, index }) => {
                 </motion.div>
               </div>
               
-              {/* Right visual — premium 3D phone mockup (trial) */}
-              <motion.div
-                className="flex-shrink-0 w-full max-w-[260px] sm:max-w-[280px] md:max-w-[300px] mockup-card-container"
-                initial={{ opacity: 0, y: 28 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.25, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-              >
-                <PremiumPhoneMockup glow="rgba(16, 185, 129, 0.4)">
-                  <OnChainResumePhoneScreen />
-                </PremiumPhoneMockup>
-              </motion.div>
+              {/* Right visual — premium 3D phone mockup */}
+              <CarouselPhoneVisual glow="rgba(16, 185, 129, 0.4)">
+                <OnChainResumePhoneScreen />
+              </CarouselPhoneVisual>
             </div>
           </motion.div>
         </div>
@@ -1255,91 +1813,9 @@ const CarouselCard = ({ feature, index }) => {
                 </motion.div>
               </div>
               
-              {/* Right visual - AquaFi mockup */}
-              <motion.div
-                className="flex-shrink-0 w-full max-w-[280px] sm:max-w-xs md:max-w-sm lg:max-w-md mockup-card-container"
-                initial={{ opacity: 0, scale: 0.9, rotate: -5 }}
-                whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.3, duration: 0.6 }}
-              >
-                <div className="relative">
-                  {/* Glow behind card */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-green-500/30 to-emerald-500/30 rounded-2xl blur-2xl scale-110" />
-                  
-                  {/* Mockup card */}
-                  <div className="relative bg-gray-900 rounded-2xl p-6 border border-white/20 shadow-2xl">
-                    {/* Vault Header */}
-                    <div className="flex items-center gap-3 mb-4 pb-4 border-b border-white/10">
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center text-xl drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">
-                        💰
-                      </div>
-                      <div>
-                        <div className="text-white font-bold">USDC Premium Vault</div>
-                        <div className="text-gray-400 text-sm">Ethereum</div>
-                      </div>
-                    </div>
-                    
-                    {/* Yield Stats */}
-                    <div className="grid grid-cols-2 gap-3 mb-4">
-                      <div className="bg-white/5 rounded-xl p-3 text-center">
-                        <div className="text-gray-400 text-xs mb-1">APY</div>
-                        <div className="text-2xl font-bold text-green-400">4.2%</div>
-                        <div className="text-gray-500 text-xs mt-1">Annual</div>
-                      </div>
-                      <div className="bg-white/5 rounded-xl p-3 text-center">
-                        <div className="text-gray-400 text-xs mb-1">TVL</div>
-                        <div className="text-xl font-bold text-emerald-400">$1.25B</div>
-                        <div className="text-gray-500 text-xs mt-1">Total Value</div>
-                      </div>
-                    </div>
-                    
-                    {/* Vault Details */}
-                    <div className="bg-white/5 rounded-xl p-3 mb-3">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-gray-400 text-xs">Risk</span>
-                        <span className="text-green-400 text-xs font-bold">Low Risk</span>
-                      </div>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-gray-400 text-xs">Min Deposit</span>
-                        <span className="text-white font-bold text-sm">1 USDC</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-400 text-xs">Chain</span>
-                        <span className="text-emerald-400 text-xs">Ethereum</span>
-                      </div>
-                    </div>
-                    
-                    {/* Projected Earnings */}
-                    <div className="bg-green-500/20 border border-green-500/40 rounded-xl p-3 mb-3">
-                      <div className="text-gray-400 text-xs mb-2">Projected Earnings (1 Year)</div>
-                      <div className="text-2xl font-bold text-green-400">$4,200</div>
-                      <div className="text-gray-500 text-xs mt-1">On $100K deposit</div>
-                    </div>
-                    
-                    {/* Deposit Button */}
-                    <div className="bg-gradient-to-r from-green-500 to-emerald-500 text-white text-center py-3 rounded-xl font-bold text-sm">
-                      Deposit Now
-                    </div>
-                  </div>
-                  
-                  {/* Floating badges */}
-                  <motion.div
-                    className="absolute -top-3 -right-3 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg"
-                    animate={{ y: [0, -5, 0] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                  >
-                    ⚡ Active
-                  </motion.div>
-                  <motion.div
-                    className="absolute -bottom-3 -left-3 bg-emerald-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg"
-                    animate={{ y: [0, -5, 0] }}
-                    transition={{ duration: 2, repeat: Infinity, delay: 1 }}
-                  >
-                    📊 Analytics
-                  </motion.div>
-                </div>
-              </motion.div>
+              <CarouselPhoneVisual glow="rgba(34, 197, 94, 0.4)">
+                <AquaFiPhoneScreen />
+              </CarouselPhoneVisual>
             </div>
           </motion.div>
         </div>
@@ -1435,93 +1911,9 @@ const CarouselCard = ({ feature, index }) => {
                 </motion.div>
               </div>
               
-              {/* Right visual - Job Board mockup */}
-              <motion.div
-                className="flex-shrink-0 w-full max-w-[280px] sm:max-w-xs md:max-w-sm lg:max-w-md mockup-card-container"
-                initial={{ opacity: 0, scale: 0.9, rotate: -5 }}
-                whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.3, duration: 0.6 }}
-              >
-                <div className="relative">
-                  {/* Glow behind card */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-amber-500/30 to-yellow-500/30 rounded-2xl blur-2xl scale-110" />
-                  
-                  {/* Mockup card */}
-                  <div className="relative bg-gray-900 rounded-2xl p-6 border border-white/20 shadow-2xl">
-                    {/* Job Header */}
-                    <div className="flex items-center gap-3 mb-4 pb-4 border-b border-white/10">
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-amber-500 to-yellow-500 flex items-center justify-center text-xl drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">
-                        💼
-                      </div>
-                      <div>
-                        <div className="text-white font-bold">Senior Web3 Dev</div>
-                        <div className="text-gray-400 text-sm">Web3 Company</div>
-                      </div>
-                    </div>
-                    
-                    {/* Job Stats */}
-                    <div className="grid grid-cols-2 gap-3 mb-4">
-                      <div className="bg-white/5 rounded-xl p-3 text-center">
-                        <div className="text-gray-400 text-xs mb-1">Pay</div>
-                        <div className="text-xl font-bold text-green-400">$120/hr</div>
-                        <div className="text-gray-500 text-xs mt-1">Hourly</div>
-                      </div>
-                      <div className="bg-white/5 rounded-xl p-3 text-center">
-                        <div className="text-gray-400 text-xs mb-1">Type</div>
-                        <div className="text-xl font-bold text-amber-400">Remote</div>
-                        <div className="text-gray-500 text-xs mt-1">Flexible</div>
-                      </div>
-                    </div>
-                    
-                    {/* Job Details */}
-                    <div className="bg-white/5 rounded-xl p-3 mb-3">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-gray-400 text-xs">Match</span>
-                        <span className="text-green-400 text-xs font-bold">85% Match</span>
-                      </div>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-gray-400 text-xs">Source</span>
-                        <span className="text-amber-400 text-xs">Remotive · Himalayas · Web3</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-400 text-xs">Posted</span>
-                        <span className="text-white text-xs">2 days ago</span>
-                      </div>
-                    </div>
-                    
-                    {/* Matched Skills */}
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      {['Solidity', 'React', 'Web3'].map((skill, i) => (
-                        <div key={i} className="bg-amber-500/20 border border-amber-500/40 rounded-lg px-2 py-1">
-                          <div className="text-xs text-amber-400 font-semibold">{skill}</div>
-                        </div>
-                      ))}
-                    </div>
-                    
-                    {/* Apply Button */}
-                    <div className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white text-center py-3 rounded-xl font-bold text-sm">
-                      Apply Now
-                    </div>
-                  </div>
-                  
-                  {/* Floating badges */}
-                  <motion.div
-                    className="absolute -top-3 -right-3 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg"
-                    animate={{ y: [0, -5, 0] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                  >
-                    🤖 AI Matched
-                  </motion.div>
-                  <motion.div
-                    className="absolute -bottom-3 -left-3 bg-amber-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg"
-                    animate={{ y: [0, -5, 0] }}
-                    transition={{ duration: 2, repeat: Infinity, delay: 1 }}
-                  >
-                    🌍 Remote
-                  </motion.div>
-                </div>
-              </motion.div>
+              <CarouselPhoneVisual glow="rgba(245, 158, 11, 0.4)">
+                <JobBoardPhoneScreen />
+              </CarouselPhoneVisual>
             </div>
           </motion.div>
         </div>
@@ -1617,98 +2009,9 @@ const CarouselCard = ({ feature, index }) => {
                 </motion.div>
               </div>
               
-              {/* Right visual - Market Data mockup */}
-              <motion.div
-                className="flex-shrink-0 w-full max-w-[280px] sm:max-w-xs md:max-w-sm lg:max-w-md mockup-card-container"
-                initial={{ opacity: 0, scale: 0.9, rotate: -5 }}
-                whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.3, duration: 0.6 }}
-              >
-                <div className="relative">
-                  {/* Glow behind card */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-rose-500/30 to-pink-500/30 rounded-2xl blur-2xl scale-110" />
-                  
-                  {/* Mockup card */}
-                  <div className="relative bg-gray-900 rounded-2xl p-6 border border-white/20 shadow-2xl">
-                    {/* Token Header */}
-                    <div className="flex items-center gap-3 mb-4 pb-4 border-b border-white/10">
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-rose-500 to-pink-500 flex items-center justify-center text-xl drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">
-                        📈
-                      </div>
-                      <div>
-                        <div className="text-white font-bold">Bitcoin (BTC)</div>
-                        <div className="text-gray-400 text-sm">Rank #1</div>
-                      </div>
-                    </div>
-                    
-                    {/* Price Stats */}
-                    <div className="grid grid-cols-2 gap-3 mb-4">
-                      <div className="bg-white/5 rounded-xl p-3 text-center">
-                        <div className="text-gray-400 text-xs mb-1">Price</div>
-                        <div className="text-xl font-bold text-white">$43,250</div>
-                        <div className="text-green-400 text-xs mt-1">+2.5% 24h</div>
-                      </div>
-                      <div className="bg-white/5 rounded-xl p-3 text-center">
-                        <div className="text-gray-400 text-xs mb-1">Market Cap</div>
-                        <div className="text-xl font-bold text-white">$850B</div>
-                        <div className="text-gray-500 text-xs mt-1">Volume: $28B</div>
-                      </div>
-                    </div>
-                    
-                    {/* Token Details */}
-                    <div className="bg-white/5 rounded-xl p-3 mb-3">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-gray-400 text-xs">24h High</span>
-                        <span className="text-white font-bold text-sm">$44,100</span>
-                      </div>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-gray-400 text-xs">24h Low</span>
-                        <span className="text-white font-bold text-sm">$42,800</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-400 text-xs">Rating</span>
-                        <div className="flex items-center gap-1">
-                          <span className="text-yellow-400">⭐</span>
-                          <span className="text-white font-bold text-sm">4.8</span>
-                          <span className="text-gray-400 text-xs">(156)</span>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {/* Sentiment & Actions */}
-                    <div className="flex gap-2 mb-3">
-                      <button className="flex-1 bg-green-500/20 border border-green-500/40 text-green-400 py-2 rounded-lg text-xs font-semibold">
-                        👍 1.2K
-                      </button>
-                      <button className="flex-1 bg-red-500/20 border border-red-500/40 text-red-400 py-2 rounded-lg text-xs font-semibold">
-                        👎 89
-                      </button>
-                    </div>
-                    
-                    {/* Trade Button */}
-                    <div className="bg-gradient-to-r from-rose-500 to-pink-500 text-white text-center py-3 rounded-xl font-bold text-sm">
-                      Trade on AquaSwap
-                    </div>
-                  </div>
-                  
-                  {/* Floating badges */}
-                  <motion.div
-                    className="absolute -top-3 -right-3 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg"
-                    animate={{ y: [0, -5, 0] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                  >
-                    ⚡ Live
-                  </motion.div>
-                  <motion.div
-                    className="absolute -bottom-3 -left-3 bg-rose-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg"
-                    animate={{ y: [0, -5, 0] }}
-                    transition={{ duration: 2, repeat: Infinity, delay: 1 }}
-                  >
-                    🔥 Trending
-                  </motion.div>
-                </div>
-              </motion.div>
+              <CarouselPhoneVisual glow="rgba(244, 63, 94, 0.4)">
+                <MarketDataPhoneScreen />
+              </CarouselPhoneVisual>
             </div>
           </motion.div>
         </div>
@@ -1804,98 +2107,9 @@ const CarouselCard = ({ feature, index }) => {
                 </motion.div>
               </div>
               
-              {/* Right visual - Trust Score mockup */}
-              <motion.div
-                className="flex-shrink-0 w-full max-w-[280px] sm:max-w-xs md:max-w-sm lg:max-w-md mockup-card-container"
-                initial={{ opacity: 0, scale: 0.9, rotate: -5 }}
-                whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.3, duration: 0.6 }}
-              >
-                <div className="relative">
-                  {/* Glow behind card */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-purple-500/30 to-violet-500/30 rounded-2xl blur-2xl scale-110" />
-                  
-                  {/* Mockup card */}
-                  <div className="relative bg-gray-900 rounded-2xl p-6 border border-white/20 shadow-2xl">
-                    {/* Trust Score Header */}
-                    <div className="flex items-center gap-3 mb-4 pb-4 border-b border-white/10">
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-violet-500 flex items-center justify-center text-xl drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">
-                        ⚡
-                      </div>
-                      <div>
-                        <div className="text-white font-bold">Trust Score</div>
-                        <div className="text-gray-400 text-sm">AI-Powered</div>
-                      </div>
-                    </div>
-                    
-                    {/* Score Display */}
-                    <div className="mb-4">
-                      <div className="relative w-32 h-32 mx-auto">
-                        {/* Circular gauge background */}
-                        <svg className="w-32 h-32 transform -rotate-90" viewBox="0 0 120 120">
-                          {/* Background circle */}
-                          <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="8" />
-                          {/* Score arc - 92% */}
-                          <circle 
-                            cx="60" cy="60" 
-                            r="50" 
-                            fill="none" 
-                            stroke="#22c55e" 
-                            strokeWidth="8" 
-                            strokeLinecap="round"
-                            strokeDasharray={`${2 * Math.PI * 50 * 0.92} ${2 * Math.PI * 50}`}
-                          />
-                        </svg>
-                        {/* Score text */}
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="text-center">
-                            <div className="text-3xl font-bold text-green-400">92</div>
-                            <div className="text-xs text-gray-400">Safe to Book</div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {/* Score Breakdown */}
-                    <div className="space-y-2 mb-3">
-                      {[
-                        { label: 'Rating', value: '50/50', color: 'text-green-400' },
-                        { label: 'Completion', value: '20/20', color: 'text-green-400' },
-                        { label: 'Verification', value: '20/20', color: 'text-green-400' },
-                        { label: 'CV/Profile', value: '5/5', color: 'text-green-400' },
-                        { label: 'Badges', value: '5/5', color: 'text-green-400' }
-                      ].map((item, i) => (
-                        <div key={i} className="flex items-center justify-between text-xs">
-                          <span className="text-gray-400">{item.label}</span>
-                          <span className={`font-bold ${item.color}`}>{item.value}</span>
-                        </div>
-                      ))}
-                    </div>
-                    
-                    {/* Status Badge */}
-                    <div className="bg-green-500/20 border border-green-500/40 text-center py-2 rounded-xl">
-                      <div className="text-xs text-green-400 font-semibold">✓ Safe to Book</div>
-                    </div>
-                  </div>
-                  
-                  {/* Floating badges */}
-                  <motion.div
-                    className="absolute -top-3 -right-3 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg"
-                    animate={{ y: [0, -5, 0] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                  >
-                    ✓ Verified
-                  </motion.div>
-                  <motion.div
-                    className="absolute -bottom-3 -left-3 bg-purple-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg"
-                    animate={{ y: [0, -5, 0] }}
-                    transition={{ duration: 2, repeat: Infinity, delay: 1 }}
-                  >
-                    🤖 AI-Powered
-                  </motion.div>
-                </div>
-              </motion.div>
+              <CarouselPhoneVisual glow="rgba(168, 85, 247, 0.4)">
+                <TrustScorePhoneScreen />
+              </CarouselPhoneVisual>
             </div>
           </motion.div>
         </div>
@@ -1995,98 +2209,9 @@ const CarouselCard = ({ feature, index }) => {
                 </motion.div>
               </div>
               
-              {/* Right visual - AquaSwap mockup */}
-              <motion.div
-                className="flex-shrink-0 w-full max-w-[280px] sm:max-w-xs md:max-w-sm lg:max-w-md mockup-card-container"
-                initial={{ opacity: 0, scale: 0.9, rotate: -5 }}
-                whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.3, duration: 0.6 }}
-              >
-                <div className="relative">
-                  {/* Glow behind card */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-teal-500/30 to-emerald-500/30 rounded-2xl blur-2xl scale-110" />
-                  
-                  {/* Mockup card */}
-                  <div className="relative bg-gray-900 rounded-2xl p-6 border border-white/20 shadow-2xl">
-                    {/* Swap Header */}
-                    <div className="flex items-center gap-3 mb-4 pb-4 border-b border-white/10">
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center text-xl drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">
-                        💱
-                      </div>
-                      <div>
-                        <div className="text-white font-bold">Token Swap</div>
-                        <div className="text-gray-400 text-sm">Cross-Chain BexTools</div>
-                      </div>
-                    </div>
-                    
-                    {/* Swap Stats */}
-                    <div className="grid grid-cols-2 gap-3 mb-4">
-                      <div className="bg-white/5 rounded-xl p-3 text-center">
-                        <div className="text-gray-400 text-xs mb-1">Fee</div>
-                        <div className="text-2xl font-bold text-teal-400">0.5%</div>
-                        <div className="text-gray-500 text-xs mt-1">Low Cost</div>
-                      </div>
-                      <div className="bg-white/5 rounded-xl p-3 text-center">
-                        <div className="text-gray-400 text-xs mb-1">Chains</div>
-                        <div className="text-2xl font-bold text-emerald-400">50+</div>
-                        <div className="text-gray-500 text-xs mt-1">Supported</div>
-                      </div>
-                    </div>
-                    
-                    {/* Swap Details */}
-                    <div className="bg-white/5 rounded-xl p-3 mb-3">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-gray-400 text-xs">From</span>
-                        <span className="text-white font-bold text-sm">ETH</span>
-                      </div>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-gray-400 text-xs">To</span>
-                        <span className="text-white font-bold text-sm">USDC</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-400 text-xs">Rate</span>
-                        <span className="text-teal-400 text-xs">Best Available</span>
-                      </div>
-                    </div>
-                    
-                    {/* Features */}
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      {['Charts', 'Arbitrage', 'Signals'].map((feature, i) => (
-                        <div key={i} className="bg-teal-500/20 border border-teal-500/40 rounded-lg px-2 py-1">
-                          <div className="text-xs text-teal-400 font-semibold">{feature}</div>
-                        </div>
-                      ))}
-                    </div>
-                    
-                    {/* Swap Button */}
-                    <div className="bg-gradient-to-r from-teal-500 to-emerald-500 text-white text-center py-3 rounded-xl font-bold text-sm">
-                      Swap Tokens
-                    </div>
-                    
-                    {/* Points Earned */}
-                    <div className="mt-2 text-center">
-                      <div className="text-xs text-teal-400 font-semibold">💰 Earn 5 Points Per Qualifying Swap (min. $5 USD)</div>
-                    </div>
-                  </div>
-                  
-                  {/* Floating badges */}
-                  <motion.div
-                    className="absolute -top-3 -right-3 bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg"
-                    animate={{ y: [0, -5, 0] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                  >
-                    ⚡ Extension
-                  </motion.div>
-                  <motion.div
-                    className="absolute -bottom-3 -left-3 bg-teal-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg"
-                    animate={{ y: [0, -5, 0] }}
-                    transition={{ duration: 2, repeat: Infinity, delay: 1 }}
-                  >
-                    🔗 Cross-Chain
-                  </motion.div>
-                </div>
-              </motion.div>
+              <CarouselPhoneVisual glow="rgba(20, 184, 166, 0.4)">
+                <AquaSwapPhoneScreen />
+              </CarouselPhoneVisual>
             </div>
           </motion.div>
         </div>
@@ -2182,90 +2307,9 @@ const CarouselCard = ({ feature, index }) => {
                 </motion.div>
               </div>
               
-              {/* Right visual - Bubble mockup */}
-              <motion.div
-                className="flex-shrink-0 w-full max-w-[280px] sm:max-w-xs md:max-w-sm lg:max-w-md mockup-card-container"
-                initial={{ opacity: 0, scale: 0.9, rotate: -5 }}
-                whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.3, duration: 0.6 }}
-              >
-                <div className="relative">
-                  {/* Glow behind card */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/30 to-teal-500/30 rounded-2xl blur-2xl scale-110" />
-                  
-                  {/* Mockup card */}
-                  <div className="relative bg-gray-900 rounded-2xl p-6 border border-white/20 shadow-2xl">
-                    {/* Bubble Header */}
-                    <div className="flex items-center gap-3 mb-4 pb-4 border-b border-white/10">
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-cyan-500 to-teal-500 flex items-center justify-center text-xl drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">
-                        🔮
-                      </div>
-                      <div>
-                        <div className="text-white font-bold">Token Project</div>
-                        <div className="text-gray-400 text-sm">Rank #3</div>
-                      </div>
-                    </div>
-                    
-                    {/* Vote Stats */}
-                    <div className="grid grid-cols-2 gap-3 mb-4">
-                      <div className="bg-white/5 rounded-xl p-3 text-center">
-                        <div className="text-gray-400 text-xs mb-1">Bullish</div>
-                        <div className="text-2xl font-bold text-green-400">1,234</div>
-                        <div className="text-gray-500 text-xs mt-1">👍 Votes</div>
-                      </div>
-                      <div className="bg-white/5 rounded-xl p-3 text-center">
-                        <div className="text-gray-400 text-xs mb-1">Bearish</div>
-                        <div className="text-2xl font-bold text-red-400">89</div>
-                        <div className="text-gray-500 text-xs mt-1">👎 Votes</div>
-                      </div>
-                    </div>
-                    
-                    {/* Project Details */}
-                    <div className="bg-white/5 rounded-xl p-3 mb-3">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-gray-400 text-xs">Status</span>
-                        <span className="text-cyan-400 text-xs font-bold">🔥 Trending</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-400 text-xs">Platforms</span>
-                        <span className="text-teal-400 text-xs">Aquads • BexTools</span>
-                      </div>
-                    </div>
-                    
-                    {/* Vote Buttons */}
-                    <div className="flex gap-2 mb-3">
-                      <button className="flex-1 bg-green-500/20 border border-green-500/40 text-green-400 py-2 rounded-lg text-xs font-semibold">
-                        👍 Bullish
-                      </button>
-                      <button className="flex-1 bg-red-500/20 border border-red-500/40 text-red-400 py-2 rounded-lg text-xs font-semibold">
-                        👎 Bearish
-                      </button>
-                    </div>
-                    
-                    {/* Points Earned */}
-                    <div className="bg-gradient-to-r from-cyan-500/20 to-teal-500/20 border border-cyan-500/40 text-center py-2 rounded-xl">
-                      <div className="text-xs text-cyan-400 font-semibold">💰 1 pt once per bubble · change vote anytime</div>
-                    </div>
-                  </div>
-                  
-                  {/* Floating badges */}
-                  <motion.div
-                    className="absolute -top-3 -right-3 bg-yellow-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg"
-                    animate={{ y: [0, -5, 0] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                  >
-                    🥉 #3
-                  </motion.div>
-                  <motion.div
-                    className="absolute -bottom-3 -left-3 bg-cyan-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg"
-                    animate={{ y: [0, -5, 0] }}
-                    transition={{ duration: 2, repeat: Infinity, delay: 1 }}
-                  >
-                    🔥 Bumped
-                  </motion.div>
-                </div>
-              </motion.div>
+              <CarouselPhoneVisual glow="rgba(6, 182, 212, 0.4)">
+                <BubblesPhoneScreen />
+              </CarouselPhoneVisual>
             </div>
           </motion.div>
         </div>
@@ -2361,89 +2405,9 @@ const CarouselCard = ({ feature, index }) => {
                 </motion.div>
               </div>
               
-              {/* Right visual - Twitter Raid mockup */}
-              <motion.div
-                className="flex-shrink-0 w-full max-w-[280px] sm:max-w-xs md:max-w-sm lg:max-w-md mockup-card-container"
-                initial={{ opacity: 0, scale: 0.9, rotate: -5 }}
-                whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.3, duration: 0.6 }}
-              >
-                <div className="relative">
-                  {/* Glow behind card */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-sky-500/30 to-blue-500/30 rounded-2xl blur-2xl scale-110" />
-                  
-                  {/* Mockup card */}
-                  <div className="relative bg-gray-900 rounded-2xl p-6 border border-white/20 shadow-2xl">
-                    {/* Twitter Raid Header */}
-                    <div className="flex items-center gap-3 mb-4 pb-4 border-b border-white/10">
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-sky-500 to-blue-500 flex items-center justify-center text-xl drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">
-                        🐦
-                      </div>
-                      <div>
-                        <div className="text-white font-bold">Twitter Raid</div>
-                        <div className="text-gray-400 text-sm">Boost Your Tweet</div>
-                      </div>
-                    </div>
-                    
-                    {/* Raid Stats */}
-                    <div className="grid grid-cols-2 gap-3 mb-4">
-                      <div className="bg-white/5 rounded-xl p-3 text-center">
-                        <div className="text-gray-400 text-xs mb-1">Points Earned</div>
-                        <div className="text-2xl font-bold text-sky-400">20</div>
-                        <div className="text-gray-500 text-xs mt-1">Per Completion</div>
-                      </div>
-                      <div className="bg-white/5 rounded-xl p-3 text-center">
-                        <div className="text-gray-400 text-xs mb-1">Free Raids</div>
-                        <div className="text-2xl font-bold text-green-400">1–10</div>
-                        <div className="text-gray-500 text-xs mt-1">Daily (by tier)</div>
-                      </div>
-                    </div>
-                    
-                    {/* Raid Details */}
-                    <div className="bg-white/5 rounded-xl p-3 mb-3">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-gray-400 text-xs">Cost After Free</span>
-                        <span className="text-white font-bold">2000 Pts</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-400 text-xs">Expires In</span>
-                        <span className="text-sky-400 text-xs">48 Hours</span>
-                      </div>
-                    </div>
-                    
-                    {/* Actions Required */}
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      {['Like', 'Retweet', 'Comment'].map((action, i) => (
-                        <div key={i} className="bg-sky-500/20 border border-sky-500/40 rounded-lg px-2 py-1">
-                          <div className="text-xs text-sky-400 font-semibold">{action}</div>
-                        </div>
-                      ))}
-                    </div>
-                    
-                    {/* Create Button */}
-                    <div className="bg-gradient-to-r from-sky-500 to-blue-500 text-white text-center py-3 rounded-xl font-bold text-sm">
-                      Create Raid
-                    </div>
-                  </div>
-                  
-                  {/* Floating badges */}
-                  <motion.div
-                    className="absolute -top-3 -right-3 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg"
-                    animate={{ y: [0, -5, 0] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                  >
-                    🆓 Free
-                  </motion.div>
-                  <motion.div
-                    className="absolute -bottom-3 -left-3 bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg"
-                    animate={{ y: [0, -5, 0] }}
-                    transition={{ duration: 2, repeat: Infinity, delay: 1 }}
-                  >
-                    ⚡ Active
-                  </motion.div>
-                </div>
-              </motion.div>
+              <CarouselPhoneVisual glow="rgba(14, 165, 233, 0.4)">
+                <TwitterRaidsPhoneScreen />
+              </CarouselPhoneVisual>
             </div>
           </motion.div>
         </div>
@@ -2539,95 +2503,9 @@ const CarouselCard = ({ feature, index }) => {
                 </motion.div>
               </div>
               
-              {/* Right visual - HyperSpace mockup */}
-              <motion.div
-                className="flex-shrink-0 w-full max-w-[280px] sm:max-w-xs md:max-w-sm lg:max-w-md mockup-card-container"
-                initial={{ opacity: 0, scale: 0.9, rotate: -5 }}
-                whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.3, duration: 0.6 }}
-              >
-                <div className="relative">
-                  {/* Glow behind card */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-purple-500/30 to-pink-500/30 rounded-2xl blur-2xl scale-110" />
-                  
-                  {/* Mockup card */}
-                  <div className="relative bg-gray-900 rounded-2xl p-6 border border-white/20 shadow-2xl">
-                    {/* Space Header */}
-                    <div className="flex items-center gap-3 mb-4 pb-4 border-b border-white/10">
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-xl drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">
-                        🎙️
-                      </div>
-                      <div className="flex-1">
-                        <div className="text-white font-bold">Your Twitter Space</div>
-                        <div className="text-gray-400 text-sm">Crypto Project AMA</div>
-                      </div>
-                      <div className="bg-red-500/20 border border-red-500/40 rounded-full px-3 py-1">
-                        <span className="text-red-400 text-xs font-bold">● LIVE</span>
-                      </div>
-                    </div>
-                    
-                    {/* Listener Stats */}
-                    <div className="grid grid-cols-2 gap-3 mb-4">
-                      <div className="bg-white/5 rounded-xl p-3 text-center">
-                        <div className="text-gray-400 text-xs mb-1">Listeners</div>
-                        <div className="text-2xl font-bold text-purple-400">2,500</div>
-                        <div className="text-gray-500 text-xs mt-1">In Space</div>
-                      </div>
-                      <div className="bg-white/5 rounded-xl p-3 text-center">
-                        <div className="text-gray-400 text-xs mb-1">Duration</div>
-                        <div className="text-2xl font-bold text-pink-400">1hr</div>
-                        <div className="text-gray-500 text-xs mt-1">Remaining</div>
-                      </div>
-                    </div>
-                    
-                    {/* Listener Avatars */}
-                    <div className="bg-white/5 rounded-xl p-3 mb-3">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-gray-400 text-xs">Active Listeners</span>
-                        <span className="text-purple-400 text-xs">+2,496 more</span>
-                      </div>
-                      <div className="flex -space-x-2">
-                        {[...Array(6)].map((_, i) => (
-                          <div key={i} className={`w-8 h-8 rounded-full border-2 border-gray-900 ${
-                            ['bg-purple-500', 'bg-pink-500', 'bg-blue-500', 'bg-green-500', 'bg-yellow-500', 'bg-red-500'][i]
-                          }`} />
-                        ))}
-                      </div>
-                    </div>
-                    
-                    {/* Package Options */}
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      {['100', '500', '1K', '2.5K', '5K'].map((pkg, i) => (
-                        <div key={i} className={`rounded-lg px-2 py-1 ${i === 3 ? 'bg-purple-500/30 border border-purple-500/60' : 'bg-white/5 border border-white/10'}`}>
-                          <div className={`text-xs font-semibold ${i === 3 ? 'text-purple-300' : 'text-gray-400'}`}>{pkg}</div>
-                        </div>
-                      ))}
-                    </div>
-                    
-                    {/* CTA Button */}
-                    <div className="bg-gradient-to-r from-purple-500 to-pink-500 text-white text-center py-3 rounded-xl font-bold text-sm">
-                      Get Listeners Now
-                    </div>
-                  </div>
-                  
-                  {/* Floating badges */}
-                  <motion.div
-                    className="absolute -top-3 -right-3 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg"
-                    animate={{ y: [0, -5, 0] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                  >
-                    📈 Trending
-                  </motion.div>
-                  <motion.div
-                    className="absolute -bottom-3 -left-3 bg-purple-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg"
-                    animate={{ y: [0, -5, 0] }}
-                    transition={{ duration: 2, repeat: Infinity, delay: 1 }}
-                  >
-                    ⚡ Instant
-                  </motion.div>
-                </div>
-              </motion.div>
+              <CarouselPhoneVisual glow="rgba(168, 85, 247, 0.4)">
+                <HyperSpacePhoneScreen />
+              </CarouselPhoneVisual>
             </div>
           </motion.div>
         </div>
@@ -2723,85 +2601,9 @@ const CarouselCard = ({ feature, index }) => {
                 </motion.div>
               </div>
               
-              {/* Right visual - Game Hub mockup */}
-              <motion.div
-                className="flex-shrink-0 w-full max-w-[280px] sm:max-w-xs md:max-w-sm lg:max-w-md mockup-card-container"
-                initial={{ opacity: 0, scale: 0.9, rotate: -5 }}
-                whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.3, duration: 0.6 }}
-              >
-                <div className="relative">
-                  {/* Glow behind card */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-orange-500/30 to-amber-500/30 rounded-2xl blur-2xl scale-110" />
-                  
-                  {/* Mockup card */}
-                  <div className="relative bg-gray-900 rounded-2xl p-6 border border-white/20 shadow-2xl">
-                    {/* Game Card Header */}
-                    <div className="relative mb-4 rounded-lg overflow-hidden bg-gradient-to-br from-orange-600/30 to-amber-600/30 h-32 flex items-center justify-center">
-                      <div className="text-5xl drop-shadow-[0_0_12px_rgba(255,255,255,0.6)]">🎮</div>
-                      <div className="absolute top-2 right-2 bg-blue-600/80 text-white text-xs px-2 py-1 rounded-full">
-                        RPG
-                      </div>
-                      <div className="absolute top-2 left-2 bg-purple-600/80 text-white text-xs px-2 py-1 rounded-full">
-                        Solana
-                      </div>
-                    </div>
-                    
-                    {/* Game Title & Project */}
-                    <div className="mb-3">
-                      <div className="text-white font-bold text-lg mb-1">Blockchain RPG</div>
-                      <div className="text-gray-400 text-sm">By <span className="text-orange-400">GameStudio</span></div>
-                    </div>
-                    
-                    {/* Votes & Actions */}
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2 bg-blue-900/50 text-blue-300 px-3 py-1.5 rounded-lg">
-                        <span className="text-sm">👍</span>
-                        <span className="font-bold">1,234</span>
-                      </div>
-                      <div className="flex gap-2">
-                        <button className="bg-gray-700 text-gray-300 px-3 py-1.5 rounded-lg text-xs hover:bg-gray-600">
-                          Vote
-                        </button>
-                        <button className="bg-gradient-to-r from-green-500 to-green-600 text-white px-3 py-1.5 rounded-lg text-xs">
-                          Play
-                        </button>
-                      </div>
-                    </div>
-                    
-                    {/* Tags */}
-                    <div className="flex flex-wrap gap-1 mb-3">
-                      {['Play-to-Earn', 'NFT', 'Multiplayer'].map((tag, i) => (
-                        <div key={i} className="bg-gray-700/50 text-gray-300 text-xs px-2 py-1 rounded-full">
-                          #{tag}
-                        </div>
-                      ))}
-                    </div>
-                    
-                    {/* Description preview */}
-                    <div className="text-gray-400 text-xs line-clamp-2">
-                      Epic blockchain RPG with NFT characters and play-to-earn mechanics...
-                    </div>
-                  </div>
-                  
-                  {/* Floating badges */}
-                  <motion.div
-                    className="absolute -top-3 -right-3 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg"
-                    animate={{ y: [0, -5, 0] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                  >
-                    ✓ Active
-                  </motion.div>
-                  <motion.div
-                    className="absolute -bottom-3 -left-3 bg-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg"
-                    animate={{ y: [0, -5, 0] }}
-                    transition={{ duration: 2, repeat: Infinity, delay: 1 }}
-                  >
-                    🔥 Trending
-                  </motion.div>
-                </div>
-              </motion.div>
+              <CarouselPhoneVisual glow="rgba(249, 115, 22, 0.4)">
+                <GameHubPhoneScreen />
+              </CarouselPhoneVisual>
             </div>
           </motion.div>
         </div>
@@ -2897,91 +2699,9 @@ const CarouselCard = ({ feature, index }) => {
                 </motion.div>
               </div>
               
-              {/* Right visual - Marketplace mockup */}
-              <motion.div
-                className="flex-shrink-0 w-full max-w-[280px] sm:max-w-xs md:max-w-sm lg:max-w-md mockup-card-container"
-                initial={{ opacity: 0, scale: 0.9, rotate: -5 }}
-                whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.3, duration: 0.6 }}
-              >
-                <div className="relative">
-                  {/* Glow behind card */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-violet-500/30 to-purple-500/30 rounded-2xl blur-2xl scale-110" />
-                  
-                  {/* Mockup card */}
-                  <div className="relative bg-gray-900 rounded-2xl p-6 border border-white/20 shadow-2xl">
-                    {/* Service Card Header */}
-                    <div className="flex items-center gap-3 mb-4 pb-4 border-b border-white/10">
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-violet-500 to-purple-500 flex items-center justify-center text-xl drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">
-                        👥
-                      </div>
-                      <div>
-                        <div className="text-white font-bold">Smart Contract Dev</div>
-                        <div className="text-gray-400 text-sm">Web3 Developer</div>
-                      </div>
-                    </div>
-                    
-                    {/* Trust Score & Rating */}
-                    <div className="grid grid-cols-2 gap-3 mb-4">
-                      <div className="bg-white/5 rounded-xl p-3 text-center">
-                        <div className="text-gray-400 text-xs mb-1">Trust Score</div>
-                        <div className="text-2xl font-bold text-purple-400">92</div>
-                      </div>
-                      <div className="bg-white/5 rounded-xl p-3 text-center">
-                        <div className="text-gray-400 text-xs mb-1">Rating</div>
-                        <div className="flex items-center justify-center gap-1">
-                          <span className="text-yellow-400">⭐</span>
-                          <span className="text-white font-bold">4.9</span>
-                          <span className="text-gray-400 text-xs">(120)</span>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {/* Service Details */}
-                    <div className="bg-white/5 rounded-xl p-3 mb-3">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-gray-400 text-xs">Price</span>
-                        <span className="text-white font-bold">0.5 ETH</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-400 text-xs">Delivery</span>
-                        <span className="text-purple-400 text-xs">7 Days</span>
-                      </div>
-                    </div>
-                    
-                    {/* Skills Badges */}
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      {['Solidity', 'Web3', 'React'].map((skill, i) => (
-                        <div key={i} className="bg-violet-500/20 border border-violet-500/40 rounded-lg px-2 py-1">
-                          <div className="text-xs text-violet-400 font-semibold">{skill}</div>
-                        </div>
-                      ))}
-                    </div>
-                    
-                    {/* Book Button */}
-                    <div className="bg-gradient-to-r from-violet-500 to-purple-500 text-white text-center py-3 rounded-xl font-bold text-sm">
-                      Book Service
-                    </div>
-                  </div>
-                  
-                  {/* Floating badges */}
-                  <motion.div
-                    className="absolute -top-3 -right-3 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg"
-                    animate={{ y: [0, -5, 0] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                  >
-                    ✓ Verified
-                  </motion.div>
-                  <motion.div
-                    className="absolute -bottom-3 -left-3 bg-yellow-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg"
-                    animate={{ y: [0, -5, 0] }}
-                    transition={{ duration: 2, repeat: Infinity, delay: 1 }}
-                  >
-                    🥇 Gold
-                  </motion.div>
-                </div>
-              </motion.div>
+              <CarouselPhoneVisual glow="rgba(139, 92, 246, 0.4)">
+                <MarketplacePhoneScreen />
+              </CarouselPhoneVisual>
             </div>
           </motion.div>
         </div>
@@ -3077,68 +2797,9 @@ const CarouselCard = ({ feature, index }) => {
                 </motion.div>
               </div>
               
-              {/* Right visual - Telegram Bot mockup */}
-              <motion.div
-                className="flex-shrink-0 w-full max-w-[280px] sm:max-w-xs md:max-w-sm lg:max-w-md mockup-card-container"
-                initial={{ opacity: 0, scale: 0.9, rotate: -5 }}
-                whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.3, duration: 0.6 }}
-              >
-                <div className="relative">
-                  {/* Glow behind card */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/30 to-purple-500/30 rounded-2xl blur-2xl scale-110" />
-                  
-                  {/* Mockup card */}
-                  <div className="relative bg-gray-900 rounded-2xl p-6 border border-white/20 shadow-2xl">
-                    {/* Telegram Header */}
-                    <div className="flex items-center gap-3 mb-4 pb-4 border-b border-white/10">
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-xl drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">
-                        🤖
-                      </div>
-                      <div>
-                        <div className="text-white font-bold">Aquads Bot</div>
-                        <div className="text-gray-400 text-sm">Online</div>
-                      </div>
-                    </div>
-                    
-                    {/* Bot Message */}
-                    <div className="bg-indigo-500/20 border border-indigo-500/40 rounded-xl p-3 mb-3">
-                      <div className="text-indigo-400 text-xs font-semibold mb-1">🤖 Aquads Bot</div>
-                      <div className="text-white text-sm">Twitter Raid Available!</div>
-                      <div className="text-purple-400 text-xs mt-1">💰 5–20 pts</div>
-                    </div>
-                    
-                    {/* Points Display */}
-                    <div className="bg-white/5 rounded-xl p-4 mb-3 text-center">
-                      <div className="text-gray-400 text-xs mb-1">Your Points</div>
-                      <div className="text-3xl font-bold text-purple-400 mb-1">2,450</div>
-                      <div className="text-green-400 text-xs">+5–20 from raid</div>
-                    </div>
-                    
-                    {/* Trending Badge */}
-                    <div className="bg-gradient-to-r from-emerald-500/20 to-green-500/20 border border-emerald-500/40 rounded-xl p-3 mb-3 text-center">
-                      <div className="text-emerald-400 text-xs font-semibold mb-1">📈 Trending</div>
-                      <div className="text-white text-xs">Aquads • BexTools • Rankings</div>
-                    </div>
-                    
-                    {/* Custom Branding Badge */}
-                    <div className="bg-gradient-to-r from-pink-500/20 to-rose-500/20 border border-pink-500/40 rounded-xl p-3 text-center">
-                      <div className="text-pink-400 text-xs font-semibold mb-1">🎨 Custom Branding</div>
-                      <div className="text-white text-xs">Trending Channel</div>
-                    </div>
-                  </div>
-                  
-                  {/* Floating badge */}
-                  <motion.div
-                    className="absolute -top-3 -right-3 bg-indigo-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg"
-                    animate={{ y: [0, -5, 0] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                  >
-                    FREE
-                  </motion.div>
-                </div>
-              </motion.div>
+              <CarouselPhoneVisual glow="rgba(99, 102, 241, 0.4)">
+                <TelegramBotPhoneScreen />
+              </CarouselPhoneVisual>
             </div>
           </motion.div>
         </div>
@@ -3231,71 +2892,9 @@ const CarouselCard = ({ feature, index }) => {
                 </motion.div>
               </div>
               
-              {/* Right visual - Payment link mockup */}
-              <motion.div
-                className="flex-shrink-0 w-full max-w-[280px] sm:max-w-xs md:max-w-sm lg:max-w-md mockup-card-container"
-                initial={{ opacity: 0, scale: 0.9, rotate: -5 }}
-                whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.3, duration: 0.6 }}
-              >
-                <div className="relative">
-                  {/* Glow behind card */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-blue-500/30 to-cyan-500/30 rounded-2xl blur-2xl scale-110" />
-                  
-                  {/* Mockup card */}
-                  <div className="relative bg-gray-900 rounded-2xl p-6 border border-white/20 shadow-2xl">
-                    {/* Header */}
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-xl drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">
-                        💸
-                      </div>
-                      <div>
-                        <div className="text-white font-bold">yourname</div>
-                        <div className="text-gray-400 text-sm">aquads.xyz/pay/yourname</div>
-                      </div>
-                    </div>
-                    
-                    {/* Chain selector mockup */}
-                    <div className="grid grid-cols-4 gap-2 mb-4">
-                      {[
-                        { icon: '◎', color: 'text-purple-400', bg: 'bg-purple-500/30 border border-purple-500/50', active: true },
-                        { icon: 'Ξ', color: 'text-blue-400', bg: 'bg-white/10' },
-                        { icon: '▣', color: 'text-blue-400', bg: 'bg-white/10' },
-                        { icon: '◆', color: 'text-purple-400', bg: 'bg-white/10' }
-                      ].map((item, i) => (
-                        <div 
-                          key={i} 
-                          className={`p-2 rounded-lg text-center text-lg font-bold ${item.active ? item.bg : item.bg} ${item.color}`}
-                        >
-                          {item.icon}
-                        </div>
-                      ))}
-                    </div>
-                    
-                    {/* Amount mockup */}
-                    <div className="bg-white/5 rounded-xl p-4 mb-4">
-                      <div className="text-gray-400 text-sm mb-1">Amount</div>
-                      <div className="text-white text-2xl font-bold">0.5 SOL</div>
-                      <div className="text-gray-400 text-sm">≈ $52.50 USD</div>
-                    </div>
-                    
-                    {/* Pay button mockup */}
-                    <div className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-center py-3 rounded-xl font-bold">
-                      Connect Wallet & Pay
-                    </div>
-                  </div>
-                  
-                  {/* Floating badges */}
-                  <motion.div
-                    className="absolute -top-3 -right-3 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg"
-                    animate={{ y: [0, -5, 0] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                  >
-                    ✓ Verified
-                  </motion.div>
-                </div>
-              </motion.div>
+              <CarouselPhoneVisual glow="rgba(59, 130, 246, 0.4)">
+                <AquaPayPhoneScreen />
+              </CarouselPhoneVisual>
             </div>
           </motion.div>
         </div>
@@ -3385,58 +2984,9 @@ const CarouselCard = ({ feature, index }) => {
                 </motion.div>
               </div>
 
-              <motion.div
-                className="flex-shrink-0 w-full max-w-[280px] sm:max-w-xs md:max-w-sm lg:max-w-md mockup-card-container"
-                initial={{ opacity: 0, scale: 0.9, rotate: -5 }}
-                whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.3, duration: 0.6 }}
-              >
-                <div className="relative">
-                  <div className="absolute inset-0 bg-gradient-to-br from-purple-500/30 to-yellow-500/20 rounded-2xl blur-2xl scale-110" />
-
-                  <div className="relative bg-gray-900 rounded-2xl p-3 border border-white/20 shadow-2xl overflow-hidden">
-                    <div
-                      className="absolute inset-0"
-                      style={{
-                        backgroundImage: "url('/images/link-in-bio-mockup-bg.webp')",
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center'
-                      }}
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-black/40 to-black/55" />
-
-                    <div className="relative z-10 p-2">
-                      <div className="flex flex-col items-center mb-4">
-                        <div className="w-14 h-14 rounded-full border-2 border-yellow-400/70 bg-[#2d1e59] shadow-[0_0_20px_rgba(250,204,21,0.35)] flex items-center justify-center">
-                          <span className="text-yellow-300 font-bold text-xs">A</span>
-                        </div>
-                        <div className="text-white font-semibold mt-2">Aquads</div>
-                      </div>
-
-                      <div className="space-y-2">
-                        {['WEBSITE', 'TWITTER', 'DISCORD'].map((label) => (
-                          <div key={label} className="flex items-center justify-between rounded-full border border-purple-400/70 bg-purple-500/45 px-3 py-2.5 backdrop-blur-sm">
-                            <div className="flex items-center gap-2.5">
-                              <div className="w-6 h-6 rounded-md bg-yellow-400/20 text-yellow-300 border border-yellow-300/40 flex items-center justify-center text-[10px]">★</div>
-                              <span className="text-white text-xs font-semibold tracking-wide">{label}</span>
-                            </div>
-                            <span className="text-yellow-300 text-xs">↗</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  <motion.div
-                    className="absolute -top-3 -right-3 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg"
-                    animate={{ y: [0, -5, 0] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                  >
-                    💰 Monetize
-                  </motion.div>
-                </div>
-              </motion.div>
+              <CarouselPhoneVisual glow="rgba(168, 85, 247, 0.4)">
+                <LinkInBioPhoneScreen />
+              </CarouselPhoneVisual>
             </div>
           </motion.div>
         </div>
@@ -3532,95 +3082,9 @@ const CarouselCard = ({ feature, index }) => {
                 </motion.div>
               </div>
               
-              {/* Right visual - Marketing Package mockup */}
-              <motion.div
-                className="flex-shrink-0 w-full max-w-[280px] sm:max-w-xs md:max-w-sm lg:max-w-md mockup-card-container"
-                initial={{ opacity: 0, scale: 0.9, rotate: -5 }}
-                whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.3, duration: 0.6 }}
-              >
-                <div className="relative">
-                  {/* Glow behind card */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-pink-500/30 to-rose-500/30 rounded-2xl blur-2xl scale-110" />
-                  
-                  {/* Mockup card */}
-                  <div className="relative bg-gray-900 rounded-2xl p-6 border border-white/20 shadow-2xl">
-                    {/* Package Header */}
-                    <div className="flex items-center justify-between mb-4 pb-4 border-b border-white/10">
-                      <div>
-                        <div className="text-pink-400 font-bold text-lg mb-1">AquaFlow</div>
-                        <div className="text-gray-400 text-sm">Growth Package</div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-gray-400 text-xs line-through">$2,899</div>
-                        <div className="text-pink-400 font-bold text-xl">$2,754</div>
-                      </div>
-                    </div>
-                    
-                    {/* Package Features */}
-                    <div className="space-y-3 mb-4">
-                      <div className="flex items-start gap-2">
-                        <span className="text-pink-400 mt-0.5">✓</span>
-                        <div>
-                          <div className="text-white text-sm font-semibold">9+ Media Pickups</div>
-                          <div className="text-gray-400 text-xs">Guaranteed coverage</div>
-                        </div>
-                      </div>
-                      <div className="flex items-start gap-2">
-                        <span className="text-pink-400 mt-0.5">✓</span>
-                        <div>
-                          <div className="text-white text-sm font-semibold">Tier-1 Crypto Sites</div>
-                          <div className="text-gray-400 text-xs">Cryptopolitan, CoinCodex, BraveNewCoin</div>
-                        </div>
-                      </div>
-                      <div className="flex items-start gap-2">
-                        <span className="text-pink-400 mt-0.5">✓</span>
-                        <div>
-                          <div className="text-white text-sm font-semibold">FREE SEO</div>
-                          <div className="text-gray-400 text-xs">Optimizations included</div>
-                        </div>
-                      </div>
-                      <div className="flex items-start gap-2">
-                        <span className="text-pink-400 mt-0.5">✓</span>
-                        <div>
-                          <div className="text-white text-sm font-semibold">24-72 Hours</div>
-                          <div className="text-gray-400 text-xs">Distribution time</div>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {/* Media Outlets Badge */}
-                    <div className="bg-pink-500/20 border border-pink-500/40 rounded-xl p-4 mb-4 text-center">
-                      <div className="text-gray-400 text-xs mb-1">Coverage On</div>
-                      <div className="text-pink-400 font-bold text-2xl mb-1">75+</div>
-                      <div className="text-pink-300 text-xs font-semibold">Media Outlets</div>
-                    </div>
-                    
-                    {/* Powered By */}
-                    <div className="bg-white/5 rounded-lg p-3 text-center">
-                      <div className="text-gray-400 text-xs mb-1">Powered by</div>
-                      <div className="text-pink-400 font-semibold text-sm">Coinbound/Mintfunnel</div>
-                    </div>
-                  </div>
-                  
-                  {/* Floating badges */}
-                  <motion.div
-                    className="absolute -top-3 -right-3 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg"
-                    animate={{ y: [0, -5, 0] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                  >
-                    ⚡ Popular
-                  </motion.div>
-                  <motion.div
-                    className="absolute -bottom-3 -left-3 bg-pink-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg"
-                    animate={{ y: [0, -5, 0] }}
-                    transition={{ duration: 2, repeat: Infinity, delay: 1 }}
-                  >
-                    🔥 Trending
-                  </motion.div>
-                </div>
-              </motion.div>
+              <CarouselPhoneVisual glow="rgba(236, 72, 153, 0.4)">
+                <MarketingPhoneScreen />
+              </CarouselPhoneVisual>
             </div>
           </motion.div>
         </div>
@@ -3715,74 +3179,9 @@ const CarouselCard = ({ feature, index }) => {
                 </motion.div>
               </div>
 
-              {/* Right visual - Wanted poster mockup */}
-              <motion.div
-                className="flex-shrink-0 w-full max-w-[280px] sm:max-w-xs md:max-w-sm lg:max-w-md mockup-card-container"
-                initial={{ opacity: 0, scale: 0.9, rotate: -5 }}
-                whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.3, duration: 0.6 }}
-              >
-                <div className="relative">
-                  {/* Glow behind card */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-amber-500/30 to-yellow-500/30 rounded-2xl blur-2xl scale-110" />
-
-                  {/* Mockup card */}
-                  <div className="relative bg-gray-900 rounded-2xl p-6 border border-amber-500/30 shadow-2xl">
-                    {/* Wanted band */}
-                    <div className="text-center mb-4 pb-4 border-b border-dashed border-amber-500/40">
-                      <div className="text-amber-400 text-[10px] tracking-[0.35em] font-bold mb-1">WANTED</div>
-                      <div className="text-white font-bold text-base leading-snug">Build a Solana Staking Widget</div>
-                      <div className="text-gray-500 text-xs mt-1">posted by AquaLabs · Development</div>
-                    </div>
-
-                    {/* Reward */}
-                    <div className="bg-amber-500/15 border border-amber-500/40 rounded-xl p-4 mb-4 text-center">
-                      <div className="text-gray-400 text-xs mb-1">Reward in escrow</div>
-                      <div className="text-amber-400 font-bold text-3xl mb-1">1,500</div>
-                      <div className="text-amber-300 text-xs font-semibold">USDC · Solana</div>
-                    </div>
-
-                    {/* Status rows */}
-                    <div className="space-y-2 mb-4">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-gray-400">Escrow status</span>
-                        <span className="text-green-400 font-semibold">✓ Funded</span>
-                      </div>
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-gray-400">Submissions</span>
-                        <span className="text-white font-semibold">7 hunters</span>
-                      </div>
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-gray-400">Deadline</span>
-                        <span className="text-white font-semibold">in 5 days</span>
-                      </div>
-                    </div>
-
-                    {/* Approve action */}
-                    <div className="bg-white/5 rounded-lg p-3 text-center">
-                      <div className="text-gray-400 text-xs mb-1">Poster action</div>
-                      <div className="text-amber-400 font-semibold text-sm">Approve &amp; Pay Winner</div>
-                    </div>
-                  </div>
-
-                  {/* Floating badges */}
-                  <motion.div
-                    className="absolute -top-3 -right-3 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg"
-                    animate={{ y: [0, -5, 0] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                  >
-                    🔒 Escrowed
-                  </motion.div>
-                  <motion.div
-                    className="absolute -bottom-3 -left-3 bg-amber-500 text-slate-900 text-xs font-bold px-3 py-1 rounded-full shadow-lg"
-                    animate={{ y: [0, -5, 0] }}
-                    transition={{ duration: 2, repeat: Infinity, delay: 1 }}
-                  >
-                    🏆 Open
-                  </motion.div>
-                </div>
-              </motion.div>
+              <CarouselPhoneVisual glow="rgba(245, 158, 11, 0.4)">
+                <BountiesPhoneScreen />
+              </CarouselPhoneVisual>
             </div>
           </motion.div>
         </div>
@@ -3861,31 +3260,9 @@ const CarouselCard = ({ feature, index }) => {
               )}
             </div>
             
-            {/* Right visual - SVG mockup */}
-            <motion.div
-              className="flex-shrink-0 w-full max-w-[280px] sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl mockup-card-container"
-              initial={{ opacity: 0, scale: 0.9, rotate: -5 }}
-              whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.3, duration: 0.6 }}
-            >
-              <div className="relative">
-                {/* Glow behind card */}
-                <div 
-                  className="absolute inset-0 rounded-2xl blur-2xl scale-110" 
-                  style={{ 
-                    background: `linear-gradient(to bottom right, ${colors.glowBg.replace('0.2', '0.3')}, ${colors.glowBg.replace('0.2', '0.3')})`
-                  }}
-                />
-                
-                {/* Mockup card */}
-                <div className="relative bg-gray-900 rounded-2xl p-6 border border-white/20 shadow-2xl overflow-hidden flex items-center justify-center">
-                  <div className="w-full flex items-center justify-center">
-                    <FeaturePreviewSVG featureTitle={feature.title} />
-                  </div>
-                </div>
-              </div>
-            </motion.div>
+            <CarouselPhoneVisual glow={colors.glowColor}>
+              <DefaultFeaturePhoneScreen featureTitle={feature.title} />
+            </CarouselPhoneVisual>
           </div>
         </motion.div>
       </div>
