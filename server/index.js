@@ -96,7 +96,11 @@ setInterval(async () => {
 }, 2 * 60 * 1000); // Run every 2 minutes
 
 // Vote Boost Background Service - Add votes every 30 seconds for active boosts
+// Skip overlapping ticks if Mongo is slow (keeps cadence without stacking work).
+let voteBoostTickRunning = false;
 setInterval(async () => {
+  if (voteBoostTickRunning || mongoose.connection.readyState !== 1) return;
+  voteBoostTickRunning = true;
   try {
     const { syncAdBumpState } = require('./utils/bumpFromVotes');
     const adsRoutesForCache = require('./routes/ads');
@@ -168,11 +172,16 @@ setInterval(async () => {
     }
   } catch (error) {
     console.error('[Vote Boost] Error in vote boost service:', error.message);
+  } finally {
+    voteBoostTickRunning = false;
   }
 }, 30000); // Run every 30 seconds
 
 // HyperSpace Auto-Complete Service - Complete orders when delivery timer expires
+let hyperSpaceAutoCompleteRunning = false;
 setInterval(async () => {
+  if (hyperSpaceAutoCompleteRunning || mongoose.connection.readyState !== 1) return;
+  hyperSpaceAutoCompleteRunning = true;
   try {
     const HyperSpaceOrder = require('./models/HyperSpaceOrder');
     const HyperSpaceAffiliateEarning = require('./models/HyperSpaceAffiliateEarning');
@@ -185,7 +194,7 @@ setInterval(async () => {
       status: 'delivering',
       deliveryEndsAt: { $lte: now }
     });
-    
+
     if (expiredOrders.length === 0) return;
     
     console.log(`[HyperSpace Auto-Complete] Found ${expiredOrders.length} orders to auto-complete`);
@@ -256,6 +265,8 @@ setInterval(async () => {
     }
   } catch (error) {
     console.error('[HyperSpace Auto-Complete] Error in auto-complete service:', error.message);
+  } finally {
+    hyperSpaceAutoCompleteRunning = false;
   }
 }, 30000); // Run every 30 seconds to check for expired orders
 
@@ -268,14 +279,14 @@ setInterval(async () => {
   }
 }, 24 * 60 * 60 * 1000); // Run every 24 hours
 
-// Send initial bubble summary on server start (after a delay to ensure DB is ready)
+// Send initial bubble summary on server start (after warmups settle; not live UI data)
 setTimeout(async () => {
   try {
     await telegramService.sendDailyBubbleSummary();
   } catch (error) {
     console.error('[Daily Bubble Summary] Error sending initial summary:', error);
   }
-}, 10000); // Wait 10 seconds after server start
+}, 90 * 1000);
 
 // Cron job for sending daily GM message at 8 AM EST every morning (Telegram + Discord)
 cron.schedule('0 8 * * *', async () => {
@@ -360,6 +371,10 @@ cron.schedule('0 */8 * * *', async () => {
   }
 });
 
+// Boot RSS/admin syncs are NOT live bubble/vote data. Spread them so deploys
+// don't compete with user traffic + Mongo warmups. Cron schedules stay the same.
+const BOOT_SYNC_BASE_MS = Number(process.env.BOOT_SYNC_BASE_MS) || 3 * 60 * 1000;
+
 // Sync Remotive jobs on server start (after a delay to ensure DB is ready)
 setTimeout(async () => {
   try {
@@ -368,7 +383,7 @@ setTimeout(async () => {
   } catch (error) {
     console.error('[Remotive Sync] Error in initial sync:', error);
   }
-}, 20000); // Wait 20 seconds after server start
+}, BOOT_SYNC_BASE_MS);
 
 // Suspicious affiliate referrers scan — persisted snapshot for admin Affiliates tab (medium+ risk only). Twice daily UTC.
 cron.schedule('17 */12 * * *', async () => {
@@ -387,7 +402,7 @@ setTimeout(async () => {
   } catch (e) {
     console.error('[SuspiciousAffiliatesScan] Initial run error:', e);
   }
-}, 60000); // 1 minute — after DB is ready and other boot work has started
+}, BOOT_SYNC_BASE_MS + 7 * 60 * 1000);
 
 // One-time cleanup: retired RSS sources — purge any stale rows from prior syncs.
 setTimeout(async () => {
@@ -400,7 +415,7 @@ setTimeout(async () => {
   } catch (error) {
     console.error('[Retired Sources Cleanup] Error removing stale jobs:', error.message);
   }
-}, 25000);
+}, BOOT_SYNC_BASE_MS + 30 * 1000);
 
 // Cron job for syncing Himalayas RSS (offset from Remotive)
 cron.schedule('0 5,13,21 * * *', async () => {
@@ -419,7 +434,7 @@ setTimeout(async () => {
   } catch (error) {
     console.error('[Himalayas Sync] Error in initial sync:', error);
   }
-}, 45000); // After Remotive initial sync
+}, BOOT_SYNC_BASE_MS + 2 * 60 * 1000);
 
 // Cron: Web3.career/Bondex API — offset minute to spread load vs Remotive/Himalayas
 cron.schedule('45 */8 * * *', async () => {
@@ -438,7 +453,7 @@ setTimeout(async () => {
   } catch (error) {
     console.error('[Web3.career Sync] Error in initial sync:', error);
   }
-}, 62000); // After Himalayas initial sync hook
+}, BOOT_SYNC_BASE_MS + 6 * 60 * 1000);
 
 // Market news (CoinDesk + Sky News world RSS): 3× daily UTC; keep last 72h in DB
 cron.schedule('0 0,8,16 * * *', async () => {
@@ -457,7 +472,7 @@ setTimeout(async () => {
   } catch (error) {
     console.error('[MarketNews Sync] Error in initial sync:', error);
   }
-}, 50000);
+}, BOOT_SYNC_BASE_MS + 3 * 60 * 1000);
 
 // Free online courses (Cursa.app via rss.app): upsert into MongoDB on each run.
 // Third-party feeds typically expose only the latest N items; sync often enough
@@ -469,7 +484,7 @@ setTimeout(async () => {
   } catch (error) {
     console.error('[FreeCourses Sync] Error in initial sync:', error);
   }
-}, 55000);
+}, BOOT_SYNC_BASE_MS + 4 * 60 * 1000);
 
 // Once daily UTC — rss feeds usually only include recent items; pick up new entries periodically.
 cron.schedule('30 6 * * *', async () => {
@@ -493,7 +508,7 @@ if (DEX_FEED_ENABLED) {
     } catch (error) {
       console.error('[DexFeed] Error in initial sync:', error);
     }
-  }, 60000);
+  }, BOOT_SYNC_BASE_MS + 5 * 60 * 1000);
 
   cron.schedule('0 6 * * *', async () => {
     try {
@@ -680,32 +695,39 @@ app.use('/api/login', limiter);
 app.use('/api/register', limiter);
 
 // Connect to MongoDB
+// Tuned for Railway Mongo TCP proxy stability (public *.proxy.rlwy.net flaps under
+// connection churn). Does not reduce live data freshness — only how we hold sockets.
 mongoose.connect(process.env.MONGODB_URI, {
-  serverSelectionTimeoutMS: 5000, // 5s is enough for a healthy Atlas cluster
-  socketTimeoutMS: 45000, // Close sockets after 45s
-  maxPoolSize: 25, // Limit connection pool to avoid exhausting MongoDB Atlas free-tier connections
-  minPoolSize: 2,  // Keep a few warm connections ready
-  maxIdleTimeMS: 30000 // Release idle connections after 30s to free up the pool
-}).then(() => {
+  serverSelectionTimeoutMS: 15000,
+  socketTimeoutMS: 45000,
+  connectTimeoutMS: 15000,
+  maxPoolSize: 25,
+  minPoolSize: 5,
+  maxIdleTimeMS: 60000
+  // Do NOT set family:4 — Railway private networking is IPv6 (*.railway.internal)
+}).then(async () => {
   // Initialize skill tests if they don't exist
   initializeSkillTests();
-  // Pre-warm caches so the first page load after restart is fast
-  const { warmupReviewsCache } = require('./routes/reviews');
-  const { warmupTokensCache } = require('./routes/tokens');
-  const { warmupGamesCache } = require('./routes/games');
-  const { warmupJobsCache } = require('./routes/jobs');
-  const { warmupAdsCache } = require('./routes/ads');
-  const { warmupBlogsCache } = require('./routes/blogs');
-  const { warmupServicesCache } = require('./routes/services');
-  const { warmupRaidsCache } = require('./routes/twitter-raids');
-  warmupReviewsCache();
-  warmupTokensCache();
-  warmupGamesCache();
-  warmupJobsCache();
-  warmupAdsCache();
-  warmupBlogsCache();
-  warmupServicesCache();
-  warmupRaidsCache();
+  // Pre-warm caches so first page load after restart is fast — staggered so we
+  // don't open a connection stampede through the Mongo proxy on every deploy.
+  const warmupSteps = [
+    ['reviews', () => require('./routes/reviews').warmupReviewsCache()],
+    ['tokens', () => require('./routes/tokens').warmupTokensCache()],
+    ['games', () => require('./routes/games').warmupGamesCache()],
+    ['jobs', () => require('./routes/jobs').warmupJobsCache()],
+    ['ads', () => require('./routes/ads').warmupAdsCache()],
+    ['blogs', () => require('./routes/blogs').warmupBlogsCache()],
+    ['services', () => require('./routes/services').warmupServicesCache()],
+    ['raids', () => require('./routes/twitter-raids').warmupRaidsCache()]
+  ];
+  for (const [name, fn] of warmupSteps) {
+    try {
+      await Promise.resolve(fn());
+    } catch (err) {
+      console.error(`[Cache Warmup] ${name} failed (non-critical):`, err.message);
+    }
+    await new Promise((r) => setTimeout(r, 150));
+  }
   ensureDexFeedUser().catch((err) => {
     console.error('[DexFeed] ensureDexFeedUser on connect:', err.message);
   });
