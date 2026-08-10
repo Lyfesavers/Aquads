@@ -845,6 +845,140 @@ const FeaturePreviewSVG = ({ featureTitle }) => {
   }
 };
 
+/** Premium 3D phone chrome for carousel product previews */
+const PremiumPhoneMockup = ({ children, glow = 'rgba(16, 185, 129, 0.38)', time = '9:41' }) => (
+  <div className="premium-phone-scene" style={{ '--phone-glow': glow }}>
+    <div className="premium-phone-glow" aria-hidden="true" />
+    <div className="premium-phone-shadow" aria-hidden="true" />
+    <div className="premium-phone">
+      <span className="premium-phone__side" aria-hidden="true" />
+      <div className="premium-phone__screen">
+        <div className="premium-phone__island" aria-hidden="true" />
+        <div className="premium-phone__status" aria-hidden="true">
+          <span>{time}</span>
+          <span className="premium-phone__status-right">
+            <svg width="14" height="10" viewBox="0 0 14 10" fill="currentColor" aria-hidden="true">
+              <rect x="0" y="6" width="2.2" height="4" rx="0.4" opacity="0.45" />
+              <rect x="3.2" y="4" width="2.2" height="6" rx="0.4" opacity="0.65" />
+              <rect x="6.4" y="2" width="2.2" height="8" rx="0.4" opacity="0.85" />
+              <rect x="9.6" y="0" width="2.2" height="10" rx="0.4" />
+            </svg>
+            <svg width="18" height="10" viewBox="0 0 18 10" fill="none" aria-hidden="true">
+              <rect x="0.5" y="1.5" width="14" height="7" rx="1.5" stroke="currentColor" strokeOpacity="0.55" />
+              <rect x="2" y="3" width="9.5" height="4" rx="0.6" fill="currentColor" />
+              <path d="M15.5 3.5v3a1.5 1.5 0 0 0 0-3z" fill="currentColor" opacity="0.45" />
+            </svg>
+          </span>
+        </div>
+        <div className="premium-phone__body">{children}</div>
+        <div className="premium-phone__glass" aria-hidden="true" />
+        <div className="premium-phone__home" aria-hidden="true" />
+      </div>
+    </div>
+  </div>
+);
+
+/** On-Chain Resume — dense product UI for the phone screen */
+const OnChainResumePhoneScreen = () => (
+  <div className="flex h-full flex-col text-left">
+    <div className="mb-3 flex items-center gap-2.5">
+      <div
+        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white"
+        style={{
+          background: 'linear-gradient(145deg, #34d399 0%, #0f766e 100%)',
+          boxShadow: '0 0 0 2px rgba(16,185,129,0.25), 0 6px 16px -6px rgba(16,185,129,0.55)'
+        }}
+      >
+        JD
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="truncate text-[13px] font-semibold tracking-tight text-white">Jordan Hale</div>
+        <div className="truncate text-[10px] text-slate-400">Smart Contract Engineer</div>
+      </div>
+      <div className="rounded-md border border-white/10 bg-white/[0.04] px-1.5 py-0.5 text-[9px] font-medium text-slate-300">
+        Base
+      </div>
+    </div>
+
+    <div className="mb-3 rounded-xl border border-white/[0.08] bg-gradient-to-b from-white/[0.06] to-white/[0.02] p-3">
+      <div className="mb-2 flex items-center justify-between">
+        <span className="text-[10px] font-medium uppercase tracking-[0.12em] text-slate-500">Trust score</span>
+        <span className="text-[10px] font-semibold text-emerald-400/90">Top 8%</span>
+      </div>
+      <div className="flex items-center gap-3">
+        <div className="relative h-[4.25rem] w-[4.25rem] shrink-0">
+          <svg className="h-full w-full -rotate-90" viewBox="0 0 80 80" aria-hidden="true">
+            <circle cx="40" cy="40" r="32" fill="none" stroke="rgba(16,185,129,0.12)" strokeWidth="6" />
+            <circle
+              cx="40"
+              cy="40"
+              r="32"
+              fill="none"
+              stroke="url(#resumeRing)"
+              strokeWidth="6"
+              strokeLinecap="round"
+              strokeDasharray={`${2 * Math.PI * 32 * 0.88} ${2 * Math.PI * 32}`}
+            />
+            <defs>
+              <linearGradient id="resumeRing" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#34d399" />
+                <stop offset="100%" stopColor="#14b8a6" />
+              </linearGradient>
+            </defs>
+          </svg>
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <span className="text-xl font-bold leading-none tracking-tight text-white">88</span>
+            <span className="mt-0.5 text-[8px] uppercase tracking-wider text-slate-500">/ 100</span>
+          </div>
+        </div>
+        <div className="min-w-0 flex-1 space-y-1.5">
+          {[
+            { label: 'Completed jobs', value: '47' },
+            { label: 'On-time rate', value: '98%' },
+            { label: 'Dispute-free', value: '100%' }
+          ].map((row) => (
+            <div key={row.label} className="flex items-center justify-between gap-2 text-[10px]">
+              <span className="text-slate-500">{row.label}</span>
+              <span className="font-semibold tabular-nums text-slate-200">{row.value}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+
+    <div className="mb-3">
+      <div className="mb-1.5 text-[10px] font-medium uppercase tracking-[0.12em] text-slate-500">Verified skills</div>
+      <div className="flex flex-wrap gap-1.5">
+        {['Solidity', 'React', 'Audits', 'Base'].map((skill) => (
+          <span
+            key={skill}
+            className="rounded-md border border-emerald-500/25 bg-emerald-500/10 px-2 py-1 text-[10px] font-medium text-emerald-300/95"
+          >
+            {skill}
+          </span>
+        ))}
+      </div>
+    </div>
+
+    <div className="mt-auto space-y-2">
+      <div className="flex items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.08] px-2.5 py-2">
+        <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-[11px] font-bold text-emerald-300">
+          ✓
+        </div>
+        <div className="min-w-0">
+          <div className="text-[11px] font-semibold text-emerald-200">Verified on-chain</div>
+          <div className="truncate text-[9px] text-slate-500">EAS attestation · Base</div>
+        </div>
+      </div>
+      <div className="rounded-lg border border-white/[0.06] bg-white/[0.03] px-2.5 py-1.5">
+        <div className="truncate font-mono text-[8px] leading-relaxed text-slate-500">
+          0x7a3f…c91e · attester: aquads.eth
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
 // Carousel Card Component - Redesigned to match AquaPay section style
 const CarouselCard = ({ feature, index }) => {
   // Get gradient colors based on feature gradient
@@ -1014,78 +1148,17 @@ const CarouselCard = ({ feature, index }) => {
                 </motion.div>
               </div>
               
-              {/* Right visual - Resume mockup */}
+              {/* Right visual — premium 3D phone mockup (trial) */}
               <motion.div
-                className="flex-shrink-0 w-full max-w-[280px] sm:max-w-xs md:max-w-sm lg:max-w-md mockup-card-container"
-                initial={{ opacity: 0, scale: 0.9, rotate: -5 }}
-                whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
+                className="flex-shrink-0 w-full max-w-[260px] sm:max-w-[280px] md:max-w-[300px] mockup-card-container"
+                initial={{ opacity: 0, y: 28 }}
+                whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: 0.3, duration: 0.6 }}
+                transition={{ delay: 0.25, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
               >
-                <div className="relative">
-                  {/* Glow behind card */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/30 to-teal-500/30 rounded-2xl blur-2xl scale-110" />
-                  
-                  {/* Mockup card */}
-                  <div className="relative bg-gray-900 rounded-2xl p-6 border border-white/20 shadow-2xl">
-                    {/* Header */}
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center text-xl drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">
-                        ⛓️
-                      </div>
-                      <div>
-                        <div className="text-white font-bold">John Doe</div>
-                        <div className="text-gray-400 text-sm">Web3 Developer</div>
-                      </div>
-                    </div>
-                    
-                    {/* Trust Score */}
-                    <div className="bg-white/5 rounded-xl p-4 mb-4 text-center">
-                      <div className="relative w-20 h-20 mx-auto mb-2">
-                        <svg className="w-20 h-20 transform -rotate-90">
-                          <circle cx="40" cy="40" r="35" fill="none" stroke="rgba(16, 185, 129, 0.2)" strokeWidth="6"/>
-                          <circle cx="40" cy="40" r="35" fill="none" stroke="#10b981" strokeWidth="6" 
-                            strokeDasharray={`${2 * Math.PI * 35 * 0.88} ${2 * Math.PI * 35}`} 
-                            strokeDashoffset={2 * Math.PI * 35 * 0.12}
-                            strokeLinecap="round"/>
-                        </svg>
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="text-center">
-                            <div className="text-2xl font-bold text-emerald-400">88</div>
-                            <div className="text-xs text-gray-400">Trust Score</div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {/* Skills Badges */}
-                    <div className="grid grid-cols-3 gap-2 mb-4">
-                      {['React', 'Web3', 'Solidity'].map((skill, i) => (
-                        <div key={i} className="bg-emerald-500/20 border border-emerald-500/40 rounded-lg px-2 py-1 text-center">
-                          <div className="text-xs text-emerald-400 font-semibold">{skill}</div>
-                        </div>
-                      ))}
-                    </div>
-                    
-                    {/* Verification Badge */}
-                    <div className="bg-emerald-500/20 border border-emerald-500/40 rounded-xl p-3 text-center">
-                      <div className="flex items-center justify-center gap-2 text-emerald-400 text-sm font-semibold">
-                        <span>✓</span>
-                        <span>Verified On-Chain</span>
-                      </div>
-                      <div className="text-xs text-gray-400 mt-1">Base • EAS</div>
-                    </div>
-                  </div>
-                  
-                  {/* Floating badge */}
-                  <motion.div
-                    className="absolute -top-3 -right-3 bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg"
-                    animate={{ y: [0, -5, 0] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                  >
-                    🔵 Base
-                  </motion.div>
-                </div>
+                <PremiumPhoneMockup glow="rgba(16, 185, 129, 0.4)">
+                  <OnChainResumePhoneScreen />
+                </PremiumPhoneMockup>
               </motion.div>
             </div>
           </motion.div>
