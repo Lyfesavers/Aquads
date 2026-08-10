@@ -183,65 +183,76 @@ const finalizeAdBumpAfterVote = async (adDoc) => {
   return synced;
 };
 
-/**
- * Periodic bubble shrink — still every 15s for live feel / socket freshness.
- * Safe change vs old loop: one lean find + one bulkWrite instead of N sequential
- * findByIdAndUpdate round-trips (that stampeded the Railway Mongo proxy under load).
- * Clients still get per-ad socket updates; list GET also computes size on read.
- */
-let shrinkTickRunning = false;
-setInterval(async () => {
-  if (shrinkTickRunning) return;
-  if (mongoose.connection.readyState !== 1) return;
-  shrinkTickRunning = true;
+// Function to calculate and update ad size (bump = bullishVotes >= BUMP_VOTE_THRESHOLD)
+const updateAdSize = async (ad) => {
+  const now = Date.now();
 
   try {
-    const now = Date.now();
     const sizeOpts = sizeOptsForBump(now);
-    const ads = await Ad.find({ status: { $in: ['active', 'approved'] } })
-      .select('_id id size bullishVotes bearishVotes createdAt status meetsLiquidityRequirement isBumped bumpedAt bumpExpiresAt bumpDuration')
-      .lean();
+    const { changed, $set } = getBumpSyncUpdate(ad, ad.bullishVotes, sizeOpts);
 
-    const ops = [];
-    const socketPayloads = [];
-
-    for (const ad of ads) {
-      const { changed, $set } = getBumpSyncUpdate(ad, ad.bullishVotes, sizeOpts);
-      if (!changed) continue;
-
-      ops.push({
-        updateOne: {
-          filter: { _id: ad._id },
-          update: { $set }
-        }
-      });
-      socketPayloads.push({
-        _id: ad._id,
-        id: ad.id,
-        size: $set.size !== undefined ? $set.size : ad.size,
-        bullishVotes: ad.bullishVotes,
-        bearishVotes: ad.bearishVotes,
-        isBumped: $set.isBumped !== undefined ? $set.isBumped : ad.isBumped,
-        status: ad.status,
-        createdAt: ad.createdAt,
-        bumpedAt: Object.prototype.hasOwnProperty.call($set, 'bumpedAt') ? $set.bumpedAt : ad.bumpedAt
-      });
+    if (changed) {
+      const result = await Ad.findByIdAndUpdate(
+        ad._id,
+        { $set },
+        { new: true, select: '_id id size bullishVotes bearishVotes isBumped status createdAt' }
+      );
+      if (result) {
+        invalidateAdsCache();
+        socket.emitAdUpdate('update', result);
+      }
+      return;
     }
 
-    if (ops.length === 0) return;
+    if (isBumpEligible(ad, ad.bullishVotes)) {
+      if (ad.size !== MAX_SIZE) {
+        const result = await Ad.findByIdAndUpdate(
+          ad._id,
+          { $set: { size: MAX_SIZE } },
+          { new: true, select: '_id id size bullishVotes bearishVotes isBumped status createdAt' }
+        );
+        if (result) {
+          socket.emitAdUpdate('update', result);
+        }
+      }
+      return;
+    }
 
-    await Ad.bulkWrite(ops, { ordered: false });
-    invalidateAdsCache();
-    for (const payload of socketPayloads) {
-      socket.emitAdUpdate('update', payload);
+    const timeSinceCreation = now - new Date(ad.createdAt).getTime();
+    const shrinkIntervals = Math.floor(timeSinceCreation / SHRINK_INTERVAL);
+    let newSize = MAX_SIZE;
+    for (let i = 0; i < shrinkIntervals; i++) {
+      newSize *= SHRINK_PERCENTAGE;
+    }
+    newSize = Math.max(MIN_SIZE, Math.round(newSize * 10) / 10);
+
+    if (newSize !== ad.size) {
+      const result = await Ad.findByIdAndUpdate(
+        ad._id,
+        { $set: { size: newSize } },
+        { new: true, select: '_id id size bullishVotes bearishVotes isBumped status createdAt' }
+      );
+      if (result) {
+        socket.emitAdUpdate('update', result);
+      }
     }
   } catch (error) {
-    // Periodic check error — avoid log storms on transient Mongo disconnects
-    if (error?.message && !/ECONNRESET|ServerSelection|topology|closed/i.test(error.message)) {
-      console.error('[Ads Shrink] tick error:', error.message);
+    // Error updating ad
+  }
+};
+
+// Periodic bubble shrink — only fetch fields needed for size math (NOT full docs).
+setInterval(async () => {
+  try {
+    const ads = await Ad.find({ status: { $in: ['active', 'approved'] } })
+      .select('_id id size bullishVotes createdAt status meetsLiquidityRequirement isBumped bumpedAt bumpExpiresAt bumpDuration')
+      .lean();
+
+    for (const ad of ads) {
+      await updateAdSize(ad);
     }
-  } finally {
-    shrinkTickRunning = false;
+  } catch (error) {
+    // Periodic check error
   }
 }, SHRINK_INTERVAL);
 
