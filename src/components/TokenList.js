@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useId } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import TokenSparkline from './TokenSparkline';
 import TokenRating from './TokenRating';
 import { FaGlobe, FaTwitter, FaTelegram, FaDiscord, FaGithub, FaReddit, FaSearch, FaTimes } from 'react-icons/fa';
@@ -116,8 +116,6 @@ const SignalRpmGauge = ({
   tooltip,
   size = 118,
 }) => {
-  const reactId = useId();
-  const glowId = `gauge-glow-${reactId.replace(/:/g, '')}`;
   const w = size;
   const h = size * 0.62;
   const cx = w / 2;
@@ -125,9 +123,21 @@ const SignalRpmGauge = ({
   const radius = w / 2 - 14;
   const stroke = Math.max(7, w / 16);
   const needlePct = clampGauge(Number.isFinite(pct) ? pct : 50, 0, 100);
-  // 0% = left (Sell/Falling), 100% = right (Buy/Rising)
-  const needleRotation = (needlePct / 100) * 180;
-  const needleLen = radius - stroke * 0.35;
+  // SVG polar angle: 180° left (Sell/Falling) → 360° right (Buy/Rising)
+  const needleAngle = 180 + (needlePct / 100) * 180;
+  const needleRad = (needleAngle * Math.PI) / 180;
+  const needleLen = radius - stroke * 0.55;
+  const tipX = cx + needleLen * Math.cos(needleRad);
+  const tipY = cy + needleLen * Math.sin(needleRad);
+  const tipSize = 5.5;
+  const tipLeft = {
+    x: tipX - tipSize * Math.cos(needleRad - 0.9),
+    y: tipY - tipSize * Math.sin(needleRad - 0.9),
+  };
+  const tipRight = {
+    x: tipX - tipSize * Math.cos(needleRad + 0.9),
+    y: tipY - tipSize * Math.sin(needleRad + 0.9),
+  };
 
   const arc = (startDeg, endDeg) => {
     const start = (startDeg * Math.PI) / 180;
@@ -153,16 +163,6 @@ const SignalRpmGauge = ({
   return (
     <div className="shrink-0 flex flex-col items-center select-none" title={tooltip}>
       <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="overflow-visible" aria-hidden="true">
-        <defs>
-          <filter id={glowId} x="-40%" y="-40%" width="180%" height="180%">
-            <feGaussianBlur stdDeviation="2.2" result="blur" />
-            <feMerge>
-              <feMergeNode in="blur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-        </defs>
-
         {/* Track */}
         <path d={arc(180, 360)} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={stroke + 4} strokeLinecap="round" />
         {/* Sell / falling */}
@@ -189,27 +189,22 @@ const SignalRpmGauge = ({
           );
         })}
 
-        {/* Needle — rotates from left (0°) toward right (180°) */}
-        <g
-          style={{
-            transformOrigin: `${cx}px ${cy}px`,
-            transform: `rotate(${needleRotation}deg)`,
-            transition: 'transform 900ms cubic-bezier(0.22, 1, 0.36, 1)',
-          }}
-        >
-          <line
-            x1={cx}
-            y1={cy}
-            x2={cx - needleLen}
-            y2={cy}
-            stroke={color}
-            strokeWidth={2.6}
-            strokeLinecap="round"
-            filter={`url(#${glowId})`}
-          />
-        </g>
-        <circle cx={cx} cy={cy} r={5.5} fill="#111827" stroke={color} strokeWidth="2" />
-        <circle cx={cx} cy={cy} r={2} fill={color} />
+        {/* Needle drawn with explicit coords so it always renders */}
+        <line
+          x1={cx}
+          y1={cy}
+          x2={tipX}
+          y2={tipY}
+          stroke={color}
+          strokeWidth={3}
+          strokeLinecap="round"
+        />
+        <polygon
+          points={`${tipX},${tipY} ${tipLeft.x},${tipLeft.y} ${tipRight.x},${tipRight.y}`}
+          fill={color}
+        />
+        <circle cx={cx} cy={cy} r={6} fill="#0b1220" stroke={color} strokeWidth="2.5" />
+        <circle cx={cx} cy={cy} r={2.25} fill={color} />
       </svg>
 
       <div className="-mt-1 text-center leading-tight">
@@ -233,10 +228,19 @@ const MarketSignalGauge = ({ signal }) => {
 
   const label = signal.label;
   const strength = signal.strength || 'neutral';
-  const score = Number.isFinite(signal.score) ? signal.score : 0;
-  const pct = ((clampGauge(score, -100, 100) + 100) / 200) * 100;
+  // Park the needle in the matching color band (red / amber / green).
+  const pct =
+    label === 'Sell'
+      ? strength === 'strong'
+        ? 12
+        : 28
+      : label === 'Buy'
+      ? strength === 'strong'
+        ? 88
+        : 72
+      : 50;
 
-  const color = label === 'Buy' ? '#4ade80' : label === 'Sell' ? '#f87171' : '#d1d5db';
+  const color = label === 'Buy' ? '#4ade80' : label === 'Sell' ? '#f87171' : '#fbbf24';
   const strengthLabel =
     strength === 'strong' ? 'Strong' : strength === 'moderate' ? 'Moderate' : 'Neutral';
 
@@ -264,8 +268,8 @@ const VolumeTrendGauge = ({ volumeChange }) => {
   const label =
     volumeChange >= 10 ? 'Rising' : volumeChange <= -10 ? 'Falling' : 'Steady';
   const color =
-    label === 'Rising' ? '#4ade80' : label === 'Falling' ? '#f87171' : '#d1d5db';
-  const pct = ((clampGauge(volumeChange, -30, 30) + 30) / 60) * 100;
+    label === 'Rising' ? '#4ade80' : label === 'Falling' ? '#f87171' : '#fbbf24';
+  const pct = label === 'Rising' ? 83 : label === 'Falling' ? 17 : 50;
 
   const tooltip = `Volume ${label.toLowerCase()} — 24h change ${
     volumeChange >= 0 ? '+' : ''
