@@ -90,8 +90,6 @@ import {
   persistTokensCache,
   readGlobalStatsCache,
   persistGlobalStatsCache,
-  getTokensCacheAgeMs,
-  TOKENS_CACHE_STALE_MS,
 } from './utils/tokensCache';
 import './App.css';
 import FilterControls from './components/FilterControls';
@@ -975,15 +973,18 @@ const AdsFetchOnRoute = ({ loadAdsFromApi }) => {
 
 const TokensFetchOnRoute = ({ loadTokensFromApi, hasLoadedTokens }) => {
   const location = useLocation();
+  const apiFetchedRef = useRef(false);
 
   useEffect(() => {
     if (location.pathname !== '/home') return;
+    // Once per SPA session (same pattern as ads). Live freshness comes from
+    // tokensUpdated socket pushes after the server CoinGecko sync — not from
+    // re-hitting /api/tokens on every remount or return to /home.
+    if (apiFetchedRef.current) return;
+    apiFetchedRef.current = true;
     if (!hasLoadedTokens) {
       loadTokensFromApi();
-      return;
-    }
-    // Stale in-memory list: refresh quietly when user returns to home (same cadence as server sync).
-    if (getTokensCacheAgeMs() >= TOKENS_CACHE_STALE_MS) {
+    } else {
       loadTokensFromApi({ background: true });
     }
   }, [location.pathname, loadTokensFromApi, hasLoadedTokens]);
@@ -1660,7 +1661,13 @@ function App() {
     const startFallback = () => {
       if (fallbackInterval) return;
       fallbackInterval = setInterval(() => {
-        if (!document.hidden && !tokenDetailsRefreshPausedRef.current) {
+        // Only poll while the token list is on-screen — avoid burning /api/tokens
+        // every minute from dashboard/marketplace/etc. when the socket is down.
+        if (
+          !document.hidden &&
+          !tokenDetailsRefreshPausedRef.current &&
+          window.location.pathname === '/home'
+        ) {
           loadTokensFromApi({ background: true });
         }
       }, 60000);

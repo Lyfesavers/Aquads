@@ -18,15 +18,17 @@ let nextCoinGeckoAttemptAt = 0;
 
 let globalStatsCache = null;
 let globalStatsCacheTime = 0;
+/** In-flight dedupe so concurrent /global/stats visitors share one CoinGecko call. */
+let globalStatsInflight = null;
 /**
- * Kept short so the "Global Market Cap" and "24h Trading Volume" numbers stay close to
- * CoinGecko's live figures — /global is a single cheap CG call, comfortably within free
- * tier rate limits at this TTL.
+ * Align with the token list sync cadence. Shorter TTLs caused every home visit (after
+ * cache expiry) to hit CoinGecko /global and then chart fallbacks — a major 429 source.
  */
-const GLOBAL_STATS_CACHE_TTL = 5 * 60 * 1000;
+const GLOBAL_STATS_CACHE_TTL = 15 * 60 * 1000;
 const GLOBAL_CHART_CACHE_TTL = 60 * 60 * 1000;
 let globalChartCache = null;
 let globalChartCacheTime = 0;
+let globalChartInflight = null;
 const GLOBAL_SNAPSHOT_MIN_INTERVAL_MS = 10 * 60 * 1000;
 const GLOBAL_SNAPSHOT_RETENTION_MS = 8 * 24 * 60 * 60 * 1000;
 /** Top coins whose market_chart volume history is summed when the global chart endpoint is unavailable. */
@@ -54,7 +56,29 @@ const extractChartValues = (pairs) => {
     .filter((value) => Number.isFinite(value) && value > 0);
 };
 
+function getRetryAfterMsFromError(error) {
+  const headers = error.response?.headers;
+  if (!headers) return DEFAULT_429_BACKOFF_MS;
+  const raw = headers['retry-after'] ?? headers['Retry-After'];
+  if (raw == null) return DEFAULT_429_BACKOFF_MS;
+  const sec = parseInt(String(raw).trim(), 10);
+  if (!Number.isFinite(sec) || sec <= 0) return DEFAULT_429_BACKOFF_MS;
+  return Math.min(sec * 1000, 60 * 60 * 1000);
+}
+
+function markCoinGeckoRateLimited(error, context) {
+  const waitMs = getRetryAfterMsFromError(error);
+  nextCoinGeckoAttemptAt = Math.max(nextCoinGeckoAttemptAt, Date.now() + waitMs);
+  console.warn(
+    `[Tokens] CoinGecko rate limited${context ? ` (${context})` : ''}; backoff until ${new Date(nextCoinGeckoAttemptAt).toISOString()}`
+  );
+}
+
 const fetchGlobalMarketCapChart = async () => {
+  if (Date.now() < nextCoinGeckoAttemptAt) {
+    return null;
+  }
+
   const { baseURL, headers } = getCoinGeckoRequestConfig();
   try {
     const response = await axios.get(`${baseURL}/global/market_cap_chart`, {
@@ -77,6 +101,10 @@ const fetchGlobalMarketCapChart = async () => {
       chartSource: 'coingecko_global_chart'
     };
   } catch (error) {
+    if (error.response?.status === 429) {
+      markCoinGeckoRateLimited(error, 'global/market_cap_chart');
+      return null;
+    }
     const errorCode = error.response?.data?.status?.error_code;
     if (errorCode !== 10005) {
       console.warn('[Tokens] Global market cap chart fetch failed:', error.message);
@@ -305,9 +333,7 @@ const fetchVolumeSparklineFromTopCoins = async () => {
         }
       } catch (error) {
         if (error.response?.status === 429) {
-          const waitMs = getRetryAfterMsFromError(error);
-          nextCoinGeckoAttemptAt = Date.now() + waitMs;
-          console.warn('[Tokens] CoinGecko rate limited while building global volume sparkline');
+          markCoinGeckoRateLimited(error, 'market_chart volume sparkline');
           break;
         }
         console.warn(`[Tokens] market_chart failed for ${coinId}:`, error.message);
@@ -329,37 +355,81 @@ const resolveGlobalChartSparklines = async () => {
   if (globalChartCache && now - globalChartCacheTime < GLOBAL_CHART_CACHE_TTL) {
     return globalChartCache;
   }
-
-  const proChart = await fetchGlobalMarketCapChart();
-  if (proChart) {
-    globalChartCache = proChart;
-    globalChartCacheTime = now;
-    return proChart;
+  if (globalChartInflight) {
+    return globalChartInflight;
   }
 
-  const [marketCapSparkline, volumeSparkline] = await Promise.all([
-    fetchMarketCapSparklineFromTokenCache(),
-    fetchVolumeSparklineFromTopCoins()
-  ]);
+  globalChartInflight = (async () => {
+    // Prefer local snapshots whenever CoinGecko backoff is active — never fan out
+    // into per-coin market_chart calls while rate-limited.
+    if (Date.now() < nextCoinGeckoAttemptAt) {
+      const snapshotChart = await fetchSparklinesFromSnapshots();
+      if (snapshotChart) {
+        globalChartCache = snapshotChart;
+        globalChartCacheTime = Date.now();
+      }
+      return snapshotChart || globalChartCache;
+    }
 
-  if (marketCapSparkline.length >= 2 || volumeSparkline.length >= 2) {
-    const chartData = {
-      marketCapSparkline,
-      volumeSparkline,
-      chartSource: 'coingecko_markets_and_market_chart'
-    };
-    globalChartCache = chartData;
-    globalChartCacheTime = now;
-    return chartData;
-  }
+    const proChart = await fetchGlobalMarketCapChart();
+    if (proChart) {
+      globalChartCache = proChart;
+      globalChartCacheTime = Date.now();
+      return proChart;
+    }
 
-  const snapshotChart = await fetchSparklinesFromSnapshots();
-  if (snapshotChart) {
-    globalChartCache = snapshotChart;
-    globalChartCacheTime = now;
-  }
+    // After a Pro chart 429, skip the 15× market_chart hammer and use DB-only sources.
+    if (Date.now() < nextCoinGeckoAttemptAt) {
+      const [marketCapSparkline, snapshotChart] = await Promise.all([
+        fetchMarketCapSparklineFromTokenCache(),
+        fetchSparklinesFromSnapshots()
+      ]);
+      if (snapshotChart) {
+        globalChartCache = snapshotChart;
+        globalChartCacheTime = Date.now();
+        return snapshotChart;
+      }
+      if (marketCapSparkline.length >= 2) {
+        const chartData = {
+          marketCapSparkline,
+          volumeSparkline: [],
+          chartSource: 'token_sparkline_cache'
+        };
+        globalChartCache = chartData;
+        globalChartCacheTime = Date.now();
+        return chartData;
+      }
+      return globalChartCache;
+    }
 
-  return snapshotChart;
+    const [marketCapSparkline, volumeSparkline] = await Promise.all([
+      fetchMarketCapSparklineFromTokenCache(),
+      fetchVolumeSparklineFromTopCoins()
+    ]);
+
+    if (marketCapSparkline.length >= 2 || volumeSparkline.length >= 2) {
+      const chartData = {
+        marketCapSparkline,
+        volumeSparkline,
+        chartSource: 'coingecko_markets_and_market_chart'
+      };
+      globalChartCache = chartData;
+      globalChartCacheTime = Date.now();
+      return chartData;
+    }
+
+    const snapshotChart = await fetchSparklinesFromSnapshots();
+    if (snapshotChart) {
+      globalChartCache = snapshotChart;
+      globalChartCacheTime = Date.now();
+    }
+
+    return snapshotChart || globalChartCache;
+  })().finally(() => {
+    globalChartInflight = null;
+  });
+
+  return globalChartInflight;
 };
 
 const fetchGlobalStats = async () => {
@@ -368,54 +438,75 @@ const fetchGlobalStats = async () => {
     return globalStatsCache;
   }
 
-  try {
-    const { baseURL, headers } = getCoinGeckoRequestConfig();
-    const response = await axios.get(`${baseURL}/global`, {
-      timeout: 15000,
-      headers
-    });
-
-    const data = response.data?.data;
-    if (!data) return globalStatsCache;
-
-    const totalVolume24h = parseFloat(data.total_volume?.usd) || 0;
-    // /global does not include a real volume change %, so derive it from our own snapshots.
-    // Falls back to null (not 0) so the UI can hide the badge until we have >=24h of data.
-    const derivedVolumeChange = await computeVolumeChangePercentage24h(totalVolume24h);
-
-    const marketCapChangePercentage24h = parseFloat(data.market_cap_change_percentage_24h_usd) || 0;
-
-    const stats = {
-      totalMarketCap: parseFloat(data.total_market_cap?.usd) || 0,
-      totalVolume24h,
-      marketCapChangePercentage24h,
-      volumeChangePercentage24h: derivedVolumeChange, // may be null when we lack history
-      marketSignal: buildMarketSignal({
-        marketCapChange24h: marketCapChangePercentage24h,
-        volumeChange24h: derivedVolumeChange
-      }),
-      marketCapSparkline: [],
-      volumeSparkline: [],
-      chartSource: null,
-      lastUpdated: new Date().toISOString()
-    };
-
-    await recordGlobalSnapshot(stats);
-
-    const chartData = await resolveGlobalChartSparklines();
-    if (chartData) {
-      stats.marketCapSparkline = chartData.marketCapSparkline;
-      stats.volumeSparkline = chartData.volumeSparkline;
-      stats.chartSource = chartData.chartSource;
-    }
-
-    globalStatsCache = stats;
-    globalStatsCacheTime = now;
-    return stats;
-  } catch (error) {
-    console.error('[Tokens] Global stats fetch failed:', error.message);
+  // During CoinGecko backoff, keep serving the last good payload instead of stacking 429s.
+  if (globalStatsCache && now < nextCoinGeckoAttemptAt) {
     return globalStatsCache;
   }
+
+  if (globalStatsInflight) {
+    return globalStatsInflight;
+  }
+
+  globalStatsInflight = (async () => {
+    try {
+      const { baseURL, headers } = getCoinGeckoRequestConfig();
+      const response = await axios.get(`${baseURL}/global`, {
+        timeout: 15000,
+        headers
+      });
+
+      const data = response.data?.data;
+      if (!data) return globalStatsCache;
+
+      const totalVolume24h = parseFloat(data.total_volume?.usd) || 0;
+      // /global does not include a real volume change %, so derive it from our own snapshots.
+      // Falls back to null (not 0) so the UI can hide the badge until we have >=24h of data.
+      const derivedVolumeChange = await computeVolumeChangePercentage24h(totalVolume24h);
+
+      const marketCapChangePercentage24h = parseFloat(data.market_cap_change_percentage_24h_usd) || 0;
+
+      const stats = {
+        totalMarketCap: parseFloat(data.total_market_cap?.usd) || 0,
+        totalVolume24h,
+        marketCapChangePercentage24h,
+        volumeChangePercentage24h: derivedVolumeChange, // may be null when we lack history
+        marketSignal: buildMarketSignal({
+          marketCapChange24h: marketCapChangePercentage24h,
+          volumeChange24h: derivedVolumeChange
+        }),
+        // Token list UI no longer renders global sparklines — fill from local snapshots
+        // only so we never spend CoinGecko quota on chart endpoints per home visit.
+        marketCapSparkline: [],
+        volumeSparkline: [],
+        chartSource: null,
+        lastUpdated: new Date().toISOString()
+      };
+
+      await recordGlobalSnapshot(stats);
+
+      const snapshotChart = await fetchSparklinesFromSnapshots();
+      if (snapshotChart) {
+        stats.marketCapSparkline = snapshotChart.marketCapSparkline;
+        stats.volumeSparkline = snapshotChart.volumeSparkline;
+        stats.chartSource = snapshotChart.chartSource;
+      }
+
+      globalStatsCache = stats;
+      globalStatsCacheTime = Date.now();
+      return stats;
+    } catch (error) {
+      if (error.response?.status === 429) {
+        markCoinGeckoRateLimited(error, 'global');
+      } else {
+        console.error('[Tokens] Global stats fetch failed:', error.message);
+      }
+      return globalStatsCache;
+    }
+  })().finally(() => {
+    globalStatsInflight = null;
+  });
+
+  return globalStatsInflight;
 };
 
 const formatTokenForResponse = (token) => ({
@@ -440,16 +531,6 @@ const formatTokenForResponse = (token) => ({
   sparklineIn7d: Array.isArray(token.sparklineIn7d) ? token.sparklineIn7d : [],
   lastUpdated: token.lastUpdated
 });
-
-function getRetryAfterMsFromError(error) {
-  const headers = error.response?.headers;
-  if (!headers) return DEFAULT_429_BACKOFF_MS;
-  const raw = headers['retry-after'] ?? headers['Retry-After'];
-  if (raw == null) return DEFAULT_429_BACKOFF_MS;
-  const sec = parseInt(String(raw).trim(), 10);
-  if (!Number.isFinite(sec) || sec <= 0) return DEFAULT_429_BACKOFF_MS;
-  return Math.min(sec * 1000, 60 * 60 * 1000);
-}
 
 // In-memory cache for the GET /api/tokens response to prevent MongoDB connection pool exhaustion
 let tokensReadCache = null;
