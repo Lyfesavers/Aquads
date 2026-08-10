@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useId } from 'react';
 import TokenSparkline from './TokenSparkline';
 import TokenRating from './TokenRating';
 import { FaGlobe, FaTwitter, FaTelegram, FaDiscord, FaGithub, FaReddit, FaSearch, FaTimes } from 'react-icons/fa';
@@ -101,112 +101,184 @@ const TH_BASE =
   'px-3 lg:px-4 py-3.5 text-[11px] font-semibold uppercase tracking-wider whitespace-nowrap select-none';
 const TD_BASE = 'px-3 lg:px-4 py-3.5';
 
+/** Clamp helper for gauge needle mapping. */
+const clampGauge = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
+
 /**
- * Live market-sentiment badge that replaces the old inaccurate global sparklines.
- * The `signal` payload is computed server-side from CoinGecko's live 24h market-cap
- * change and our derived 24h volume change (see `buildMarketSignal` in server/routes/tokens.js).
- * Purely informational — the tooltip makes clear it's a sentiment indicator, not advice.
+ * Semicircle RPM-style gauge for market / volume signals.
+ * `pct` is 0–100 (left → right). Zones are red → amber → green like a tachometer.
  */
-const MarketSignalBadge = ({ signal }) => {
-  if (!signal || !signal.label) return null;
+const SignalRpmGauge = ({
+  pct = 50,
+  label,
+  sublabel,
+  color = '#9ca3af',
+  tooltip,
+  size = 118,
+}) => {
+  const reactId = useId();
+  const glowId = `gauge-glow-${reactId.replace(/:/g, '')}`;
+  const w = size;
+  const h = size * 0.62;
+  const cx = w / 2;
+  const cy = w / 2 - 4;
+  const radius = w / 2 - 14;
+  const stroke = Math.max(7, w / 16);
+  const needlePct = clampGauge(Number.isFinite(pct) ? pct : 50, 0, 100);
+  // 0% = left (Sell/Falling), 100% = right (Buy/Rising)
+  const needleRotation = (needlePct / 100) * 180;
+  const needleLen = radius - stroke * 0.35;
 
-  const label = signal.label;
-  const strength = signal.strength || 'neutral';
+  const arc = (startDeg, endDeg) => {
+    const start = (startDeg * Math.PI) / 180;
+    const end = (endDeg * Math.PI) / 180;
+    const x1 = cx + radius * Math.cos(start);
+    const y1 = cy + radius * Math.sin(start);
+    const x2 = cx + radius * Math.cos(end);
+    const y2 = cy + radius * Math.sin(end);
+    const large = endDeg - startDeg > 180 ? 1 : 0;
+    return `M ${x1} ${y1} A ${radius} ${radius} 0 ${large} 1 ${x2} ${y2}`;
+  };
 
-  const styles =
-    label === 'Buy'
-      ? {
-          wrap: 'bg-green-500/10 border-green-500/40 text-green-300',
-          dot: 'bg-green-400',
-          arrow: '▲'
-        }
-      : label === 'Sell'
-      ? {
-          wrap: 'bg-red-500/10 border-red-500/40 text-red-300',
-          dot: 'bg-red-400',
-          arrow: '▼'
-        }
-      : {
-          wrap: 'bg-gray-500/10 border-gray-500/40 text-gray-300',
-          dot: 'bg-gray-400',
-          arrow: '•'
-        };
-
-  const strengthLabel =
-    strength === 'strong' ? 'Strong' : strength === 'moderate' ? 'Moderate' : '';
-
-  const tooltip = `${strengthLabel ? strengthLabel + ' ' : ''}${label} signal${
-    signal.reason ? ` — ${signal.reason}` : ''
-  }. Sentiment indicator based on 24h market data. Not financial advice.`;
+  const tick = (deg, inner = 0.78, outer = 1) => {
+    const r = (deg * Math.PI) / 180;
+    return {
+      x1: cx + radius * inner * Math.cos(r),
+      y1: cy + radius * inner * Math.sin(r),
+      x2: cx + radius * outer * Math.cos(r),
+      y2: cy + radius * outer * Math.sin(r),
+    };
+  };
 
   return (
-    <div
-      className={`shrink-0 flex flex-col items-end gap-1 rounded-md border px-3 py-2 ${styles.wrap}`}
-      title={tooltip}
-    >
-      <div className="flex items-center gap-1.5 text-sm font-semibold leading-none">
-        <span className={`inline-block w-1.5 h-1.5 rounded-full ${styles.dot}`} />
-        <span>{styles.arrow}</span>
-        <span>{label}</span>
-      </div>
-      {strengthLabel && (
-        <div className="text-[10px] uppercase tracking-wider opacity-80 leading-none">
-          {strengthLabel}
+    <div className="shrink-0 flex flex-col items-center select-none" title={tooltip}>
+      <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="overflow-visible" aria-hidden="true">
+        <defs>
+          <filter id={glowId} x="-40%" y="-40%" width="180%" height="180%">
+            <feGaussianBlur stdDeviation="2.2" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+
+        {/* Track */}
+        <path d={arc(180, 360)} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={stroke + 4} strokeLinecap="round" />
+        {/* Sell / falling */}
+        <path d={arc(180, 240)} fill="none" stroke="#ef4444" strokeWidth={stroke} strokeLinecap="round" opacity="0.9" />
+        {/* Hold / steady */}
+        <path d={arc(240, 300)} fill="none" stroke="#eab308" strokeWidth={stroke} strokeLinecap="round" opacity="0.85" />
+        {/* Buy / rising */}
+        <path d={arc(300, 360)} fill="none" stroke="#22c55e" strokeWidth={stroke} strokeLinecap="round" opacity="0.9" />
+
+        {/* Tick marks */}
+        {[180, 210, 240, 270, 300, 330, 360].map((deg) => {
+          const t = tick(deg, deg % 60 === 0 ? 0.72 : 0.8, 0.92);
+          return (
+            <line
+              key={deg}
+              x1={t.x1}
+              y1={t.y1}
+              x2={t.x2}
+              y2={t.y2}
+              stroke="rgba(255,255,255,0.35)"
+              strokeWidth={deg % 60 === 0 ? 1.6 : 1}
+              strokeLinecap="round"
+            />
+          );
+        })}
+
+        {/* Needle — rotates from left (0°) toward right (180°) */}
+        <g
+          style={{
+            transformOrigin: `${cx}px ${cy}px`,
+            transform: `rotate(${needleRotation}deg)`,
+            transition: 'transform 900ms cubic-bezier(0.22, 1, 0.36, 1)',
+          }}
+        >
+          <line
+            x1={cx}
+            y1={cy}
+            x2={cx - needleLen}
+            y2={cy}
+            stroke={color}
+            strokeWidth={2.6}
+            strokeLinecap="round"
+            filter={`url(#${glowId})`}
+          />
+        </g>
+        <circle cx={cx} cy={cy} r={5.5} fill="#111827" stroke={color} strokeWidth="2" />
+        <circle cx={cx} cy={cy} r={2} fill={color} />
+      </svg>
+
+      <div className="-mt-1 text-center leading-tight">
+        <div className="text-sm font-semibold tracking-wide" style={{ color }}>
+          {label}
         </div>
-      )}
+        {sublabel ? (
+          <div className="text-[10px] uppercase tracking-wider text-gray-500 mt-0.5">{sublabel}</div>
+        ) : null}
+      </div>
     </div>
   );
 };
 
 /**
- * Volume-side companion to the market signal. Uses only the derived 24h volume change
- * so users get a direct read on trading activity — Rising when volume is meaningfully
- * up, Falling when meaningfully down, Steady otherwise. Renders nothing until we have
- * ~24h of snapshots to compare against.
+ * Market-cap sentiment gauge — uses server `marketSignal` (Buy / Sell / Hold + strength).
+ * Purely informational — not financial advice.
  */
-const VolumeTrendBadge = ({ volumeChange }) => {
+const MarketSignalGauge = ({ signal }) => {
+  if (!signal || !signal.label) return null;
+
+  const label = signal.label;
+  const strength = signal.strength || 'neutral';
+  const score = Number.isFinite(signal.score) ? signal.score : 0;
+  const pct = ((clampGauge(score, -100, 100) + 100) / 200) * 100;
+
+  const color = label === 'Buy' ? '#4ade80' : label === 'Sell' ? '#f87171' : '#d1d5db';
+  const strengthLabel =
+    strength === 'strong' ? 'Strong' : strength === 'moderate' ? 'Moderate' : 'Neutral';
+
+  const tooltip = `${strengthLabel} ${label} signal${
+    signal.reason ? ` — ${signal.reason}` : ''
+  }. Sentiment indicator based on 24h market data. Not financial advice.`;
+
+  return (
+    <SignalRpmGauge
+      pct={pct}
+      label={label}
+      sublabel={strengthLabel}
+      color={color}
+      tooltip={tooltip}
+    />
+  );
+};
+
+/**
+ * Volume trend gauge — Rising / Falling / Steady from 24h volume change %.
+ */
+const VolumeTrendGauge = ({ volumeChange }) => {
   if (typeof volumeChange !== 'number' || !Number.isFinite(volumeChange)) return null;
 
-  const styles =
-    volumeChange >= 10
-      ? {
-          wrap: 'bg-green-500/10 border-green-500/40 text-green-300',
-          dot: 'bg-green-400',
-          arrow: '▲',
-          label: 'Rising'
-        }
-      : volumeChange <= -10
-      ? {
-          wrap: 'bg-red-500/10 border-red-500/40 text-red-300',
-          dot: 'bg-red-400',
-          arrow: '▼',
-          label: 'Falling'
-        }
-      : {
-          wrap: 'bg-gray-500/10 border-gray-500/40 text-gray-300',
-          dot: 'bg-gray-400',
-          arrow: '•',
-          label: 'Steady'
-        };
+  const label =
+    volumeChange >= 10 ? 'Rising' : volumeChange <= -10 ? 'Falling' : 'Steady';
+  const color =
+    label === 'Rising' ? '#4ade80' : label === 'Falling' ? '#f87171' : '#d1d5db';
+  const pct = ((clampGauge(volumeChange, -30, 30) + 30) / 60) * 100;
 
-  const tooltip = `Volume ${styles.label.toLowerCase()} — 24h change ${
+  const tooltip = `Volume ${label.toLowerCase()} — 24h change ${
     volumeChange >= 0 ? '+' : ''
   }${volumeChange.toFixed(2)}% vs. 24h ago.`;
 
   return (
-    <div
-      className={`shrink-0 flex flex-col items-end gap-1 rounded-md border px-3 py-2 ${styles.wrap}`}
-      title={tooltip}
-    >
-      <div className="flex items-center gap-1.5 text-sm font-semibold leading-none">
-        <span className={`inline-block w-1.5 h-1.5 rounded-full ${styles.dot}`} />
-        <span>{styles.arrow}</span>
-        <span>{styles.label}</span>
-      </div>
-      <div className="text-[10px] uppercase tracking-wider opacity-80 leading-none">
-        24h volume
-      </div>
-    </div>
+    <SignalRpmGauge
+      pct={pct}
+      label={label}
+      sublabel="24h volume"
+      color={color}
+      tooltip={tooltip}
+    />
   );
 };
 
@@ -558,8 +630,8 @@ const TokenList = ({
             {/* Global market stats */}
             <div className="p-3 sm:p-4 lg:p-5 border-b border-white/10">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
-                <div className="rounded-xl border border-white/10 bg-gradient-to-br from-white/[0.06] to-transparent p-4 flex items-center justify-between gap-4">
-                  <div className="min-w-0">
+                <div className="rounded-xl border border-white/10 bg-gradient-to-br from-white/[0.06] to-transparent p-4 flex items-center justify-between gap-3 sm:gap-5">
+                  <div className="min-w-0 flex-1">
                     <div className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">
                       Global Market Cap
                     </div>
@@ -579,12 +651,12 @@ const TokenList = ({
                     )}
                   </div>
                   {globalStats?.marketSignal && (
-                    <MarketSignalBadge signal={globalStats.marketSignal} />
+                    <MarketSignalGauge signal={globalStats.marketSignal} />
                   )}
                 </div>
 
-                <div className="rounded-xl border border-white/10 bg-gradient-to-br from-white/[0.06] to-transparent p-4 flex items-center justify-between gap-4">
-                  <div className="min-w-0">
+                <div className="rounded-xl border border-white/10 bg-gradient-to-br from-white/[0.06] to-transparent p-4 flex items-center justify-between gap-3 sm:gap-5">
+                  <div className="min-w-0 flex-1">
                     <div className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">
                       Global 24h Trading Volume
                     </div>
@@ -603,7 +675,7 @@ const TokenList = ({
                       </div>
                     )}
                   </div>
-                  <VolumeTrendBadge volumeChange={globalStats?.volumeChangePercentage24h} />
+                  <VolumeTrendGauge volumeChange={globalStats?.volumeChangePercentage24h} />
                 </div>
               </div>
             </div>
