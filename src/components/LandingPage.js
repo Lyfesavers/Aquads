@@ -137,15 +137,33 @@ const GridLine = ({ vertical, position }) => (
 // Interactive 3D Carousel Component
 const FeaturesCarousel = ({ features }) => {
   const [activeIndex, setActiveIndex] = useState(-1); // Start with no card selected
-  const [isPaused, setIsPaused] = useState(false);
   const carouselRef = useRef(null);
   const scrollRef = useRef(null);
   const autoScrollInterval = useRef(null);
   const isProgrammaticScroll = useRef(false);
   const lastScrollLeft = useRef(0);
   const resumeTimeout = useRef(null);
+  // Separate hover vs interaction pause so scroll/timeout resume cannot override hover
+  const isHoverPaused = useRef(false);
+  const isInteractionPaused = useRef(false);
 
-  const handleScroll = (e) => {
+  const clearResumeTimeout = () => {
+    if (resumeTimeout.current) {
+      clearTimeout(resumeTimeout.current);
+      resumeTimeout.current = null;
+    }
+  };
+
+  const pauseForInteraction = (resumeAfterMs = 3000) => {
+    isInteractionPaused.current = true;
+    clearResumeTimeout();
+    resumeTimeout.current = setTimeout(() => {
+      isInteractionPaused.current = false;
+      resumeTimeout.current = null;
+    }, resumeAfterMs);
+  };
+
+  const handleScroll = () => {
     // Don't auto-select on scroll - let user interact manually
     if (!scrollRef.current) return;
     
@@ -158,40 +176,24 @@ const FeaturesCarousel = ({ features }) => {
     
     // If scroll is not programmatic, it's a user scroll
     if (!isProgrammaticScroll.current) {
-      // Pause auto-scroll when user manually scrolls
-      setIsPaused(true);
-      
-      // Clear any existing resume timeout
-      if (resumeTimeout.current) {
-        clearTimeout(resumeTimeout.current);
-      }
-      
-      // Resume auto-scroll after 3 seconds of no manual scrolling
-      resumeTimeout.current = setTimeout(() => {
-        setIsPaused(false);
-      }, 3000);
+      pauseForInteraction(3000);
     }
     
     lastScrollLeft.current = currentScrollLeft;
-    isProgrammaticScroll.current = false;
   };
 
   // Handle touch events for mobile
   const handleTouchStart = () => {
-    setIsPaused(true);
-    if (resumeTimeout.current) {
-      clearTimeout(resumeTimeout.current);
-    }
+    isInteractionPaused.current = true;
+    clearResumeTimeout();
   };
 
   const handleTouchEnd = () => {
     // Resume auto-scroll after 3 seconds of no touch interaction
-    resumeTimeout.current = setTimeout(() => {
-      setIsPaused(false);
-    }, 3000);
+    pauseForInteraction(3000);
   };
 
-  // Auto-scroll functionality - pauses on hover
+  // Auto-scroll functionality - pauses while hovered or interacting
   useEffect(() => {
     if (!scrollRef.current) return;
 
@@ -211,19 +213,23 @@ const FeaturesCarousel = ({ features }) => {
     };
 
     const autoScroll = () => {
-      if (isPaused || !scrollContainer) return;
+      if (isHoverPaused.current || isInteractionPaused.current || !scrollContainer) return;
       
       const currentIndex = getCurrentIndex();
       const nextIndex = (currentIndex + 1) % features.length;
       const cardWidth = getCardWidth();
       const targetScroll = nextIndex * cardWidth;
 
-      // Mark as programmatic scroll before scrolling
+      // Mark as programmatic for the duration of smooth scroll so
+      // intermediate scroll events do not trip interaction-pause
       isProgrammaticScroll.current = true;
       scrollContainer.scrollTo({
         left: targetScroll,
         behavior: 'smooth'
       });
+      window.setTimeout(() => {
+        isProgrammaticScroll.current = false;
+      }, 700);
     };
 
     // Start auto-scroll after initial delay
@@ -242,15 +248,17 @@ const FeaturesCarousel = ({ features }) => {
         clearInterval(autoScrollInterval.current);
         autoScrollInterval.current = null;
       }
-      if (resumeTimeout.current) {
-        clearTimeout(resumeTimeout.current);
-      }
+      clearResumeTimeout();
     };
-  }, [features.length, isPaused]);
+  }, [features.length]);
 
-  // Pause on hover
-  const handleMouseEnter = () => setIsPaused(true);
-  const handleMouseLeave = () => setIsPaused(false);
+  // Pause auto-scroll while mouse is over any card; resume on leave
+  const handleMouseEnter = () => {
+    isHoverPaused.current = true;
+  };
+  const handleMouseLeave = () => {
+    isHoverPaused.current = false;
+  };
 
   return (
     <div 
@@ -303,13 +311,7 @@ const FeaturesCarousel = ({ features }) => {
             key={index}
             onClick={() => {
               // Pause auto-scroll when user clicks navigation dots
-              setIsPaused(true);
-              if (resumeTimeout.current) {
-                clearTimeout(resumeTimeout.current);
-              }
-              resumeTimeout.current = setTimeout(() => {
-                setIsPaused(false);
-              }, 3000);
+              pauseForInteraction(3000);
               
               const cardWidth = window.innerWidth;
               isProgrammaticScroll.current = true;
@@ -317,6 +319,9 @@ const FeaturesCarousel = ({ features }) => {
                 left: index * cardWidth,
                 behavior: 'smooth'
               });
+              window.setTimeout(() => {
+                isProgrammaticScroll.current = false;
+              }, 700);
               setActiveIndex(index);
             }}
             className={`w-2 h-2 rounded-full transition-all duration-300 ${
