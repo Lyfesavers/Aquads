@@ -399,6 +399,32 @@ function paginateBubbleMapAds(bumpedAds, nonBumpedAds, itemsPerPage, currentPage
   };
 }
 
+/** Match bubble ads by ticker/name (title), contract address, or pair address. */
+function matchesBubbleSearch(ad, query) {
+  const q = String(query || '').trim().toLowerCase();
+  if (!q) return true;
+  const qNo0x = q.startsWith('0x') ? q.slice(2) : q;
+  const title = String(ad.title || '').toLowerCase();
+  const ca = String(ad.contractAddress || '').toLowerCase();
+  const pair = String(ad.pairAddress || '').toLowerCase();
+  const caNo0x = ca.startsWith('0x') ? ca.slice(2) : ca;
+  const pairNo0x = pair.startsWith('0x') ? pair.slice(2) : pair;
+
+  if (title.includes(q)) return true;
+  if (ca.includes(q) || (qNo0x.length >= 4 && caNo0x.includes(qNo0x))) return true;
+  if (pair.includes(q) || (qNo0x.length >= 4 && pairNo0x.includes(qNo0x))) return true;
+  return false;
+}
+
+function filterBubbleMapAds(ads, blockchainFilter, searchQuery) {
+  return ads.filter((ad) => {
+    if (blockchainFilter !== 'all' && !matchesBlockchainFilter(ad.blockchain, blockchainFilter)) {
+      return false;
+    }
+    return matchesBubbleSearch(ad, searchQuery);
+  });
+}
+
 /** How many bubbles fit per pagination page for this viewport / monitor. */
 function calculateBubbleMapItemsPerPage(viewportWidth, viewportHeight) {
   if (is1440pDesktopMonitor125()) {
@@ -1156,8 +1182,9 @@ function App() {
   const [activeBookingId, setActiveBookingId] = useState(null);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   
-  // New state for blockchain filter and pagination
+  // New state for blockchain filter, search, and pagination
   const [blockchainFilter, setBlockchainFilter] = useState('all');
+  const [bubbleSearch, setBubbleSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(() =>
     calculateBubbleMapItemsPerPage(window.innerWidth, window.innerHeight)
@@ -1249,11 +1276,9 @@ function App() {
     };
   }, [windowSize]);
 
-  // Calculate total pages whenever ads or filter changes
+  // Calculate total pages whenever ads or filter/search changes
   useEffect(() => {
-    const filteredAds = blockchainFilter === 'all'
-      ? ads
-      : ads.filter((ad) => matchesBlockchainFilter(ad.blockchain, blockchainFilter));
+    const filteredAds = filterBubbleMapAds(ads, blockchainFilter, bubbleSearch);
 
     // Separate bumped and non-bumped ads to calculate pages
     const bumpedAds = filteredAds.filter(ad => ad.isBumped);
@@ -1272,13 +1297,11 @@ function App() {
     if (currentPage > pageCount) {
       setCurrentPage(1);
     }
-  }, [ads, blockchainFilter, itemsPerPage, currentPage]);
+  }, [ads, blockchainFilter, bubbleSearch, itemsPerPage, currentPage]);
 
   // Function to get currently visible ads
   const getVisibleAds = () => {
-    const filteredAds = blockchainFilter === 'all'
-      ? ads
-      : ads.filter((ad) => matchesBlockchainFilter(ad.blockchain, blockchainFilter));
+    const filteredAds = filterBubbleMapAds(ads, blockchainFilter, bubbleSearch);
 
     // First, sort ads to put bumped ads first, then sort by bullish votes
     const sortedAds = [...filteredAds].sort((a, b) => {
@@ -1302,6 +1325,11 @@ function App() {
   const handleBlockchainFilterChange = (blockchain) => {
     setBlockchainFilter(blockchain);
     setCurrentPage(1); // Reset to first page when filter changes
+  };
+
+  const handleBubbleSearchChange = (query) => {
+    setBubbleSearch(query);
+    setCurrentPage(1);
   };
 
   // Function to handle page change
@@ -3650,13 +3678,13 @@ function App() {
                     <FilterControls 
                       currentBlockchain={blockchainFilter}
                       onBlockchainChange={handleBlockchainFilterChange}
+                      searchQuery={bubbleSearch}
+                      onSearchChange={handleBubbleSearchChange}
                       currentPage={currentPage}
                       totalPages={totalPages}
                       onPageChange={handlePageChange}
                       itemsPerPage={itemsPerPage}
-                      totalItems={blockchainFilter === 'all'
-                        ? ads.length
-                        : ads.filter((ad) => matchesBlockchainFilter(ad.blockchain, blockchainFilter)).length}
+                      totalItems={filterBubbleMapAds(ads, blockchainFilter, bubbleSearch).length}
                     />
                   </div>
                   
@@ -3899,7 +3927,19 @@ function App() {
                         ) : (
                           <>
                             <p className="text-gray-400 text-xl mb-2">No projects found</p>
-                            {blockchainFilter !== 'all' && (
+                            {bubbleSearch.trim() && (
+                              <p className="text-gray-500">
+                                No projects match &ldquo;{bubbleSearch.trim()}&rdquo;.
+                                <button
+                                  type="button"
+                                  className="ml-2 text-blue-400 hover:text-blue-300 underline"
+                                  onClick={() => handleBubbleSearchChange('')}
+                                >
+                                  Clear search
+                                </button>
+                              </p>
+                            )}
+                            {!bubbleSearch.trim() && blockchainFilter !== 'all' && (
                               <p className="text-gray-500">
                                 No projects found for {getBlockchainLabel(blockchainFilter)}.
                                 <button 

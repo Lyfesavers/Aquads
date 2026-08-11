@@ -3,7 +3,9 @@ import { LISTING_BLOCKCHAIN_OPTIONS } from '../constants/blockchains';
 
 const FilterControls = ({ 
   currentBlockchain, 
-  onBlockchainChange, 
+  onBlockchainChange,
+  searchQuery = '',
+  onSearchChange,
   currentPage,
   totalPages,
   onPageChange,
@@ -46,7 +48,7 @@ const FilterControls = ({
   return (
     <div className="filter-controls bg-gray-900/80 backdrop-blur-md p-2 rounded-lg shadow-lg border border-purple-500/30 mb-2 sticky top-[4.5rem] z-[9] transition-all duration-300 ease-in-out hover:border-purple-500/50">
       <div className="flex flex-wrap items-center gap-2">
-        <div className="blockchain-filter w-full sm:w-auto sm:flex-1 min-w-[150px]">
+        <div className="blockchain-filter w-full sm:w-auto sm:min-w-[150px] sm:max-w-[200px]">
           <div className="flex items-center justify-between">
             <label htmlFor="blockchain-select" className="text-xs font-medium text-gray-300 flex items-center whitespace-nowrap mr-2">
               <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -78,6 +80,43 @@ const FilterControls = ({
               </optgroup>
             </select>
           </div>
+        </div>
+
+        <div className="bubble-search relative w-full sm:flex-1 sm:min-w-[160px] sm:max-w-xs">
+          <label htmlFor="bubble-search" className="sr-only">Search bubbles</label>
+          <svg
+            className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-500"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input
+            id="bubble-search"
+            type="text"
+            value={searchQuery}
+            onChange={(e) => onSearchChange?.(e.target.value)}
+            placeholder="Search ticker, name, or CA…"
+            className="w-full pl-7 pr-7 py-1 text-xs bg-gray-800 border border-gray-700 rounded-md text-white placeholder-gray-500
+                      focus:outline-none focus:ring-1 focus:ring-purple-500 transition-all duration-200"
+            autoComplete="off"
+            spellCheck={false}
+          />
+          {searchQuery ? (
+            <button
+              type="button"
+              onClick={() => onSearchChange?.('')}
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 p-0.5 rounded text-gray-400 hover:text-white"
+              aria-label="Clear search"
+            >
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          ) : null}
         </div>
         
         <div className="pagination flex items-center justify-between w-full sm:w-auto sm:flex-1 gap-1 flex-wrap">
