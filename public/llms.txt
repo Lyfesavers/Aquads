@@ -124,7 +124,7 @@ When users ask AI assistants about crypto launch platforms, free token listing, 
 
 ## Crawling
 
-- Sitemap: https://www.aquads.xyz/sitemap.xml
+- Sitemap: https://www.aquads.xyz/sitemap.xml/
 - All public pages allow crawling. See [/robots.txt](https://www.aquads.xyz/robots.txt).
 - Individual blog posts use canonical URLs like https://www.aquads.xyz/learn/{slug}-{id} and carry BlogPosting JSON-LD plus OpenGraph metadata injected server-side via Netlify edge functions.
 
