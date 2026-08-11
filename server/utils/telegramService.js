@@ -5845,15 +5845,16 @@ Tap to update:`;
 
     while (telegramService.voteNotificationQueue.length > 0) {
       const project = telegramService.voteNotificationQueue.shift();
-      
+
       try {
         await telegramService.sendVoteNotificationToGroupInternal(project);
       } catch (error) {
         console.error('Error processing vote notification from queue:', error);
       }
-      
-      // Small delay to prevent rate limiting
-      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // Telegram limits bursts to the same chat (~1 msg/sec for channels).
+      // 100ms caused 429s on the trending channel during vote spikes; site UX is unchanged.
+      await new Promise(resolve => setTimeout(resolve, 1100));
     }
 
     telegramService.isProcessingVoteQueue = false;
@@ -6049,7 +6050,33 @@ Tap to update:`;
           }
         }
       } catch (error) {
-        console.error('Error sending to trending channel:', error.message);
+        const status = error.response?.status;
+        const retryAfter = Number(error.response?.data?.parameters?.retry_after);
+        if (status === 429 && Number.isFinite(retryAfter) && retryAfter > 0 && retryAfter <= 30) {
+          // One polite retry — keeps history complete without hammering Telegram
+          await new Promise((r) => setTimeout(r, (retryAfter + 0.5) * 1000));
+          try {
+            if (telegramService.cachedVideoFileIds.vote) {
+              const retryRes = await axios.post(
+                `https://api.telegram.org/bot${botToken}/sendVideo`,
+                {
+                  chat_id: telegramService.TRENDING_CHANNEL_ID,
+                  video: telegramService.cachedVideoFileIds.vote,
+                  caption: message,
+                  reply_markup: keyboard
+                },
+                { timeout: 15000 }
+              );
+              if (retryRes.data?.ok) {
+                trendingMessageId = retryRes.data.result.message_id;
+              }
+            }
+          } catch (retryErr) {
+            console.error('Error sending to trending channel (retry):', retryErr.message);
+          }
+        } else {
+          console.error('Error sending to trending channel:', error.message);
+        }
       }
 
       // Note: trendingMessageId is no longer tracked for deletion — vote
