@@ -47,42 +47,40 @@ const FilterControls = ({
   
   return (
     <div className="filter-controls bg-gray-900/80 backdrop-blur-md p-2 rounded-lg shadow-lg border border-purple-500/30 mb-2 sticky top-[4.5rem] z-[9] transition-all duration-300 ease-in-out hover:border-purple-500/50">
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="blockchain-filter w-full sm:w-auto sm:min-w-[150px] sm:max-w-[200px]">
-          <div className="flex items-center justify-between">
-            <label htmlFor="blockchain-select" className="text-xs font-medium text-gray-300 flex items-center whitespace-nowrap mr-2">
-              <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-              </svg>
-              Filter:
-            </label>
-            <select
-              id="blockchain-select"
-              value={currentBlockchain}
-              onChange={(e) => onBlockchainChange(e.target.value)}
-              className="flex-1 px-2 py-1 text-xs bg-gray-800 border border-gray-700 rounded-md text-white 
-                        focus:outline-none focus:ring-1 focus:ring-purple-500 transition-all duration-200"
-            >
-              <option value="all">All Blockchains</option>
-              <optgroup label="Popular">
-                {LISTING_BLOCKCHAIN_OPTIONS.filter((o) => o.popular).map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </optgroup>
-              <optgroup label="All chains">
-                {LISTING_BLOCKCHAIN_OPTIONS.filter((o) => !o.popular).map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </optgroup>
-            </select>
-          </div>
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="blockchain-filter flex items-center gap-2 shrink-0 w-full sm:w-auto">
+          <label htmlFor="blockchain-select" className="text-xs font-medium text-gray-300 flex items-center whitespace-nowrap">
+            <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+            </svg>
+            Filter:
+          </label>
+          <select
+            id="blockchain-select"
+            value={currentBlockchain}
+            onChange={(e) => onBlockchainChange(e.target.value)}
+            className="min-w-[9.5rem] max-w-[12rem] px-2 py-1 text-xs bg-gray-800 border border-gray-700 rounded-md text-white 
+                      focus:outline-none focus:ring-1 focus:ring-purple-500 transition-all duration-200"
+          >
+            <option value="all">All Blockchains</option>
+            <optgroup label="Popular">
+              {LISTING_BLOCKCHAIN_OPTIONS.filter((o) => o.popular).map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </optgroup>
+            <optgroup label="All chains">
+              {LISTING_BLOCKCHAIN_OPTIONS.filter((o) => !o.popular).map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </optgroup>
+          </select>
         </div>
 
-        <div className="bubble-search relative w-full sm:flex-1 sm:min-w-[160px] sm:max-w-xs">
+        <div className="bubble-search relative w-full sm:w-auto sm:flex-1 sm:min-w-[12rem] sm:max-w-xs min-w-0">
           <label htmlFor="bubble-search" className="sr-only">Search bubbles</label>
           <svg
             className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-500"
@@ -100,7 +98,7 @@ const FilterControls = ({
             value={searchQuery}
             onChange={(e) => onSearchChange?.(e.target.value)}
             placeholder="Search ticker, name, or CA…"
-            className="w-full pl-7 pr-7 py-1 text-xs bg-gray-800 border border-gray-700 rounded-md text-white placeholder-gray-500
+            className="w-full min-w-0 pl-7 pr-7 py-1 text-xs bg-gray-800 border border-gray-700 rounded-md text-white placeholder-gray-500
                       focus:outline-none focus:ring-1 focus:ring-purple-500 transition-all duration-200"
             autoComplete="off"
             spellCheck={false}
@@ -119,7 +117,7 @@ const FilterControls = ({
           ) : null}
         </div>
         
-        <div className="pagination flex items-center justify-between w-full sm:w-auto sm:flex-1 gap-1 flex-wrap">
+        <div className="pagination flex items-center justify-between w-full sm:w-auto sm:flex-1 gap-1 flex-wrap min-w-0">
           <div className="text-xs text-gray-400 flex items-center whitespace-nowrap">
             <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
