@@ -214,10 +214,18 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onAdPatche
   const [approvingListingId, setApprovingListingId] = useState(null);
   const [isRejectingListing, setIsRejectingListing] = useState(false);
   const [unclaimedDexAds, setUnclaimedDexAds] = useState([]);
+  const [unclaimedDexTotal, setUnclaimedDexTotal] = useState(0);
+  const [unclaimedDexPage, setUnclaimedDexPage] = useState(1);
+  const [unclaimedDexTotalPages, setUnclaimedDexTotalPages] = useState(1);
   const [unclaimedDexSearch, setUnclaimedDexSearch] = useState('');
+  const [debouncedUnclaimedDexSearch, setDebouncedUnclaimedDexSearch] = useState('');
   const [isLoadingUnclaimedDex, setIsLoadingUnclaimedDex] = useState(false);
   const [transferUsernames, setTransferUsernames] = useState({});
   const [transferringDexAdId, setTransferringDexAdId] = useState(null);
+  const UNCLAIMED_DEX_PAGE_SIZE = 25;
+  const [allAdsSearch, setAllAdsSearch] = useState('');
+  const [allAdsPage, setAllAdsPage] = useState(1);
+  const ALL_ADS_PAGE_SIZE = 25;
   const [pendingListingClaims, setPendingListingClaims] = useState([]);
   const [isLoadingListingClaims, setIsLoadingListingClaims] = useState(false);
   const [processingClaimId, setProcessingClaimId] = useState(null);
@@ -884,7 +892,14 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onAdPatche
 
     const handleUnclaimedDexAdsLoaded = (data) => {
       setUnclaimedDexAds(data.ads || []);
+      if (typeof data.total === 'number') setUnclaimedDexTotal(data.total);
+      if (typeof data.page === 'number') setUnclaimedDexPage(data.page);
+      if (typeof data.totalPages === 'number') setUnclaimedDexTotalPages(data.totalPages);
       setIsLoadingUnclaimedDex(false);
+    };
+
+    const handleUnclaimedDexAdsCount = (data) => {
+      if (typeof data?.total === 'number') setUnclaimedDexTotal(data.total);
     };
 
     const handleUnclaimedDexAdsError = (error) => {
@@ -893,22 +908,29 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onAdPatche
     };
 
     const handleUnclaimedDexAdsUpdated = (data) => {
+      if (typeof data?.total === 'number') {
+        setUnclaimedDexTotal(data.total);
+      } else if (data.action === 'transfer') {
+        setUnclaimedDexTotal((prev) => Math.max(0, prev - 1));
+      } else if (data.action === 'create') {
+        setUnclaimedDexTotal((prev) => prev + 1);
+      }
+
       if (data.action === 'transfer' && data.adId) {
         setUnclaimedDexAds((prev) => prev.filter((ad) => (ad.id || ad._id) !== data.adId));
         return;
       }
+      // Don't prepend full create payloads into a paginated page — refresh when viewing Dex Feed
       if (data.action === 'create' && data.ad) {
-        setUnclaimedDexAds((prev) => {
-          const id = data.ad.id || data.ad._id;
-          if (prev.some((ad) => (ad.id || ad._id) === id)) return prev;
-          return [data.ad, ...prev];
-        });
+        return;
       }
     };
 
     const handleDexFeedListingCreated = (data) => {
-      if (data?.ad) {
-        handleUnclaimedDexAdsUpdated({ action: 'create', ad: data.ad });
+      if (typeof data?.unclaimedTotal === 'number') {
+        setUnclaimedDexTotal(data.unclaimedTotal);
+      } else if (data?.ad) {
+        setUnclaimedDexTotal((prev) => prev + 1);
       }
     };
 
@@ -1028,6 +1050,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onAdPatche
     socket.on('pendingAdsError', handlePendingAdsError);
 
     socket.on('unclaimedDexAdsLoaded', handleUnclaimedDexAdsLoaded);
+    socket.on('unclaimedDexAdsCount', handleUnclaimedDexAdsCount);
     socket.on('unclaimedDexAdsError', handleUnclaimedDexAdsError);
     socket.on('unclaimedDexAdsUpdated', handleUnclaimedDexAdsUpdated);
     socket.on('dexFeedListingCreated', handleDexFeedListingCreated);
@@ -1077,6 +1100,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onAdPatche
       socket.off('pendingAdsError', handlePendingAdsError);
 
       socket.off('unclaimedDexAdsLoaded', handleUnclaimedDexAdsLoaded);
+      socket.off('unclaimedDexAdsCount', handleUnclaimedDexAdsCount);
       socket.off('unclaimedDexAdsError', handleUnclaimedDexAdsError);
       socket.off('unclaimedDexAdsUpdated', handleUnclaimedDexAdsUpdated);
       socket.off('dexFeedListingCreated', handleDexFeedListingCreated);
@@ -1118,8 +1142,9 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onAdPatche
     // Step 1: Ads (immediate)
     requestPendingAdsViaSocket();
 
+    // Dex Feed badge only — full list loads when Dex Feed section is opened
     timers.push(setTimeout(() => {
-      requestUnclaimedDexAdsViaSocket();
+      requestUnclaimedDexAdsCountViaSocket();
     }, 25));
 
     timers.push(setTimeout(() => {
@@ -1161,10 +1186,24 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onAdPatche
     return () => timers.forEach(t => clearTimeout(t));
   }, [currentUser, activeTab, socket]);
 
+  // Debounce Dex Feed search so each keystroke doesn't hit the server
+  const debouncedUnclaimedDexSearchRef = useRef(debouncedUnclaimedDexSearch);
+  debouncedUnclaimedDexSearchRef.current = debouncedUnclaimedDexSearch;
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const next = unclaimedDexSearch.trim();
+      const prev = debouncedUnclaimedDexSearchRef.current;
+      if (next === prev) return;
+      setDebouncedUnclaimedDexSearch(next);
+      setUnclaimedDexPage(1);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [unclaimedDexSearch]);
+
   useEffect(() => {
     if (!currentUser?.isAdmin || activeTab !== 'admin' || activeAdminSection !== 'dexFeed') return;
-    requestUnclaimedDexAdsViaSocket(unclaimedDexSearch);
-  }, [currentUser, activeTab, activeAdminSection, unclaimedDexSearch]);
+    requestUnclaimedDexAdsViaSocket(debouncedUnclaimedDexSearch, unclaimedDexPage);
+  }, [currentUser, activeTab, activeAdminSection, debouncedUnclaimedDexSearch, unclaimedDexPage]);
 
   useEffect(() => {
     if (!currentUser?.isAdmin || activeTab !== 'admin' || activeAdminSection !== 'claimRequests') return;
@@ -1454,6 +1493,36 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onAdPatche
   };
 
   const userAds = ads.filter(ad => ad.owner === currentUser?.username);
+
+  const filteredAllAds = useMemo(() => {
+    const q = allAdsSearch.trim().toLowerCase();
+    if (!q) return ads;
+    const qNo0x = q.startsWith('0x') ? q.slice(2) : q;
+    return ads.filter((ad) => {
+      const title = String(ad.title || '').toLowerCase();
+      const ca = String(ad.contractAddress || '').toLowerCase();
+      const pair = String(ad.pairAddress || '').toLowerCase();
+      const owner = String(ad.owner || '').toLowerCase();
+      const caNo0x = ca.startsWith('0x') ? ca.slice(2) : ca;
+      const pairNo0x = pair.startsWith('0x') ? pair.slice(2) : pair;
+
+      // Name / ticker (dex listings use symbol as title)
+      if (title.includes(q)) return true;
+      // Contract address (with or without 0x)
+      if (ca.includes(q) || (qNo0x.length >= 4 && caNo0x.includes(qNo0x))) return true;
+      // Pair address
+      if (pair.includes(q) || (qNo0x.length >= 4 && pairNo0x.includes(qNo0x))) return true;
+      if (owner.includes(q)) return true;
+      return false;
+    });
+  }, [ads, allAdsSearch]);
+
+  const allAdsTotalPages = Math.max(1, Math.ceil(filteredAllAds.length / ALL_ADS_PAGE_SIZE) || 1);
+  const paginatedAllAds = useMemo(() => {
+    const page = Math.min(allAdsPage, allAdsTotalPages);
+    const start = (page - 1) * ALL_ADS_PAGE_SIZE;
+    return filteredAllAds.slice(start, start + ALL_ADS_PAGE_SIZE);
+  }, [filteredAllAds, allAdsPage, allAdsTotalPages]);
 
   const userAdsVoteSignature = useMemo(
     () =>
@@ -3261,13 +3330,23 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onAdPatche
     });
   };
 
-  const requestUnclaimedDexAdsViaSocket = (q = '') => {
+  const requestUnclaimedDexAdsViaSocket = (q = '', page = 1) => {
     if (!socket || !currentUser?.isAdmin) return;
     setIsLoadingUnclaimedDex(true);
     socket.emit('requestUnclaimedDexAds', {
       userId: currentUser.userId || currentUser.id,
       isAdmin: currentUser.isAdmin,
-      q: String(q || '').trim()
+      q: String(q || '').trim(),
+      page,
+      limit: UNCLAIMED_DEX_PAGE_SIZE
+    });
+  };
+
+  const requestUnclaimedDexAdsCountViaSocket = () => {
+    if (!socket || !currentUser?.isAdmin) return;
+    socket.emit('requestUnclaimedDexAdsCount', {
+      userId: currentUser.userId || currentUser.id,
+      isAdmin: currentUser.isAdmin
     });
   };
 
@@ -3322,11 +3401,18 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onAdPatche
       setTransferringDexAdId(adId);
       await transferDexFeedOwnership(adId, username);
       setUnclaimedDexAds((prev) => prev.filter((ad) => (ad.id || ad._id) !== adId));
+      setUnclaimedDexTotal((prev) => Math.max(0, prev - 1));
       setTransferUsernames((prev) => {
         const next = { ...prev };
         delete next[adId];
         return next;
       });
+      // If page emptied after transfer, go back a page (or refresh)
+      if (unclaimedDexAds.length <= 1 && unclaimedDexPage > 1) {
+        setUnclaimedDexPage((p) => p - 1);
+      } else {
+        requestUnclaimedDexAdsViaSocket(debouncedUnclaimedDexSearch, unclaimedDexPage);
+      }
       showNotification(`Listing transferred to @${username}`, 'success');
     } catch (error) {
       showNotification(error.message || 'Failed to transfer ownership', 'error');
@@ -3761,7 +3847,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onAdPatche
     { id: 'banners', label: 'Banner Mgmt', icon: '🎯', badge: bannerAds.filter(b => b.status === 'pending').length },
     { id: 'giftcards', label: 'Redemptions', icon: '🎁', badge: pendingRedemptions.length },
     { id: 'listings', label: 'Bubble Listings', icon: '🫧', badge: pendingListings.length },
-    { id: 'dexFeed', label: 'Dex Feed', icon: '🌊', badge: unclaimedDexAds.length },
+    { id: 'dexFeed', label: 'Dex Feed', icon: '🌊', badge: unclaimedDexTotal },
     { id: 'claimRequests', label: 'Claim Requests', icon: '📋', badge: pendingListingClaims.length },
     { id: 'allads', label: 'All Ads', icon: '📱', badge: 0 },
     { id: 'premium', label: 'Premium Requests', icon: '💎', badge: premiumRequests.length },
@@ -6183,6 +6269,9 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onAdPatche
                     <h3 className="text-2xl font-semibold text-white mb-2">Dex Feed Listings</h3>
                     <p className="text-gray-400 text-sm mb-6">
                       Auto-listed projects owned by <span className="text-cyan-300">aquads-feed</span>. Transfer to a user to claim ownership (Starter tier).
+                      {unclaimedDexTotal > 0 && (
+                        <span className="text-gray-500"> · {unclaimedDexTotal} unclaimed</span>
+                      )}
                     </p>
                     <div className="mb-4">
                       <input
@@ -6206,80 +6295,108 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onAdPatche
                             : 'No unclaimed dex feed listings yet'}
                         </div>
                       ) : (
-                        <div className="space-y-4">
-                          {unclaimedDexAds.map((listing) => {
-                            const listingId = listing.id || listing._id;
-                            const metrics = listing.feedMetricsSnapshot || {};
-                            return (
-                              <div key={listingId} className="bg-gray-800 rounded-lg p-5 border border-teal-500/30">
-                                <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-4 mb-4">
-                                  <div className="flex items-start gap-4 min-w-0">
-                                    <img
-                                      src={listing.logo}
-                                      alt={listing.title}
-                                      className="w-14 h-14 rounded-full object-cover border border-gray-600 shrink-0"
-                                      loading="lazy"
-                                      onError={(e) => { e.target.src = 'https://placehold.co/56x56?text=?'; }}
-                                    />
-                                    <div className="min-w-0">
-                                      <h4 className="font-bold text-white text-lg truncate">{listing.title}</h4>
-                                      <p className="text-sm text-gray-400 capitalize">
-                                        {listing.blockchain || '—'} · Listed {listing.feedListedAt ? new Date(listing.feedListedAt).toLocaleString() : '—'}
-                                      </p>
-                                      <p className="text-xs text-gray-500 font-mono break-all mt-1">
-                                        CA: {listing.contractAddress || '—'}
-                                      </p>
-                                      <p className="text-xs text-gray-500 font-mono break-all">
-                                        Pair: {listing.pairAddress || '—'}
-                                      </p>
-                                      <span className="inline-block mt-2 px-2 py-0.5 rounded text-xs font-medium bg-teal-500/20 text-teal-300">
-                                        Unclaimed · Dex Feed
-                                      </span>
-                                    </div>
-                                  </div>
-                                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 shrink-0 text-sm">
-                                    <div className="bg-gray-900 rounded p-2 text-center">
-                                      <div className="text-gray-500 text-xs">Market cap</div>
-                                      <div className="text-white font-medium">{formatDexFeedUsd(metrics.marketCap)}</div>
-                                    </div>
-                                    <div className="bg-gray-900 rounded p-2 text-center">
-                                      <div className="text-gray-500 text-xs">Liquidity</div>
-                                      <div className="text-white font-medium">{formatDexFeedUsd(metrics.liquidity)}</div>
-                                    </div>
-                                    <div className="bg-gray-900 rounded p-2 text-center">
-                                      <div className="text-gray-500 text-xs">Pair age</div>
-                                      <div className="text-white font-medium">
-                                        {metrics.pairAgeHours != null ? `${Number(metrics.pairAgeHours).toFixed(1)}h` : '—'}
+                        <>
+                          <div className="space-y-4">
+                            {unclaimedDexAds.map((listing) => {
+                              const listingId = listing.id || listing._id;
+                              const metrics = listing.feedMetricsSnapshot || {};
+                              return (
+                                <div key={listingId} className="bg-gray-800 rounded-lg p-5 border border-teal-500/30">
+                                  <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-4 mb-4">
+                                    <div className="flex items-start gap-4 min-w-0">
+                                      <img
+                                        src={listing.logo}
+                                        alt={listing.title}
+                                        className="w-14 h-14 rounded-full object-cover border border-gray-600 shrink-0"
+                                        loading="lazy"
+                                        onError={(e) => { e.target.src = 'https://placehold.co/56x56?text=?'; }}
+                                      />
+                                      <div className="min-w-0">
+                                        <h4 className="font-bold text-white text-lg truncate">{listing.title}</h4>
+                                        <p className="text-sm text-gray-400 capitalize">
+                                          {listing.blockchain || '—'} · Listed {listing.feedListedAt ? new Date(listing.feedListedAt).toLocaleString() : '—'}
+                                        </p>
+                                        <p className="text-xs text-gray-500 font-mono break-all mt-1">
+                                          CA: {listing.contractAddress || '—'}
+                                        </p>
+                                        <p className="text-xs text-gray-500 font-mono break-all">
+                                          Pair: {listing.pairAddress || '—'}
+                                        </p>
+                                        <span className="inline-block mt-2 px-2 py-0.5 rounded text-xs font-medium bg-teal-500/20 text-teal-300">
+                                          Unclaimed · Dex Feed
+                                        </span>
                                       </div>
                                     </div>
-                                    <div className="bg-gray-900 rounded p-2 text-center">
-                                      <div className="text-gray-500 text-xs">24h txns</div>
-                                      <div className="text-white font-medium">{metrics.txns24h ?? '—'}</div>
+                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 shrink-0 text-sm">
+                                      <div className="bg-gray-900 rounded p-2 text-center">
+                                        <div className="text-gray-500 text-xs">Market cap</div>
+                                        <div className="text-white font-medium">{formatDexFeedUsd(metrics.marketCap)}</div>
+                                      </div>
+                                      <div className="bg-gray-900 rounded p-2 text-center">
+                                        <div className="text-gray-500 text-xs">Liquidity</div>
+                                        <div className="text-white font-medium">{formatDexFeedUsd(metrics.liquidity)}</div>
+                                      </div>
+                                      <div className="bg-gray-900 rounded p-2 text-center">
+                                        <div className="text-gray-500 text-xs">Pair age</div>
+                                        <div className="text-white font-medium">
+                                          {metrics.pairAgeHours != null ? `${Number(metrics.pairAgeHours).toFixed(1)}h` : '—'}
+                                        </div>
+                                      </div>
+                                      <div className="bg-gray-900 rounded p-2 text-center">
+                                        <div className="text-gray-500 text-xs">24h txns</div>
+                                        <div className="text-white font-medium">{metrics.txns24h ?? '—'}</div>
+                                      </div>
                                     </div>
                                   </div>
+                                  <div className="flex flex-col sm:flex-row gap-2 sm:items-center border-t border-gray-700 pt-4">
+                                    <input
+                                      type="text"
+                                      value={transferUsernames[listingId] || ''}
+                                      onChange={(e) => setTransferUsernames((prev) => ({ ...prev, [listingId]: e.target.value }))}
+                                      placeholder="Transfer to @username"
+                                      className="flex-1 bg-gray-900 border border-gray-600 rounded-md px-3 py-2 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-cyan-500"
+                                      disabled={transferringDexAdId === listingId}
+                                    />
+                                    <button
+                                      onClick={() => handleTransferDexFeedOwnership(listingId)}
+                                      disabled={transferringDexAdId === listingId}
+                                      className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shrink-0"
+                                    >
+                                      {transferringDexAdId === listingId && <FaSpinner className="animate-spin" />}
+                                      Transfer ownership
+                                    </button>
+                                  </div>
                                 </div>
-                                <div className="flex flex-col sm:flex-row gap-2 sm:items-center border-t border-gray-700 pt-4">
-                                  <input
-                                    type="text"
-                                    value={transferUsernames[listingId] || ''}
-                                    onChange={(e) => setTransferUsernames((prev) => ({ ...prev, [listingId]: e.target.value }))}
-                                    placeholder="Transfer to @username"
-                                    className="flex-1 bg-gray-900 border border-gray-600 rounded-md px-3 py-2 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-cyan-500"
-                                    disabled={transferringDexAdId === listingId}
-                                  />
-                                  <button
-                                    onClick={() => handleTransferDexFeedOwnership(listingId)}
-                                    disabled={transferringDexAdId === listingId}
-                                    className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shrink-0"
-                                  >
-                                    {transferringDexAdId === listingId && <FaSpinner className="animate-spin" />}
-                                    Transfer ownership
-                                  </button>
-                                </div>
+                              );
+                            })}
+                          </div>
+                          {unclaimedDexTotalPages > 1 && (
+                            <div className="flex flex-wrap items-center justify-between gap-3 mt-6 pt-4 border-t border-gray-600">
+                              <p className="text-sm text-gray-400">
+                                Page {unclaimedDexPage} of {unclaimedDexTotalPages}
+                                <span className="text-gray-500"> · {unclaimedDexTotal} total</span>
+                              </p>
+                              <div className="flex gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => setUnclaimedDexPage((p) => Math.max(1, p - 1))}
+                                  disabled={unclaimedDexPage <= 1 || isLoadingUnclaimedDex}
+                                  className="px-3 py-1.5 bg-gray-800 hover:bg-gray-900 rounded text-sm text-white disabled:opacity-40 disabled:cursor-not-allowed"
+                                >
+                                  Previous
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setUnclaimedDexPage((p) => Math.min(unclaimedDexTotalPages, p + 1))}
+                                  disabled={unclaimedDexPage >= unclaimedDexTotalPages || isLoadingUnclaimedDex}
+                                  className="px-3 py-1.5 bg-gray-800 hover:bg-gray-900 rounded text-sm text-white disabled:opacity-40 disabled:cursor-not-allowed"
+                                >
+                                  Next
+                                </button>
                               </div>
-                            );
-                          })}
-                        </div>
+                            </div>
+                          )}
+                        </>
                       )}
                     </div>
                   </div>
@@ -6379,87 +6496,141 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onAdPatche
 
                 {activeAdminSection === 'allads' && (
                   <div>
-                    <h3 className="text-2xl font-semibold text-white mb-6">All Ads Management</h3>
-                    {ads.length === 0 ? (
-                      <p className="text-gray-400 text-center py-8">No ads found.</p>
+                    <h3 className="text-2xl font-semibold text-white mb-2">All Ads Management</h3>
+                    <p className="text-gray-400 text-sm mb-4">
+                      {filteredAllAds.length} listing{filteredAllAds.length === 1 ? '' : 's'}
+                      {allAdsSearch.trim() ? ' matching search' : ''}
+                      {ads.length !== filteredAllAds.length && (
+                        <span className="text-gray-500"> · {ads.length} total</span>
+                      )}
+                    </p>
+                    <div className="mb-4">
+                      <input
+                        type="search"
+                        value={allAdsSearch}
+                        onChange={(e) => {
+                          setAllAdsSearch(e.target.value);
+                          setAllAdsPage(1);
+                        }}
+                        placeholder="Search by name, ticker, or CA…"
+                        className="w-full md:max-w-lg bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500"
+                        autoComplete="off"
+                      />
+                    </div>
+                    {filteredAllAds.length === 0 ? (
+                      <p className="text-gray-400 text-center py-8">
+                        {allAdsSearch.trim() ? 'No ads match your search.' : 'No ads found.'}
+                      </p>
                     ) : (
-                      <div className="space-y-4">
-                        {ads.map(ad => {
-                          const totalVotes = (ad.bullishVotes || 0) + (ad.bearishVotes || 0);
-                          const bullishPercentage = totalVotes > 0 ? Math.round(((ad.bullishVotes || 0) / totalVotes) * 100) : 0;
-                          const bearishPercentage = totalVotes > 0 ? Math.round(((ad.bearishVotes || 0) / totalVotes) * 100) : 0;
-                          
-                          return (
-                            <div key={ad.id} className="bg-gray-700 rounded-lg p-4 flex items-center justify-between">
-                              <div className="flex items-center space-x-4">
-                                <img src={ad.logo} alt={ad.title} className="w-12 h-12 object-contain rounded" loading="lazy" />
-                                <div>
-                                  <h3 className="text-white font-semibold">{ad.title}</h3>
-                                  <p className="text-gray-400 text-sm">{ad.url || 'No website yet'}</p>
-                                  <p className="text-gray-400 text-sm">Owner: {ad.owner}</p>
-                                  {ad.status === 'pending' && (
-                                    <p className="text-yellow-500 text-sm">Listing pending</p>
-                                  )}
-                                </div>
-                              </div>
-                              
-                              {/* Vote Counts Display */}
-                              <div className="flex items-center space-x-6 mr-4">
-                                <div className="text-center">
-                                  <div className="text-xs text-gray-400 mb-1">Community Votes</div>
-                                  <div className="flex items-center space-x-3">
-                                    <div className="flex items-center space-x-1">
-                                      <span className="text-green-400 font-bold">👍</span>
-                                      <span className="text-green-400 font-semibold">{ad.bullishVotes || 0}</span>
-                                      <span className="text-green-400 text-sm">({bullishPercentage}%)</span>
-                                    </div>
-                                    <div className="flex items-center space-x-1">
-                                      <span className="text-red-400 font-bold">👎</span>
-                                      <span className="text-red-400 font-semibold">{ad.bearishVotes || 0}</span>
-                                      <span className="text-red-400 text-sm">({bearishPercentage}%)</span>
-                                    </div>
+                      <>
+                        <div className="space-y-4">
+                          {paginatedAllAds.map(ad => {
+                            const totalVotes = (ad.bullishVotes || 0) + (ad.bearishVotes || 0);
+                            const bullishPercentage = totalVotes > 0 ? Math.round(((ad.bullishVotes || 0) / totalVotes) * 100) : 0;
+                            const bearishPercentage = totalVotes > 0 ? Math.round(((ad.bearishVotes || 0) / totalVotes) * 100) : 0;
+                            
+                            return (
+                              <div key={ad.id} className="bg-gray-700 rounded-lg p-4 flex items-center justify-between">
+                                <div className="flex items-center space-x-4">
+                                  <img src={ad.logo} alt={ad.title} className="w-12 h-12 object-contain rounded" loading="lazy" />
+                                  <div>
+                                    <h3 className="text-white font-semibold">{ad.title}</h3>
+                                    <p className="text-gray-400 text-sm">{ad.url || 'No website yet'}</p>
+                                    <p className="text-gray-400 text-sm">Owner: {ad.owner}</p>
+                                    {ad.contractAddress && (
+                                      <p className="text-gray-500 text-xs font-mono break-all mt-0.5">
+                                        CA: {ad.contractAddress}
+                                      </p>
+                                    )}
+                                    {ad.status === 'pending' && (
+                                      <p className="text-yellow-500 text-sm">Listing pending</p>
+                                    )}
                                   </div>
-                                  <div className="text-xs text-gray-500 mt-1">Total: {totalVotes}</div>
+                                </div>
+                                
+                                {/* Vote Counts Display */}
+                                <div className="flex items-center space-x-6 mr-4">
+                                  <div className="text-center">
+                                    <div className="text-xs text-gray-400 mb-1">Community Votes</div>
+                                    <div className="flex items-center space-x-3">
+                                      <div className="flex items-center space-x-1">
+                                        <span className="text-green-400 font-bold">👍</span>
+                                        <span className="text-green-400 font-semibold">{ad.bullishVotes || 0}</span>
+                                        <span className="text-green-400 text-sm">({bullishPercentage}%)</span>
+                                      </div>
+                                      <div className="flex items-center space-x-1">
+                                        <span className="text-red-400 font-bold">👎</span>
+                                        <span className="text-red-400 font-semibold">{ad.bearishVotes || 0}</span>
+                                        <span className="text-red-400 text-sm">({bearishPercentage}%)</span>
+                                      </div>
+                                    </div>
+                                    <div className="text-xs text-gray-500 mt-1">Total: {totalVotes}</div>
+                                  </div>
+                                </div>
+                                
+                                <div className="flex space-x-2">
+                                  {!ad.status || ad.status !== 'pending' ? (
+                                    <>
+                                      <button
+                                        onClick={() => handleBumpClick(ad.id)}
+                                        disabled={bumpLoadingAdId === ad.id}
+                                        className="bg-blue-500 hover:bg-blue-600 disabled:opacity-60 disabled:cursor-wait text-white px-3 py-1 rounded"
+                                        title="Check votes and liquidity to bump"
+                                      >
+                                        {bumpLoadingAdId === ad.id ? 'Checking…' : 'Bump'}
+                                      </button>
+                                      <a
+                                        href="https://t.me/+6rJbDLqdMxA3ZTUx"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="bg-purple-500 hover:bg-purple-600 text-white px-3 py-1 rounded inline-flex items-center"
+                                        title="Book a free AMA session"
+                                      >
+                                        Book Free AMA
+                                      </a>
+                                    </>
+                                  ) : (
+                                    <span className="text-yellow-500 px-3 py-1">
+                                      Listing pending
+                                    </span>
+                                  )}
+                                  <button onClick={() => handleOpenEditAdModal(ad)} className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded" title="Edit this ad">
+                                    Edit
+                                  </button>
+                                  <button onClick={() => { if (window.confirm('Are you sure you want to delete this ad?')) { onDeleteAd(ad.id); } }} className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded" title="Delete this ad">
+                                    Delete
+                                  </button>
                                 </div>
                               </div>
-                              
-                              <div className="flex space-x-2">
-                                {!ad.status || ad.status !== 'pending' ? (
-                                  <>
-                                    <button
-                                      onClick={() => handleBumpClick(ad.id)}
-                                      disabled={bumpLoadingAdId === ad.id}
-                                      className="bg-blue-500 hover:bg-blue-600 disabled:opacity-60 disabled:cursor-wait text-white px-3 py-1 rounded"
-                                      title="Check votes and liquidity to bump"
-                                    >
-                                      {bumpLoadingAdId === ad.id ? 'Checking…' : 'Bump'}
-                                    </button>
-                                    <a
-                                      href="https://t.me/+6rJbDLqdMxA3ZTUx"
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="bg-purple-500 hover:bg-purple-600 text-white px-3 py-1 rounded inline-flex items-center"
-                                      title="Book a free AMA session"
-                                    >
-                                      Book Free AMA
-                                    </a>
-                                  </>
-                                ) : (
-                                  <span className="text-yellow-500 px-3 py-1">
-                                    Listing pending
-                                  </span>
-                                )}
-                                <button onClick={() => handleOpenEditAdModal(ad)} className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded" title="Edit this ad">
-                                  Edit
-                                </button>
-                                <button onClick={() => { if (window.confirm('Are you sure you want to delete this ad?')) { onDeleteAd(ad.id); } }} className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded" title="Delete this ad">
-                                  Delete
-                                </button>
-                              </div>
+                            );
+                          })}
+                        </div>
+                        {allAdsTotalPages > 1 && (
+                          <div className="flex flex-wrap items-center justify-between gap-3 mt-6 pt-4 border-t border-gray-600">
+                            <p className="text-sm text-gray-400">
+                              Page {Math.min(allAdsPage, allAdsTotalPages)} of {allAdsTotalPages}
+                            </p>
+                            <div className="flex gap-2">
+                              <button
+                                type="button"
+                                onClick={() => setAllAdsPage((p) => Math.max(1, p - 1))}
+                                disabled={allAdsPage <= 1}
+                                className="px-3 py-1.5 bg-gray-800 hover:bg-gray-900 rounded text-sm text-white disabled:opacity-40 disabled:cursor-not-allowed"
+                              >
+                                Previous
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setAllAdsPage((p) => Math.min(allAdsTotalPages, p + 1))}
+                                disabled={allAdsPage >= allAdsTotalPages}
+                                className="px-3 py-1.5 bg-gray-800 hover:bg-gray-900 rounded text-sm text-white disabled:opacity-40 disabled:cursor-not-allowed"
+                              >
+                                Next
+                              </button>
                             </div>
-                          );
-                        })}
-                      </div>
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
                 )}

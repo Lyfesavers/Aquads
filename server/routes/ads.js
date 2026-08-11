@@ -1333,36 +1333,20 @@ router.get('/pending', auth, async (req, res) => {
   }
 });
 
-// GET unclaimed dex-feed listings (admin only)
+// GET unclaimed dex-feed listings (admin only) — paginated + slim projection
 router.get('/admin/unclaimed-dex-feed', auth, async (req, res) => {
   try {
     if (!req.user.isAdmin) {
       return res.status(403).json({ error: 'Admin access required' });
     }
 
-    const q = String(req.query.q || '').trim();
-    const filter = {
-      listingSource: LISTING_SOURCE_DEX_FEED,
-      claimStatus: CLAIM_STATUS_UNCLAIMED,
-      owner: DEX_FEED_OWNER_USERNAME,
-      status: 'active'
-    };
-
-    let ads = await Ad.find(filter).sort({ feedListedAt: -1, createdAt: -1 }).lean();
-
-    if (q) {
-      const lower = q.toLowerCase();
-      ads = ads.filter(
-        (ad) =>
-          String(ad.title || '').toLowerCase().includes(lower) ||
-          String(ad.contractAddress || '').toLowerCase().includes(lower) ||
-          String(ad.pairAddress || '').toLowerCase().includes(lower) ||
-          String(ad.blockchain || '').toLowerCase().includes(lower) ||
-          String(ad.id || '').toLowerCase().includes(lower)
-      );
-    }
-
-    res.json({ ads, total: ads.length });
+    const { fetchUnclaimedDexAds } = require('../utils/unclaimedDexFeedQuery');
+    const result = await fetchUnclaimedDexAds({
+      q: req.query.q,
+      page: req.query.page,
+      limit: req.query.limit
+    });
+    res.json(result);
   } catch (error) {
     console.error('[DexFeed] unclaimed list error:', error);
     res.status(500).json({ error: 'Failed to fetch unclaimed dex feed listings' });

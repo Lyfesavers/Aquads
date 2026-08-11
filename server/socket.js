@@ -701,7 +701,7 @@ function init(server) {
       }
     });
 
-    // Handle admin requesting unclaimed dex-feed listings
+    // Handle admin requesting unclaimed dex-feed listings (paginated + slim projection)
     socket.on('requestUnclaimedDexAds', async (userData) => {
       if (!userData || !userData.userId || !userData.isAdmin) {
         socket.emit('unclaimedDexAdsError', { error: 'Admin access required' });
@@ -709,38 +709,33 @@ function init(server) {
       }
 
       try {
-        const Ad = require('./models/Ad');
-        const {
-          LISTING_SOURCE_DEX_FEED,
-          CLAIM_STATUS_UNCLAIMED,
-          DEX_FEED_OWNER_USERNAME
-        } = require('./constants/dexFeed');
-
-        const q = String(userData.q || '').trim().toLowerCase();
-        const filter = {
-          listingSource: LISTING_SOURCE_DEX_FEED,
-          claimStatus: CLAIM_STATUS_UNCLAIMED,
-          owner: DEX_FEED_OWNER_USERNAME,
-          status: 'active'
-        };
-
-        let ads = await Ad.find(filter).sort({ feedListedAt: -1, createdAt: -1 }).lean();
-
-        if (q) {
-          ads = ads.filter(
-            (ad) =>
-              String(ad.title || '').toLowerCase().includes(q) ||
-              String(ad.contractAddress || '').toLowerCase().includes(q) ||
-              String(ad.pairAddress || '').toLowerCase().includes(q) ||
-              String(ad.blockchain || '').toLowerCase().includes(q) ||
-              String(ad.id || '').toLowerCase().includes(q)
-          );
-        }
-
-        socket.emit('unclaimedDexAdsLoaded', { ads, total: ads.length });
+        const { fetchUnclaimedDexAds } = require('./utils/unclaimedDexFeedQuery');
+        const result = await fetchUnclaimedDexAds({
+          q: userData.q,
+          page: userData.page,
+          limit: userData.limit
+        });
+        socket.emit('unclaimedDexAdsLoaded', result);
       } catch (error) {
         console.error('Error fetching unclaimed dex ads for admin:', error);
         socket.emit('unclaimedDexAdsError', { error: 'Failed to fetch unclaimed listings' });
+      }
+    });
+
+    // Lightweight count for admin Dex Feed badge (no full document payload)
+    socket.on('requestUnclaimedDexAdsCount', async (userData) => {
+      if (!userData || !userData.userId || !userData.isAdmin) {
+        socket.emit('unclaimedDexAdsError', { error: 'Admin access required' });
+        return;
+      }
+
+      try {
+        const { countUnclaimedDexAds } = require('./utils/unclaimedDexFeedQuery');
+        const total = await countUnclaimedDexAds();
+        socket.emit('unclaimedDexAdsCount', { total });
+      } catch (error) {
+        console.error('Error counting unclaimed dex ads for admin:', error);
+        socket.emit('unclaimedDexAdsError', { error: 'Failed to count unclaimed listings' });
       }
     });
 
