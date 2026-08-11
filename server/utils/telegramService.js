@@ -342,7 +342,8 @@ const telegramService = {
           chat_id: chatId,
           message_id: messageId,
           disable_notification: false // Show notification about pinning
-        }
+        },
+        { timeout: 15000 }
       );
 
       if (response.data.ok) {
@@ -372,7 +373,8 @@ const telegramService = {
 
       const response = await axios.post(
         `https://api.telegram.org/bot${botToken}/unpinChatMessage`,
-        payload
+        payload,
+        { timeout: 15000 }
       );
 
       return response.data?.ok === true;
@@ -393,7 +395,8 @@ const telegramService = {
         {
           chat_id: chatId,
           message_id: messageId
-        }
+        },
+        { timeout: 15000 }
       );
       return response.data?.ok === true;
     } catch (error) {

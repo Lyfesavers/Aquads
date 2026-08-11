@@ -335,8 +335,15 @@ cron.schedule('0 * * * *', async () => {
   }
 });
 
-// Sweep Telegram raid announcement messages before Telegram's ~48h bot delete window ends (stored IDs + stale pins)
+// Sweep Telegram raid announcement messages before Telegram's ~48h bot delete window ends (stored IDs + stale pins).
+// Reentrancy guard + completion log: overnight hang correlated with this job starting and never finishing.
+let raidTgCleanupRunning = false;
 cron.schedule('0 */2 * * *', async () => {
+  if (raidTgCleanupRunning) {
+    console.warn('[Raid TG cleanup] Previous sweep still running — skipping this tick');
+    return;
+  }
+  raidTgCleanupRunning = true;
   try {
     console.log('[Raid TG cleanup] Running scheduled raid message sweep...');
     await telegramService.scheduledRaidTelegramRaidMessageCleanup();
@@ -344,8 +351,11 @@ cron.schedule('0 */2 * * *', async () => {
     await telegramService.scheduledVcOpenTelegramMessageCleanup();
     const discordService = require('./utils/discordService');
     await discordService.scheduledSpacesDiscordMessageCleanup();
+    console.log('[Raid TG cleanup] Sweep completed');
   } catch (error) {
-    console.error('[Raid TG cleanup] Error:', error);
+    console.error('[Raid TG cleanup] Error:', error.message || error);
+  } finally {
+    raidTgCleanupRunning = false;
   }
 });
 
