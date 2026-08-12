@@ -4447,7 +4447,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onAdPatche
                       <p>• Earn 5 points for each qualifying swap completed on AquaSwap (minimum <strong>$5 USD</strong> notional on the From side)</p>
                       <p>• Earn 5 points for shilling a project from AquaSwap DEX charts (once per day)</p>
                       <p>• Earn 1 point for your first vote on each project bubble (one time per bubble; you can change bullish/bearish anytime)</p>
-                      <p>• Social media raids: you must <strong>Like + Retweet/Share + Comment + Bookmark (Twitter)</strong> (all required every time!). Points by tier: <strong>5</strong> text/unverified · <strong>10</strong> text+image/unverified · <strong>15</strong> text/verified ✓ · <strong>20</strong> text+image/verified ✓</p>
+                      <p>• Social media raids: you must <strong>Like + Retweet/Share + Comment</strong> (all required every time!). Points by tier: <strong>5</strong> text/unverified · <strong>10</strong> text+image/unverified · <strong>15</strong> text/verified ✓ · <strong>20</strong> text+image/verified ✓</p>
                       <p>• Earn 100 points per day for hosting or pitching on live streams & spaces (X, YouTube, Twitch, Kick, etc.) - Read more in the Affiliate documents for full requirements</p>
                       <p>• Earn 5 points for each new affiliate</p>
                       <p>• Earn 20 points for each game vote in the gamehub</p>

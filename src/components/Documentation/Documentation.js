@@ -3195,7 +3195,7 @@ Support Facebook content:
 
 ### Points System
 
-When you complete a Twitter or Facebook raid (Like + RT/Share + Comment + Bookmark on Twitter), an admin awards points based on your **comment type** and **verified ✓** status:
+When you complete a Twitter or Facebook raid (Like + RT/Share + Comment on Twitter), an admin awards points based on your **comment type** and **verified ✓** status:
 
 | Points | Comment | Account |
 |--------|---------|---------|
@@ -3265,7 +3265,6 @@ Follow the required actions:
 - ❤️ Like the tweet
 - 🔄 Retweet
 - 💬 Comment
-- 🔖 Bookmark
 
 **Step 4: Verify**
 Click "Verify" to confirm your participation.

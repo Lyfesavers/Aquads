@@ -734,7 +734,7 @@ function RaidsTab({ status, token, refresh, toast }) {
         body: JSON.stringify({
           tweetUrl: tweetUrl.trim(),
           title: `Twitter Raid by @${user.username}`,
-          description: 'Help boost this tweet! Like, retweet, comment, and bookmark to earn 5–20 points.',
+          description: 'Help boost this tweet! Like, retweet, and comment to earn 5–20 points.',
         }),
       });
       toast(mode === 'free' ? 'Free raid created!' : 'Raid created (2,000 pts deducted)', 'success');

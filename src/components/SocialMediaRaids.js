@@ -63,7 +63,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
   // Add missing state variables
   const [showIframe, setShowIframe] = useState(false);
   const [iframeLoading, setIframeLoading] = useState(false);
-  const [iframeInteractions, setIframeInteractions] = useState({ liked: false, retweeted: false, commented: false, bookmarked: false });
+  const [iframeInteractions, setIframeInteractions] = useState({ liked: false, retweeted: false, commented: false });
   const [iframeVerified, setIframeVerified] = useState(false);
   const iframeContainerRef = useRef(null);
   
@@ -71,14 +71,12 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
   const [interactionTimes, setInteractionTimes] = useState({
     liked: null,
     retweeted: null,
-    commented: null,
-    bookmarked: null
+    commented: null
   });
   const [suspiciousActivity, setSuspiciousActivity] = useState({
     liked: false,
     retweeted: false,
-    commented: false,
-    bookmarked: false
+    commented: false
   });
   
   // For admin creation
@@ -86,7 +84,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
   const [newRaid, setNewRaid] = useState({
     tweetUrl: '',
     title: 'Twitter Raid',
-    description: 'Like, Retweet, Comment & Bookmark to earn 5–20 points!',
+    description: 'Like, Retweet & Comment to earn 5–20 points!',
     points: 20
   });
   
@@ -95,7 +93,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
   const [pointsRaidData, setPointsRaidData] = useState({
     tweetUrl: '',
     title: 'Twitter Raid',
-    description: 'Like, Retweet, Comment & Bookmark to earn 5–20 points!'
+    description: 'Like, Retweet & Comment to earn 5–20 points!'
   });
 
   // For free raid creation
@@ -103,7 +101,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
   const [freeRaidData, setFreeRaidData] = useState({
     tweetUrl: '',
     title: 'Twitter Raid',
-    description: 'Like, Retweet, Comment & Bookmark to earn 5–20 points!'
+    description: 'Like, Retweet & Comment to earn 5–20 points!'
   });
   const [freeRaidSubmitting, setFreeRaidSubmitting] = useState(false);
   const [freeRaidEligibility, setFreeRaidEligibility] = useState(null);
@@ -438,7 +436,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     try {
       // Check if all interactions are verified
       if (!iframeVerified) {
-        setError('Please complete all four Twitter interactions first (like, retweet, comment, and bookmark)');
+        setError('Please complete all three Twitter interactions first (like, retweet, and comment)');
         return false;
       }
       
@@ -516,11 +514,9 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       liked: false, 
       retweeted: false, 
       commented: false,
-      bookmarked: false,
       likedLoading: false,
       retweetedLoading: false,
-      commentedLoading: false,
-      bookmarkedLoading: false
+      commentedLoading: false
     });
     setIframeVerified(false);
     setIframeLoading(true);
@@ -529,14 +525,12 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     setInteractionTimes({
       liked: null,
       retweeted: null,
-      commented: null,
-      bookmarked: null
+      commented: null
     });
     setSuspiciousActivity({
       liked: false,
       retweeted: false,
-      commented: false,
-      bookmarked: false
+      commented: false
     });
     
     // Extract tweet ID and prepare for preview
@@ -617,7 +611,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
 
       // Verify all interactions are completed
       if (!iframeVerified) {
-        setError('Please complete all four Twitter interactions first (like, retweet, comment, and bookmark)');
+        setError('Please complete all three Twitter interactions first (like, retweet, and comment)');
         return;
       }
 
@@ -736,7 +730,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     const raidData = {
       ...newRaid,
       title: 'Twitter Raid',
-      description: 'Like, Retweet, Comment & Bookmark to earn 5–20 points!',
+      description: 'Like, Retweet & Comment to earn 5–20 points!',
       points: 20
     };
     
@@ -762,7 +756,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       setNewRaid({
         tweetUrl: '',
         title: 'Twitter Raid',
-        description: 'Like, Retweet, Comment & Bookmark to earn 5–20 points!',
+        description: 'Like, Retweet & Comment to earn 5–20 points!',
         points: 20
       });
       setShowCreateForm(false);
@@ -847,7 +841,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       setFreeRaidData({
         tweetUrl: '',
         title: 'Twitter Raid',
-        description: 'Like, Retweet, Comment & Bookmark to earn 5–20 points!'
+        description: 'Like, Retweet & Comment to earn 5–20 points!'
       });
       setShowFreeRaidForm(false);
       
@@ -956,8 +950,8 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
           [`${type}Loading`]: false
         };
         
-        // Check if all four interactions are completed
-        if (newInteractions.liked && newInteractions.retweeted && newInteractions.commented && newInteractions.bookmarked) {
+        // Check if all three interactions are completed
+        if (newInteractions.liked && newInteractions.retweeted && newInteractions.commented) {
           setIframeVerified(true);
         }
         
@@ -1033,7 +1027,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       setPointsRaidData({
         tweetUrl: '',
         title: 'Twitter Raid',
-        description: 'Like, Retweet, Comment & Bookmark to earn 5–20 points!'
+        description: 'Like, Retweet & Comment to earn 5–20 points!'
       });
       setShowPointsCreateForm(false);
       
@@ -1068,7 +1062,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
           <div>
             <h2 className="text-xl font-bold text-blue-400">Twitter Raids</h2>
             <p className="text-gray-300 mt-2">
-              Like, Retweet, Comment, and Bookmark tweets to earn points. You must do all four — not just comment!
+              Like, Retweet, and Comment on tweets to earn points. You must do all three — not just comment!
             </p>
           </div>
           
@@ -1143,16 +1137,16 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
             <div className="px-4 pb-4">
               <div className="text-yellow-300 text-sm space-y-2">
                 <div className="bg-red-500/10 border border-red-400/40 rounded p-3">
-                  <p className="text-red-200 font-semibold mb-1">You must do ALL 4 things — every time:</p>
-                  <p className="text-yellow-100">👍 <strong>Like</strong> the tweet · 🔁 <strong>Retweet</strong> the tweet · 💬 <strong>Comment</strong> on the tweet · 🔖 <strong>Bookmark</strong> the tweet</p>
-                  <p className="text-yellow-200/80 text-xs mt-2">Commenting alone does NOT count. You need Like + Retweet + Comment + Bookmark every time!</p>
+                  <p className="text-red-200 font-semibold mb-1">You must do ALL 3 things — every time:</p>
+                  <p className="text-yellow-100">👍 <strong>Like</strong> the tweet · 🔁 <strong>Retweet</strong> the tweet · 💬 <strong>Comment</strong> on the tweet</p>
+                  <p className="text-yellow-200/80 text-xs mt-2">Commenting alone does NOT count. You need Like + Retweet + Comment every time!</p>
                 </div>
                 <div className="flex items-start bg-blue-500/20 border border-blue-400/30 rounded p-3">
                   <svg className="w-4 h-4 text-blue-400 mr-2 mt-0.5 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.998-3.818-3.998-.47 0-.92.084-1.336.25C14.818 2.415 13.51 1.5 12 1.5s-2.816.917-3.437 2.25c-.415-.165-.866-.25-1.336-.25-2.11 0-3.818 1.79-3.818 4 0 .494.083.964.237 1.4-1.272.65-2.147 2.018-2.147 3.6 0 1.495.782 2.798 1.942 3.486-.02.17-.032.34-.032.514 0 2.21 1.708 4 3.818 4 .47 0 .92-.086 1.335-.25.62 1.334 1.926 2.25 3.437 2.25 1.512 0 2.818-.916 3.437-2.25.415.163.865.248 1.336.248 2.11 0 3.818-1.79 3.818-4 0-.174-.012-.344-.033-.513 1.158-.687 1.943-1.99 1.943-3.484zm-6.616-3.334l-4.334 6.5c-.145.217-.382.334-.625.334-.143 0-.288-.04-.416-.126l-.115-.094-2.415-2.415c-.293-.293-.293-.768 0-1.06s.768-.294 1.06 0l1.77 1.767 3.825-5.74c.23-.345.696-.436 1.04-.207.346.23.44.696.21 1.04z"/>
                   </svg>
                   <div>
-                    <p className="text-blue-200 font-semibold mb-1">After you do all 4, your points depend on your comment:</p>
+                    <p className="text-blue-200 font-semibold mb-1">After you do all 3, your points depend on your comment:</p>
                     <p className="text-blue-300"><strong className="text-gray-300">5 pts</strong> = text only, unverified · <strong className="text-green-400">10 pts</strong> = text + image, unverified · <strong className="text-blue-400">15 pts</strong> = text only + verified ✓ · <strong className="text-cyan-400">20 pts</strong> = text + image + verified ✓</p>
                     <p className="text-blue-200/80 text-xs mt-1">Tip: Add an AI-generated image or meme to your comment to earn more points!</p>
                   </div>
@@ -1246,7 +1240,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                   <br />
                   • Title: "Twitter Raid"
                   <br />
-                  • Description: "Like, Retweet, Comment & Bookmark to earn 5–20 points!"
+                  • Description: "Like, Retweet & Comment to earn 5–20 points!"
                   <br />
                   • Points: 20
                 </p>
@@ -1649,7 +1643,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                             {showIframe ? (
                               <div className="w-full bg-gray-800/50 rounded-lg overflow-hidden border border-gray-700">
                                 <div className="text-gray-400 text-sm p-2 bg-gray-800">
-                                  <span className="font-semibold">Instructions:</span> You must Like, Retweet, Comment, AND Bookmark — all 4 required! Use the buttons below (each opens Twitter in a new tab).
+                                  <span className="font-semibold">Instructions:</span> You must Like, Retweet, AND Comment — all 3 required! Use the buttons below (each opens Twitter in a new tab).
                                 </div>
                                 
                                 {/* Tweet interaction buttons */}
@@ -1742,27 +1736,6 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                                             </span>
                                           </button>
                                         </div>
-
-                                        {/* Bookmark button — opens tweet (no intent URL; bookmark from share menu on X) */}
-                                        <div className={`${iframeInteractions.bookmarked ? 'bg-green-500/20 border-green-500' : iframeInteractions.bookmarkedLoading ? 'bg-yellow-500/20 border-yellow-500' : suspiciousActivity.bookmarked ? 'bg-red-500/20 border-red-500' : 'bg-gray-800 border-gray-700'} border rounded-lg p-2 sm:p-3 text-center transition-colors w-full sm:max-w-[80px]`}>
-                                          <button 
-                                            onClick={() => {
-                                              if (!iframeInteractions.bookmarked && !iframeInteractions.bookmarkedLoading) {
-                                                window.open(selectedRaid?.tweetUrl || tweetUrl, '_blank');
-                                                handleIframeInteraction('bookmarked');
-                                              }
-                                            }}
-                                            disabled={iframeInteractions.bookmarked || iframeInteractions.bookmarkedLoading}
-                                            className={`${(iframeInteractions.bookmarked || iframeInteractions.bookmarkedLoading) ? 'opacity-70 cursor-default' : 'hover:text-yellow-500'} w-full flex flex-row sm:flex-col items-center justify-center`}
-                                          >
-                                            <svg className={`w-5 h-5 sm:w-6 sm:h-6 sm:mb-1 mr-2 sm:mr-0 ${iframeInteractions.bookmarked ? 'text-yellow-500' : iframeInteractions.bookmarkedLoading ? 'text-yellow-500' : suspiciousActivity.bookmarked ? 'text-red-500' : 'text-gray-400'}`} fill="currentColor" viewBox="0 0 24 24">
-                                              <path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"/>
-                                            </svg>
-                                            <span className={`${iframeInteractions.bookmarked ? 'text-green-400' : iframeInteractions.bookmarkedLoading ? 'text-yellow-400' : suspiciousActivity.bookmarked ? 'text-red-400' : 'text-gray-300'} font-medium text-xs`}>
-                                              {iframeInteractions.bookmarked ? 'Bookmarked ✓' : iframeInteractions.bookmarkedLoading ? 'Verifying...' : suspiciousActivity.bookmarked ? 'Try Again' : 'Bookmark'}
-                                            </span>
-                                          </button>
-                                        </div>
                                       </div>
                                       
                                       {/* Verification status */}
@@ -1771,7 +1744,6 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                                           <div className={`w-3 h-3 rounded-full ${iframeInteractions.liked ? 'bg-green-500' : iframeInteractions.likedLoading ? 'bg-yellow-500 animate-pulse' : 'bg-gray-600'}`}></div>
                                           <div className={`w-3 h-3 rounded-full ${iframeInteractions.retweeted ? 'bg-green-500' : iframeInteractions.retweetedLoading ? 'bg-yellow-500 animate-pulse' : 'bg-gray-600'}`}></div>
                                           <div className={`w-3 h-3 rounded-full ${iframeInteractions.commented ? 'bg-green-500' : iframeInteractions.commentedLoading ? 'bg-yellow-500 animate-pulse' : 'bg-gray-600'}`}></div>
-                                          <div className={`w-3 h-3 rounded-full ${iframeInteractions.bookmarked ? 'bg-green-500' : iframeInteractions.bookmarkedLoading ? 'bg-yellow-500 animate-pulse' : 'bg-gray-600'}`}></div>
                                         </div>
                                         
                                         {iframeVerified ? (
@@ -1786,10 +1758,9 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                                             <p className="text-gray-400 text-sm">
                                               {(iframeInteractions.liked ? 1 : 0) + 
                                               (iframeInteractions.retweeted ? 1 : 0) + 
-                                              (iframeInteractions.commented ? 1 : 0) +
-                                              (iframeInteractions.bookmarked ? 1 : 0)}/4 interactions completed
+                                              (iframeInteractions.commented ? 1 : 0)}/3 interactions completed
                                             </p>
-                                            {(iframeInteractions.likedLoading || iframeInteractions.retweetedLoading || iframeInteractions.commentedLoading || iframeInteractions.bookmarkedLoading) && (
+                                            {(iframeInteractions.likedLoading || iframeInteractions.retweetedLoading || iframeInteractions.commentedLoading) && (
                                               <p className="text-yellow-400 text-xs mt-1">
                                                 Verifying actions... Please wait...
                                               </p>
@@ -1879,11 +1850,11 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                     <div className="bg-gray-800/70 rounded p-3 border border-gray-700 mb-4">
                       <h4 className="text-white font-medium mb-2 text-sm">How to Complete:</h4>
                       <ol className="list-decimal list-inside text-gray-400 text-xs space-y-1 ml-2">
-                        <li><strong className="text-yellow-200">Do all 4 on Twitter:</strong> Like 👍 · Retweet 🔁 · Comment 💬 · Bookmark 🔖 (all required!)</li>
+                        <li><strong className="text-yellow-200">Do all 3 on Twitter:</strong> Like 👍 · Retweet 🔁 · Comment 💬 (all required!)</li>
                         <li>Click &quot;Show Interaction Buttons&quot; and use each button — they open Twitter in a new tab</li>
-                        <li>Come back after you Like, Retweet, Comment, AND Bookmark</li>
+                        <li>Come back after you Like, Retweet, AND Comment</li>
                         <li>Enter your Twitter username and click &quot;Submit for Admin Approval&quot;</li>
-                        <li>An admin checks you did all 4, then awards your points (5–20 depending on your comment)</li>
+                        <li>An admin checks you did all 3, then awards your points (5–20 depending on your comment)</li>
                       </ol>
                     </div>
                     
@@ -1929,7 +1900,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                             </svg>
                             All Tweet Interactions Verified!
                           </div>
-                          <p className="text-gray-300 mt-1 text-sm">You did all 4! Submit below — admin will award 5–20 pts based on your comment.</p>
+                          <p className="text-gray-300 mt-1 text-sm">You did all 3! Submit below — admin will award 5–20 pts based on your comment.</p>
                         </div>
                       )}
                       
@@ -1945,7 +1916,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                          submitting ? 'Submitting for Approval...' : 
                          iframeVerified && twitterUsername.trim().replace(/^@/, '') ? 'Submit for Admin Approval' : 
                          !twitterUsername.trim().replace(/^@/, '') ? 'Enter Your Twitter Username' :
-                         'Complete All Four Actions to Continue'}
+                         'Complete All Three Actions to Continue'}
                       </button>
                     </form>
                   </div>

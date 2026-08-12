@@ -1675,13 +1675,13 @@ async function startBot() {
             .setTitle('💰 Raids')
             .setDescription(
               '**How it works:**\n' +
-              '1. Do ALL 4 on every raid: Like + Retweet + Comment + Bookmark (all required!)\n' +
+              '1. Do ALL 3 on every raid: Like + Retweet + Comment (all required!)\n' +
               '2. `/raids` – List available raids\n' +
               '3. `/complete raid_id username post_url` – Submit completion\n' +
-              '4. Admin checks you did all 4, then awards points\n\n' +
+              '4. Admin checks you did all 3, then awards points\n\n' +
               '**Raid Rules:**\n' +
-              '• You MUST Like + Retweet + Comment + Bookmark every time — commenting alone does NOT count!\n' +
-              '• Points (after you do all 4): 5 = text only, unverified · 10 = text + image, unverified · 15 = text only + verified ✓ · 20 = text + image + verified ✓\n' +
+              '• You MUST Like + Retweet + Comment every time — commenting alone does NOT count!\n' +
+              '• Points (after you do all 3): 5 = text only, unverified · 10 = text + image, unverified · 15 = text only + verified ✓ · 20 = text + image + verified ✓\n' +
               '• Tip: Add an AI image or meme to your comment for more points (10 or 20 instead of 5 or 15)\n' +
               '• Twitter account must be at least 6 months old\n' +
               '• Account must have at least 50 followers\n' +
@@ -2264,8 +2264,8 @@ async function sendRaidNotificationToChannel(raidData) {
   const isFacebook = raidData.platform === 'Facebook';
   const platformName = isFacebook ? 'Facebook Raid' : 'Twitter Raid';
   const postUrl = isFacebook ? raidData.postUrl : raidData.tweetUrl;
-  const taskDescription = isFacebook ? 'Like, Share & Comment' : 'Like, Retweet, Comment & Bookmark';
-  const actionDescription = isFacebook ? 'Like, Share & Comment on the Facebook raid above' : 'Like, Retweet, Comment & Bookmark on the tweet above';
+  const taskDescription = isFacebook ? 'Like, Share & Comment' : 'Like, Retweet & Comment';
+  const actionDescription = isFacebook ? 'Like, Share & Comment on the Facebook raid above' : 'Like, Retweet & Comment on the tweet above';
 
   let tweetMetaBlock = '';
   if (!isFacebook && postUrl) {

@@ -686,8 +686,8 @@ const telegramService = {
       const isFacebook = raidData.platform === 'Facebook';
       const platformName = isFacebook ? 'Facebook Raid' : 'Twitter Raid';
       const postUrl = isFacebook ? raidData.postUrl : raidData.tweetUrl;
-      const taskDescription = isFacebook ? 'Like, Share & Comment' : 'Like, Retweet, Comment & Bookmark';
-      const actionDescription = isFacebook ? 'Like, Share & Comment on the Facebook raid above' : 'Like, Retweet, Comment & Bookmark on the tweet above';
+      const taskDescription = isFacebook ? 'Like, Share & Comment' : 'Like, Retweet & Comment';
+      const actionDescription = isFacebook ? 'Like, Share & Comment on the Facebook raid above' : 'Like, Retweet & Comment on the tweet above';
 
       let tweetMetaBlock = '';
       if (!isFacebook && postUrl) {
@@ -1875,16 +1875,16 @@ Earn points by completing Twitter & Facebook raids!
   Cancel a raid you created (use the same URL you used to create it)
 
 💡 How it works:
-1. Do ALL 4 on every raid: Like + Retweet + Comment + Bookmark (all required!)
+1. Do ALL 3 on every raid: Like + Retweet + Comment (all required!)
 2. Use /raids to see available raids
 3. Click "Complete in Private Chat" button
-4. Admin checks you did all 4, then awards points
+4. Admin checks you did all 3, then awards points
 
 ⏰ Raids expire after 48 hours
 
 📋 Raid Rules:
-• You MUST Like + Retweet + Comment + Bookmark every time — commenting alone does NOT count!
-• Points (after you do all 4): 5 = text only, unverified · 10 = text + image, unverified · 15 = text only + verified ✓ · 20 = text + image + verified ✓
+• You MUST Like + Retweet + Comment every time — commenting alone does NOT count!
+• Points (after you do all 3): 5 = text only, unverified · 10 = text + image, unverified · 15 = text only + verified ✓ · 20 = text + image + verified ✓
 • Tip: Add an AI image or meme to your comment for more points (10 or 20 instead of 5 or 15)
 • Twitter account must be at least 6 months old
 • Account must have at least 50 followers
@@ -2230,7 +2230,7 @@ https://aquads.xyz`;
         const postUrl = platform === 'Facebook' ? raid.postUrl : raid.tweetUrl;
         const interactionNote = platform === 'Facebook' 
           ? '⚠️ IMPORTANT: You must manually LIKE, SHARE, COMMENT on the Facebook post before completing!'
-          : '⚠️ IMPORTANT: You must manually LIKE, RETWEET, COMMENT & BOOKMARK the tweet before completing!';
+          : '⚠️ IMPORTANT: You must manually LIKE, RETWEET & COMMENT the tweet before completing!';
         
         let message = `🚀 ${raid.title}\n\n`;
         message += `📱 Platform: ${platform}\n`;
@@ -4242,7 +4242,7 @@ Tap to update:`;
         // Ask for username in private chat
         const interactionInstructions = platform === 'Facebook' 
           ? '✅ LIKED the Facebook post\n✅ SHARED the Facebook post\n✅ COMMENTED on the Facebook post'
-          : '✅ LIKED the tweet\n✅ RETWEETED the tweet\n✅ COMMENTED on the tweet\n✅ BOOKMARKED the tweet';
+          : '✅ LIKED the tweet\n✅ RETWEETED the tweet\n✅ COMMENTED on the tweet';
         const usernamePrompt = platform === 'Facebook' ? 'Facebook username' : 'Twitter username';
         const usernameCommand = platform === 'Facebook' ? '/facebook' : '/twitter';
         
@@ -4275,7 +4275,7 @@ Tap to update:`;
       let usernameField = 'twitterUsername';
       let postUrlField = 'tweetUrl';
       let storedUsername = user.twitterUsername;
-      let interactionInstructions = '✅ LIKED the tweet\n✅ RETWEETED the tweet\n✅ COMMENTED on the tweet\n✅ BOOKMARKED the tweet';
+      let interactionInstructions = '✅ LIKED the tweet\n✅ RETWEETED the tweet\n✅ COMMENTED on the tweet';
       let usernamePrompt = 'Twitter username';
       let usernameCommand = '/twitter';
       
