@@ -4193,6 +4193,21 @@ Active affiliates with good referral activity may become eligible for:
 - Bonus point multipliers
 - Special features
 
+### Affiliate Trust Score
+
+Your Affiliate tab shows a **trust score** based on the quality of your referral network—not just how many people you refer. A lower trust reading usually means warning signals in your network (for example inactive, unverified, or unusual referral patterns).
+
+**There is a path to recovery.** Scores can improve over time when your network looks healthier and your own activity on Aquads is real and consistent.
+
+**How to improve your score:**
+- Grow steadily instead of large bursts of signups in a short period
+- Focus on referrals who **verify** and actually use the platform
+- Help your referrals get started so they stay active (raids, listings, swaps, marketplace, etc.)
+- Stay active on Aquads yourself—legitimate participation strengthens trust
+- Avoid self-referrals, fake accounts, shared devices/IPs used only for farming, and other spammy patterns
+
+> Scores reflect ongoing network quality. Cleaning up growth habits and building an active, verified network is the recovery path. Time alone may not fully clear risk if inactive or fake referrals remain.
+
 ### Promotion Tips
 
 **Where to Share:**
