@@ -359,6 +359,9 @@ cron.schedule('0 */2 * * *', async () => {
   }
 });
 
+// Job / news / course / dex / affiliate scans run on cron only — no boot-time sync.
+// Boot sync was crushing Railway on every deploy (outbound timeouts + API lag).
+
 // Cron job for syncing Remotive jobs every 8 hours
 // Runs at 12:00 AM, 8:00 AM, and 4:00 PM daily
 cron.schedule('0 */8 * * *', async () => {
@@ -370,16 +373,6 @@ cron.schedule('0 */8 * * *', async () => {
   }
 });
 
-// Sync Remotive jobs on server start (after a delay to ensure DB is ready)
-setTimeout(async () => {
-  try {
-    console.log('[Remotive Sync] Running initial sync on server start...');
-    await syncRemotiveJobs();
-  } catch (error) {
-    console.error('[Remotive Sync] Error in initial sync:', error);
-  }
-}, 20000); // Wait 20 seconds after server start
-
 // Suspicious affiliate referrers scan — persisted snapshot for admin Affiliates tab (medium+ risk only). Twice daily UTC.
 cron.schedule('17 */12 * * *', async () => {
   try {
@@ -389,15 +382,6 @@ cron.schedule('17 */12 * * *', async () => {
     console.error('[SuspiciousAffiliatesScan] Cron error:', e);
   }
 });
-
-setTimeout(async () => {
-  try {
-    console.log('[SuspiciousAffiliatesScan] Initial run after server start...');
-    await runSuspiciousAffiliatesScan({ minAffiliates: 10 });
-  } catch (e) {
-    console.error('[SuspiciousAffiliatesScan] Initial run error:', e);
-  }
-}, 60000); // 1 minute — after DB is ready and other boot work has started
 
 // One-time cleanup: retired RSS sources — purge any stale rows from prior syncs.
 setTimeout(async () => {
@@ -422,15 +406,6 @@ cron.schedule('0 5,13,21 * * *', async () => {
   }
 });
 
-setTimeout(async () => {
-  try {
-    console.log('[Himalayas Sync] Running initial sync on server start...');
-    await syncHimalayasJobs();
-  } catch (error) {
-    console.error('[Himalayas Sync] Error in initial sync:', error);
-  }
-}, 45000); // After Remotive initial sync
-
 // Cron: Web3.career/Bondex API — offset minute to spread load vs Remotive/Himalayas
 cron.schedule('45 */8 * * *', async () => {
   try {
@@ -440,15 +415,6 @@ cron.schedule('45 */8 * * *', async () => {
     console.error('[Web3.career Sync] Error in scheduled sync:', error);
   }
 });
-
-setTimeout(async () => {
-  try {
-    console.log('[Web3.career Sync] Running initial sync on server start...');
-    await syncWeb3CareerJobs();
-  } catch (error) {
-    console.error('[Web3.career Sync] Error in initial sync:', error);
-  }
-}, 62000); // After Himalayas initial sync hook
 
 // Market news (CoinDesk + Sky News world RSS): 3× daily UTC; keep last 72h in DB
 cron.schedule('0 0,8,16 * * *', async () => {
@@ -460,27 +426,7 @@ cron.schedule('0 0,8,16 * * *', async () => {
   }
 });
 
-setTimeout(async () => {
-  try {
-    console.log('[MarketNews Sync] Running initial sync on server start...');
-    await syncMarketNews();
-  } catch (error) {
-    console.error('[MarketNews Sync] Error in initial sync:', error);
-  }
-}, 50000);
-
 // Free online courses (Cursa.app via rss.app): upsert into MongoDB on each run.
-// Third-party feeds typically expose only the latest N items; sync often enough
-// that new entries are captured before they roll off the feed.
-setTimeout(async () => {
-  try {
-    console.log('[FreeCourses Sync] Running initial sync on server start...');
-    await syncFreeCourses();
-  } catch (error) {
-    console.error('[FreeCourses Sync] Error in initial sync:', error);
-  }
-}, 55000);
-
 // Once daily UTC — rss feeds usually only include recent items; pick up new entries periodically.
 cron.schedule('30 6 * * *', async () => {
   try {
@@ -495,16 +441,6 @@ cron.schedule('30 6 * * *', async () => {
 
 // Dex feed — auto-list qualifying DEX projects (once daily when enabled)
 if (DEX_FEED_ENABLED) {
-  setTimeout(async () => {
-    try {
-      await ensureDexFeedUser();
-      console.log('[DexFeed] Running initial sync on server start...');
-      await syncDexFeedListings();
-    } catch (error) {
-      console.error('[DexFeed] Error in initial sync:', error);
-    }
-  }, 60000);
-
   cron.schedule('0 6 * * *', async () => {
     try {
       await syncDexFeedListings();
