@@ -379,7 +379,6 @@ async function getRaiderAnalytics(userId) {
 
   const recentActivity = allCompletions
     .sort((a, b) => new Date(b.completedAt || 0) - new Date(a.completedAt || 0))
-    .slice(0, 10)
     .map((row) => ({
       raidTitle: row.raidTitle,
       platform: row.platform,

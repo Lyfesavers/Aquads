@@ -5247,29 +5247,41 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onAdPatche
 
                     {raiderAnalytics.recentActivity.length > 0 && (
                       <div className="bg-gray-700 rounded-lg p-4">
-                        <h4 className="text-lg font-semibold text-white mb-3">Recent Raids</h4>
-                        <div className="space-y-2">
+                        <div className="flex items-center justify-between gap-2 mb-3">
+                          <h4 className="text-lg font-semibold text-white">Recent Raids</h4>
+                          <p className="text-xs text-gray-400">
+                            {raiderAnalytics.recentActivity.length} raid{raiderAnalytics.recentActivity.length !== 1 ? 's' : ''}
+                          </p>
+                        </div>
+                        <div className="space-y-2 max-h-96 overflow-y-auto pr-2">
                           {raiderAnalytics.recentActivity.map((item, index) => (
-                            <div key={index} className="bg-gray-800 rounded-lg p-3 flex items-center justify-between gap-3">
-                              <div className="min-w-0">
-                                <p className="text-white text-sm font-medium truncate">{item.raidTitle}</p>
-                                <p className="text-xs text-gray-500">
-                                  {item.platform === 'twitter' ? '🐦 Twitter' : '📘 Facebook'}
-                                  {item.completedAt ? ` · ${new Date(item.completedAt).toLocaleDateString()}` : ''}
+                            <div key={index} className="bg-gray-800 rounded-lg p-3">
+                              <div className="flex items-center justify-between gap-3">
+                                <div className="min-w-0">
+                                  <p className="text-white text-sm font-medium truncate">{item.raidTitle}</p>
+                                  <p className="text-xs text-gray-500">
+                                    {item.platform === 'twitter' ? '🐦 Twitter' : '📘 Facebook'}
+                                    {item.completedAt ? ` · ${new Date(item.completedAt).toLocaleDateString()}` : ''}
+                                  </p>
+                                </div>
+                                <div className="text-right flex-shrink-0">
+                                  <span className={`text-xs px-2 py-1 rounded ${
+                                    item.status === 'approved' ? 'bg-green-500/20 text-green-400' :
+                                    item.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
+                                    'bg-red-500/20 text-red-400'
+                                  }`}>
+                                    {item.status}
+                                  </span>
+                                  {item.pointsEarned != null && (
+                                    <p className="text-xs text-cyan-400 mt-1">+{item.pointsEarned} pts</p>
+                                  )}
+                                </div>
+                              </div>
+                              {item.status === 'rejected' && item.rejectionReason && (
+                                <p className="text-xs text-red-300/90 mt-2 break-words">
+                                  Reason: {item.rejectionReason}
                                 </p>
-                              </div>
-                              <div className="text-right flex-shrink-0">
-                                <span className={`text-xs px-2 py-1 rounded ${
-                                  item.status === 'approved' ? 'bg-green-500/20 text-green-400' :
-                                  item.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
-                                  'bg-red-500/20 text-red-400'
-                                }`}>
-                                  {item.status}
-                                </span>
-                                {item.pointsEarned != null && (
-                                  <p className="text-xs text-cyan-400 mt-1">+{item.pointsEarned} pts</p>
-                                )}
-                              </div>
+                              )}
                             </div>
                           ))}
                         </div>
