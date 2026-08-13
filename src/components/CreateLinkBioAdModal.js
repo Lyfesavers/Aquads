@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { FaRocket, FaClock, FaBullhorn, FaExternalLinkAlt, FaImage, FaTimes, FaCheckCircle } from 'react-icons/fa';
 import { API_URL } from '../services/api';
+import { isBannerVideoUrl, isBannerImageUrl, isBannerGifUrl } from '../utils/bannerAdMedia';
 
 const DURATION_OPTIONS = [
   { key: 'day', label: '24 Hours', durationMs: 24 * 60 * 60 * 1000 },
@@ -28,27 +29,36 @@ const CreateLinkBioAdModal = ({ onClose, targetUsername, aquaPaySlug, pricing })
     return pricing[key] || 0;
   };
 
-  const validateImageUrl = async (url) => {
+  const validateMediaUrl = async (url) => {
+    if (isBannerGifUrl(url)) return 'gif';
+    if (isBannerVideoUrl(url)) return 'video';
+    if (isBannerImageUrl(url)) return 'image';
     try {
-      const response = await fetch(url);
-      const contentType = response.headers.get('content-type');
-      return contentType && contentType.startsWith('image/');
+      const response = await fetch(url, { method: 'HEAD' });
+      const contentType = (response.headers.get('content-type') || '').toLowerCase();
+      if (contentType === 'image/gif' || contentType.includes('gif')) return 'gif';
+      if (contentType.startsWith('image/')) return 'image';
+      if (contentType.startsWith('video/')) return 'video';
     } catch {
-      return false;
+      // Third-party hosts often block HEAD/CORS — extension check above already ran.
     }
+    return null;
   };
 
   const handleGifChange = async (e) => {
     const url = e.target.value;
     setAdData(prev => ({ ...prev, gif: url }));
     if (url) {
-      const isValid = await validateImageUrl(url);
-      if (isValid) {
+      const kind = await validateMediaUrl(url);
+      if (kind === 'gif') {
+        setPreviewUrl('');
+        setError('GIF files are not supported. Use a PNG, JPG, or WebP image, or an MP4/WebM video.');
+      } else if (kind) {
         setPreviewUrl(url);
         setError('');
       } else {
         setPreviewUrl('');
-        setError('Please enter a valid image URL');
+        setError('Please enter a direct PNG, JPG, WebP, MP4, or WebM URL');
       }
     } else {
       setPreviewUrl('');
@@ -60,6 +70,14 @@ const CreateLinkBioAdModal = ({ onClose, targetUsername, aquaPaySlug, pricing })
     e.preventDefault();
     if (!adData.title || !adData.gif || !adData.url) {
       setError('Please fill in all fields');
+      return;
+    }
+    if (isBannerGifUrl(adData.gif)) {
+      setError('GIF files are not supported. Use a PNG, JPG, or WebP image, or an MP4/WebM video.');
+      return;
+    }
+    if (!isBannerVideoUrl(adData.gif) && !isBannerImageUrl(adData.gif)) {
+      setError('Please enter a direct PNG, JPG, WebP, MP4, or WebM URL');
       return;
     }
 
@@ -307,30 +325,45 @@ const CreateLinkBioAdModal = ({ onClose, targetUsername, aquaPaySlug, pricing })
             />
           </div>
 
-          {/* Banner Image URL */}
+          {/* Banner media URL — hosted by the advertiser, not stored on Aquads */}
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-2 flex items-center gap-2">
-              <FaImage className="text-cyan-400" /> Banner Image URL
+              <FaImage className="text-cyan-400" /> Banner media URL
               <span className="text-cyan-400/60 text-xs">(1280×200px)</span>
             </label>
             <input
               type="text"
               value={adData.gif}
               onChange={handleGifChange}
-              placeholder="https://example.com/banner.gif"
+              placeholder="https://example.com/banner.mp4"
               required
               className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition-colors"
             />
-            <p className="mt-1 text-xs text-slate-500">Supports GIF, PNG, or JPG. Recommended 1280×200px.</p>
+            <p className="mt-1 text-xs text-slate-500">
+              Direct file URL only — we do not upload or store the file. Use a PNG, JPG, or WebP image, or an MP4/WebM video.
+            </p>
             {previewUrl && (
               <div className="mt-3 rounded-full overflow-hidden border border-cyan-500/30">
-                <img
-                  src={previewUrl}
-                  alt="Banner preview"
-                  className="w-full h-auto object-cover"
-                  style={{ maxHeight: '80px' }}
-                  onError={() => { setPreviewUrl(''); setError('Failed to load image'); }}
-                />
+                {isBannerVideoUrl(previewUrl) ? (
+                  <video
+                    src={previewUrl}
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    className="w-full h-auto object-cover"
+                    style={{ maxHeight: '80px' }}
+                    onError={() => { setPreviewUrl(''); setError('Failed to load video'); }}
+                  />
+                ) : (
+                  <img
+                    src={previewUrl}
+                    alt="Banner preview"
+                    className="w-full h-auto object-cover"
+                    style={{ maxHeight: '80px' }}
+                    onError={() => { setPreviewUrl(''); setError('Failed to load image'); }}
+                  />
+                )}
               </div>
             )}
           </div>

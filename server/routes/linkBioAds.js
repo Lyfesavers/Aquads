@@ -5,6 +5,7 @@ const LinkInBioBannerAd = require('../models/LinkInBioBannerAd');
 const User = require('../models/User');
 const auth = require('../middleware/auth');
 const { sanitizeForRegex } = require('../utils/security');
+const { isBannerGifUrl, isAllowedBannerMediaUrl } = require('../utils/bannerAdMedia');
 
 const DURATION_OPTIONS = {
   day: 24 * 60 * 60 * 1000,
@@ -125,6 +126,13 @@ router.post('/', createAdLimiter, async (req, res) => {
       if (fieldValue.length > 2048) {
         return res.status(400).json({ error: `${fieldName} URL too long` });
       }
+    }
+
+    if (isBannerGifUrl(gif)) {
+      return res.status(400).json({ error: 'GIF files are not supported. Use a PNG, JPG, WebP image or an MP4/WebM video URL.' });
+    }
+    if (!isAllowedBannerMediaUrl(gif)) {
+      return res.status(400).json({ error: 'Banner must be a direct PNG, JPG, WebP, MP4, or WebM file URL' });
     }
 
     if (!DURATION_OPTIONS[durationKey]) {

@@ -1662,11 +1662,18 @@ router.get('/multiple-device-registrations', auth, async (req, res) => {
 router.get('/links/:username', async (req, res) => {
   try {
     const username = req.params.username.trim();
-    const user = await findUserForPublicLinkInBio(username);
+    const [user, bannerAdsResult] = await Promise.all([
+      findUserForPublicLinkInBio(username),
+      getActiveAdsFromCache(username).catch((adErr) => {
+        console.error('Link-in-bio banner ads fetch error:', adErr);
+        return [];
+      })
+    ]);
 
     if (!user) {
       return res.status(404).json({ error: 'Page not found' });
     }
+    const bannerAds = Array.isArray(bannerAdsResult) ? bannerAdsResult : [];
 
     const displayName = (user.cv && user.cv.fullName) ? user.cv.fullName.trim() : user.username;
     const taglineRaw = user.linkInBioTagline && typeof user.linkInBioTagline === 'string' ? user.linkInBioTagline.trim().slice(0, 200) : '';
@@ -1707,13 +1714,6 @@ router.get('/links/:username', async (req, res) => {
     );
 
     const adsEnabled = Boolean(user.linkInBioAdsEnabled) && hasAquaPay;
-
-    let bannerAds = [];
-    try {
-      bannerAds = await getActiveAdsFromCache(username);
-    } catch (adErr) {
-      console.error('Link-in-bio banner ads fetch error:', adErr);
-    }
 
     res.json({
       username: user.username,

@@ -5,6 +5,7 @@ import { API_URL } from '../services/api';
 import { resolveLinkInBioButtonLook } from '../utils/linkInBioButtonLook';
 import { BioLinkIcon } from '../utils/linkInBioIcons';
 import { sanitizeLinkInBioBackgroundVideoUrl, shouldLoadBackgroundVideo } from '../utils/linkInBioBackgroundVideo';
+import { isBannerVideoUrl, preloadBannerMedia } from '../utils/bannerAdMedia';
 import CreateLinkBioAdModal from './CreateLinkBioAdModal';
 import { FaBullhorn } from 'react-icons/fa';
 
@@ -124,15 +125,6 @@ function sameBannerAds(prev, next) {
   if (!Array.isArray(next)) return false;
   if (prev.length !== next.length) return false;
   return prev.every((ad, i) => ad._id === next[i]._id && ad.gif === next[i].gif && ad.url === next[i].url);
-}
-
-function preloadBannerAdImages(ads) {
-  if (!Array.isArray(ads) || typeof Image === 'undefined') return;
-  ads.forEach((ad) => {
-    if (!ad?.gif) return;
-    const img = new Image();
-    img.src = ad.gif;
-  });
 }
 
 /** Accent color drives icon glyphs; chip only when filled tile matches accent and needs contrast. */
@@ -288,6 +280,7 @@ const LinkInBio = () => {
   const [error, setError] = useState(null);
   const [activeAds, setActiveAds] = useState([]);
   const [currentAdIndex, setCurrentAdIndex] = useState(0);
+  const [currentCreativeReady, setCurrentCreativeReady] = useState(false);
   const [showAdModal, setShowAdModal] = useState(false);
   const backgroundVideoRef = useRef(null);
   const [backgroundVideoMounted, setBackgroundVideoMounted] = useState(false);
@@ -315,14 +308,12 @@ const LinkInBio = () => {
         const json = await res.json();
         setData(json);
         if (Array.isArray(json.bannerAds)) {
-          preloadBannerAdImages(json.bannerAds);
           setActiveAds((prev) => (sameBannerAds(prev, json.bannerAds) ? prev : json.bannerAds));
         } else {
           fetch(`${API_URL}/link-bio-ads/active/${encodeURIComponent(username)}`)
             .then((adsRes) => (adsRes.ok ? adsRes.json() : []))
             .then((ads) => {
               const next = Array.isArray(ads) ? ads : [];
-              preloadBannerAdImages(next);
               setActiveAds((prev) => (sameBannerAds(prev, next) ? prev : next));
             })
             .catch(() => {});
@@ -339,7 +330,7 @@ const LinkInBio = () => {
   }, [username]);
 
   // Refresh active ads in the background. First paint comes from the page payload
-  // so GIFs can start downloading immediately instead of waiting on a second round-trip.
+  // so the creative can start downloading immediately instead of waiting on a second round-trip.
   useEffect(() => {
     if (!username) return;
     const fetchAds = async () => {
@@ -356,11 +347,6 @@ const LinkInBio = () => {
     return () => clearInterval(interval);
   }, [username]);
 
-  // Decode banner GIFs as soon as we know their URLs — including while the page skeleton is up.
-  useEffect(() => {
-    preloadBannerAdImages(activeAds);
-  }, [activeAds]);
-
   // Rotate ads every 15 seconds
   useEffect(() => {
     if (activeAds.length <= 1) return;
@@ -370,16 +356,19 @@ const LinkInBio = () => {
     return () => clearInterval(timer);
   }, [activeAds.length]);
 
-  // Keep the upcoming GIF warm so rotation does not wait on a fresh download.
-  useEffect(() => {
-    if (activeAds.length <= 1) return;
-    const nextAd = activeAds[(currentAdIndex + 1) % activeAds.length];
-    if (!nextAd?.gif) return;
-    const img = new Image();
-    img.src = nextAd.gif;
-  }, [currentAdIndex, activeAds]);
-
   const currentAd = activeAds.length > 0 ? activeAds[currentAdIndex % activeAds.length] : null;
+
+  useEffect(() => {
+    setCurrentCreativeReady(false);
+  }, [currentAd?._id]);
+
+  // Warm the next creative only after the visible one is playing, so large files
+  // do not compete with each other for bandwidth.
+  useEffect(() => {
+    if (!currentCreativeReady || activeAds.length <= 1) return;
+    const nextAd = activeAds[(currentAdIndex + 1) % activeAds.length];
+    preloadBannerMedia(nextAd?.gif);
+  }, [currentCreativeReady, currentAdIndex, activeAds]);
 
   const backgroundVideoUrl = allowBackgroundVideo && !backgroundVideoFailed
     ? sanitizeLinkInBioBackgroundVideoUrl(data?.linkInBioBackgroundVideoUrl)
@@ -889,16 +878,32 @@ const LinkInBio = () => {
                 background: 'rgba(0,0,0,0.2)'
               }}
             >
-              <img
-                src={currentAd.gif}
-                alt={currentAd.title || 'Ad'}
-                className="w-full h-auto object-cover"
-                style={{ maxHeight: '80px', minHeight: '40px' }}
-                width={640}
-                height={80}
-                loading="eager"
-                decoding="async"
-              />
+              {isBannerVideoUrl(currentAd.gif) ? (
+                <video
+                  key={currentAd._id}
+                  src={currentAd.gif}
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  preload="auto"
+                  className="w-full h-auto object-cover"
+                  style={{ maxHeight: '80px', minHeight: '40px' }}
+                  onLoadedData={() => setCurrentCreativeReady(true)}
+                />
+              ) : (
+                <img
+                  src={currentAd.gif}
+                  alt={currentAd.title || 'Ad'}
+                  className="w-full h-auto object-cover"
+                  style={{ maxHeight: '80px', minHeight: '40px' }}
+                  width={640}
+                  height={80}
+                  loading="eager"
+                  decoding="async"
+                  onLoad={() => setCurrentCreativeReady(true)}
+                />
+              )}
             </a>
             {activeAds.length > 1 && (
               <div className="flex justify-center gap-1.5 mt-2">

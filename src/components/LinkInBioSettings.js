@@ -850,7 +850,7 @@ const LinkInBioSettings = ({ currentUser, onProfileUpdate, showNotification }) =
                 </div>
                 <div className="p-3 rounded-lg bg-gray-700/20 border border-gray-600/30">
                   <p className="text-gray-400 text-xs">
-                    <strong className="text-gray-300">Banner specs:</strong> 1280×200px, GIF/PNG/JPG. Displayed as a pill-shaped banner at the bottom of your page. Ads auto-activate on crypto payment.
+                    <strong className="text-gray-300">Banner specs:</strong> 1280×200px, PNG/JPG/WebP image or MP4/WebM video. Displayed as a pill-shaped banner at the bottom of your page. Ads auto-activate on crypto payment.
                   </p>
                 </div>
               </div>
