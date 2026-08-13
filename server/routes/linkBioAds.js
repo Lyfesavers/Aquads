@@ -16,6 +16,13 @@ const DURATION_OPTIONS = {
 const activeAdsCache = new Map();
 const ADS_CACHE_TTL = 30 * 1000; // 30 seconds
 
+const toPublicAd = (ad) => ({
+  _id: ad._id,
+  gif: ad.gif,
+  url: ad.url,
+  title: ad.title
+});
+
 const getActiveAdsFromCache = async (username) => {
   const key = username.toLowerCase();
   const cached = activeAdsCache.get(key);
@@ -26,9 +33,10 @@ const getActiveAdsFromCache = async (username) => {
     targetUsername: { $regex: new RegExp(`^${sanitizeForRegex(username)}$`, 'i') },
     status: 'active',
     expiresAt: { $gt: new Date() }
-  }).sort({ createdAt: -1 }).lean();
-  activeAdsCache.set(key, { data: ads, time: Date.now() });
-  return ads;
+  }).select('_id gif url title').sort({ createdAt: -1 }).lean();
+  const publicAds = ads.map(toPublicAd);
+  activeAdsCache.set(key, { data: publicAds, time: Date.now() });
+  return publicAds;
 };
 
 const invalidateAdsCache = (username) => {
@@ -273,3 +281,4 @@ router.post('/:id/cancel', auth, async (req, res) => {
 
 module.exports = router;
 module.exports.invalidateAdsCache = invalidateAdsCache;
+module.exports.getActiveAdsFromCache = getActiveAdsFromCache;

@@ -19,6 +19,7 @@ const { OAuth2Client } = require('google-auth-library');
 const { sanitizeForRegex, validateSearchQuery } = require('../utils/security');
 const auditLogger = require('../utils/auditLogger');
 const LinkInBioBannerAd = require('../models/LinkInBioBannerAd');
+const { getActiveAdsFromCache } = require('./linkBioAds');
 const { validateLogin, validateRegistration } = require('../middleware/inputValidation');
 const { resolveLinkInBioButtonLook, lookToLegacyStyle, LEGACY_STYLE_MAP } = require('../utils/linkInBioButtonLook');
 const { sanitizeBioLinkIconKey, sanitizeBioLinkIconImageUrl } = require('../utils/linkInBioIcons');
@@ -1707,6 +1708,13 @@ router.get('/links/:username', async (req, res) => {
 
     const adsEnabled = Boolean(user.linkInBioAdsEnabled) && hasAquaPay;
 
+    let bannerAds = [];
+    try {
+      bannerAds = await getActiveAdsFromCache(username);
+    } catch (adErr) {
+      console.error('Link-in-bio banner ads fetch error:', adErr);
+    }
+
     res.json({
       username: user.username,
       displayName,
@@ -1725,7 +1733,8 @@ router.get('/links/:username', async (req, res) => {
       linkInBioTextColor: textColor,
       linkInBioAdsEnabled: adsEnabled,
       linkInBioAdPricing: adsEnabled ? (user.linkInBioAdPricing || { day: 10, threeDays: 20, sevenDays: 40 }) : null,
-      aquaPaySlug: adsEnabled ? (user.aquaPay.paymentSlug || user.username.toLowerCase()) : null
+      aquaPaySlug: adsEnabled ? (user.aquaPay.paymentSlug || user.username.toLowerCase()) : null,
+      bannerAds
     });
   } catch (err) {
     console.error('Link-in-bio fetch error:', err);

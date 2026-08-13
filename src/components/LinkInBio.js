@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { API_URL } from '../services/api';
 import { resolveLinkInBioButtonLook } from '../utils/linkInBioButtonLook';
 import { BioLinkIcon } from '../utils/linkInBioIcons';
@@ -119,6 +119,21 @@ function buildPageBackgroundFromHex(hex) {
 }
 
 const DEFAULT_PAGE_BACKGROUND = 'linear-gradient(165deg, #0c0f1a 0%, #0a0e18 40%, #060910 100%)';
+
+function sameBannerAds(prev, next) {
+  if (!Array.isArray(next)) return false;
+  if (prev.length !== next.length) return false;
+  return prev.every((ad, i) => ad._id === next[i]._id && ad.gif === next[i].gif && ad.url === next[i].url);
+}
+
+function preloadBannerAdImages(ads) {
+  if (!Array.isArray(ads) || typeof Image === 'undefined') return;
+  ads.forEach((ad) => {
+    if (!ad?.gif) return;
+    const img = new Image();
+    img.src = ad.gif;
+  });
+}
 
 /** Accent color drives icon glyphs; chip only when filled tile matches accent and needs contrast. */
 function getLinkIconPresentation(accentHex, buttonHex, fill, translucent) {
@@ -299,6 +314,19 @@ const LinkInBio = () => {
         }
         const json = await res.json();
         setData(json);
+        if (Array.isArray(json.bannerAds)) {
+          preloadBannerAdImages(json.bannerAds);
+          setActiveAds((prev) => (sameBannerAds(prev, json.bannerAds) ? prev : json.bannerAds));
+        } else {
+          fetch(`${API_URL}/link-bio-ads/active/${encodeURIComponent(username)}`)
+            .then((adsRes) => (adsRes.ok ? adsRes.json() : []))
+            .then((ads) => {
+              const next = Array.isArray(ads) ? ads : [];
+              preloadBannerAdImages(next);
+              setActiveAds((prev) => (sameBannerAds(prev, next) ? prev : next));
+            })
+            .catch(() => {});
+        }
         // Track page view (fire-and-forget)
         fetch(`${API_URL}/users/links/${encodeURIComponent(username)}/view`, { method: 'POST' }).catch(() => {});
       } catch (err) {
@@ -310,24 +338,28 @@ const LinkInBio = () => {
     fetchData();
   }, [username]);
 
-  // Fetch active ads for this page
+  // Refresh active ads in the background. First paint comes from the page payload
+  // so GIFs can start downloading immediately instead of waiting on a second round-trip.
   useEffect(() => {
     if (!username) return;
     const fetchAds = async () => {
       try {
-        const res = await fetch(`${API_URL}/link-bio-ads/active/${encodeURIComponent(username)}`, {
-          cache: 'no-store'
-        });
+        const res = await fetch(`${API_URL}/link-bio-ads/active/${encodeURIComponent(username)}`);
         if (res.ok) {
           const ads = await res.json();
-          setActiveAds(Array.isArray(ads) ? ads : []);
+          const next = Array.isArray(ads) ? ads : [];
+          setActiveAds((prev) => (sameBannerAds(prev, next) ? prev : next));
         }
       } catch (_) {}
     };
-    fetchAds();
-    const interval = setInterval(fetchAds, 30000);
+    const interval = setInterval(fetchAds, 60000);
     return () => clearInterval(interval);
   }, [username]);
+
+  // Decode banner GIFs as soon as we know their URLs — including while the page skeleton is up.
+  useEffect(() => {
+    preloadBannerAdImages(activeAds);
+  }, [activeAds]);
 
   // Rotate ads every 15 seconds
   useEffect(() => {
@@ -337,6 +369,15 @@ const LinkInBio = () => {
     }, 15000);
     return () => clearInterval(timer);
   }, [activeAds.length]);
+
+  // Keep the upcoming GIF warm so rotation does not wait on a fresh download.
+  useEffect(() => {
+    if (activeAds.length <= 1) return;
+    const nextAd = activeAds[(currentAdIndex + 1) % activeAds.length];
+    if (!nextAd?.gif) return;
+    const img = new Image();
+    img.src = nextAd.gif;
+  }, [currentAdIndex, activeAds]);
 
   const currentAd = activeAds.length > 0 ? activeAds[currentAdIndex % activeAds.length] : null;
 
@@ -832,38 +873,33 @@ const LinkInBio = () => {
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.4 }}
+            transition={{ delay: 0.15, duration: 0.3 }}
             className="w-full mt-8"
           >
-            <AnimatePresence mode="wait">
-              <motion.a
-                key={currentAd._id}
-                href={currentAd.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => {
-                  fetch(`${API_URL}/link-bio-ads/${currentAd._id}/click`, { method: 'POST' }).catch(() => {});
-                }}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.5 }}
-                className="block w-full rounded-full overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300"
-                style={{
-                  border: `1px solid ${theme.badgeBorder}`,
-                  background: 'rgba(0,0,0,0.2)',
-                  backdropFilter: 'blur(8px)'
-                }}
-              >
-                <img
-                  src={currentAd.gif}
-                  alt={currentAd.title || 'Ad'}
-                  className="w-full h-auto object-cover"
-                  style={{ maxHeight: '80px', minHeight: '40px' }}
-                  loading="lazy"
-                />
-              </motion.a>
-            </AnimatePresence>
+            <a
+              href={currentAd.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => {
+                fetch(`${API_URL}/link-bio-ads/${currentAd._id}/click`, { method: 'POST' }).catch(() => {});
+              }}
+              className="block w-full rounded-full overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300"
+              style={{
+                border: `1px solid ${theme.badgeBorder}`,
+                background: 'rgba(0,0,0,0.2)'
+              }}
+            >
+              <img
+                src={currentAd.gif}
+                alt={currentAd.title || 'Ad'}
+                className="w-full h-auto object-cover"
+                style={{ maxHeight: '80px', minHeight: '40px' }}
+                width={640}
+                height={80}
+                loading="eager"
+                decoding="async"
+              />
+            </a>
             {activeAds.length > 1 && (
               <div className="flex justify-center gap-1.5 mt-2">
                 {activeAds.map((ad, i) => (
