@@ -3933,7 +3933,7 @@ const LandingPage = () => {
   ];
 
   const stats = [
-    { value: 30, suffix: '', label: 'Day launch window' },
+    { value: 30, suffix: '±', label: 'Day launch window' },
     { value: 150, suffix: '+', label: 'Wallet integrations' },
     { value: 30, suffix: '+', label: 'Hire categories' },
     { value: 50, suffix: '+', label: 'Payment chains' }
