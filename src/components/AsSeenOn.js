@@ -75,20 +75,6 @@ const PRESS_LOGOS = [
     heightClass: 'h-5 md:h-7',
   },
   {
-    id: 'mexc',
-    name: 'MEXC',
-    logo: '/mexc-global-logo-png_seeklogo-463569.png',
-    url: 'https://www.mexc.com/news/1109803',
-    alt: 'Aquads featured on MEXC',
-    // Source file is near-square with significant padding around the wordmark,
-    // so the rendered height must be pushed well above the others for the visible
-    // logo to match their optical size.
-    heightClass: 'h-20 md:h-28',
-    // PNG ships with a white background and black wordmark — invert so the white
-    // drops out and the wordmark reads as white-on-transparent over the dark page.
-    invertOnDark: true,
-  },
-  {
     id: 'intellectia',
     name: 'Intellectia.AI',
     logo: '/intellectia.png',
