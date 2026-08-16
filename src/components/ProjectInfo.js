@@ -517,7 +517,7 @@ const ProjectInfo = ({ currentUser, ads = [], onAdPatched }) => {
               <div className="flex-1 min-w-0">
                 <h3 className="text-xl font-semibold text-white mb-2">Verify ownership</h3>
                 <p className="text-gray-300 leading-relaxed">
-                  Choose <strong className="text-white">one</strong> method below. Include your <strong className="text-white">project name</strong> and <strong className="text-white">contract / pair address</strong> so we can match your submission.
+                  Choose <strong className="text-white">one</strong> method below so we can match your submission. Telegram verification must come from the <strong className="text-white">owner of your project&apos;s Telegram group</strong> — anyone else joining our chat does not count.
                 </p>
               </div>
             </div>
@@ -530,7 +530,7 @@ const ProjectInfo = ({ currentUser, ads = [], onAdPatched }) => {
                   <h4 className="text-white font-semibold">Via X</h4>
                 </div>
                 <p className="text-gray-300 text-sm leading-relaxed flex-1 mb-4">
-                  From your project&apos;s official X account, DM <strong className="text-white">{AQUADS_X_HANDLE}</strong>, then tag us in a public post.
+                  From your project&apos;s official X account, DM <strong className="text-white">{AQUADS_X_HANDLE}</strong>, then tag us in a public post. Include your <strong className="text-white">project name</strong> and <strong className="text-white">contract / pair address</strong>.
                 </p>
                 <div className="flex flex-col gap-2">
                   <a
@@ -558,8 +558,12 @@ const ProjectInfo = ({ currentUser, ads = [], onAdPatched }) => {
                   </div>
                   <h4 className="text-white font-semibold">Via Telegram</h4>
                 </div>
-                <p className="text-gray-300 text-sm leading-relaxed flex-1 mb-4">
-                  Join our community. Have a team rep post that you&apos;ve submitted a listing for verification — include project name and CA/PA.
+                <p className="text-gray-300 text-sm leading-relaxed mb-3">
+                  The <strong className="text-white">owner</strong> of your project&apos;s Telegram group must join Aquads Telegram and post that your listing was just submitted. A random member joining our group is <strong className="text-white">not</strong> verification.
+                </p>
+                <p className="text-gray-400 text-xs leading-relaxed mb-4 rounded-lg border border-gray-600/80 bg-gray-800/60 px-3 py-2">
+                  Example message:{' '}
+                  <span className="text-sky-300 font-medium">Application for [TOKEN] just submitted — check it</span>
                 </p>
                 <a
                   href={AQUADS_TELEGRAM_URL}
@@ -591,7 +595,7 @@ const ProjectInfo = ({ currentUser, ads = [], onAdPatched }) => {
                   <strong className="text-white">Premium:</strong> ~1 hour fast-track after payment. Your bubble appears on the map once approved.
                 </p>
                 <p className="text-gray-400 text-sm border-t border-gray-700 pt-4">
-                  Requirements: pair live 12+ hours, valid logo URL, and ownership proof via X or Telegram.
+                  Requirements: pair live 12+ hours, valid logo URL, and ownership proof via X or Telegram (Telegram: group owner joins Aquads TG and posts the application message).
                 </p>
               </div>
             </div>
