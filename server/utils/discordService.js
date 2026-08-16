@@ -2,6 +2,9 @@
  * Discord bot service - mirrors Telegram bot features.
  * Kept separate from telegramService; uses same DB models (User, TwitterRaid, FacebookRaid, Ad, etc.).
  * Requires: DISCORD_BOT_TOKEN, DISCORD_APPLICATION_ID. Optional: DISCORD_BOT_DISABLED, DISCORD_GUILD_ID.
+ * Official Aquads Discord trending (view-only channel, mirrors Telegram t.me/aquadstrending):
+ *   DISCORD_TRENDING_CHANNEL_ID — votes (kept as history) + pinned trending bubbles list.
+ *   Falls back to DISCORD_VOTE_CHANNEL_ID / DISCORD_BUBBLES_CHANNEL_ID if trending ID is unset.
  */
 
 const {
@@ -87,6 +90,16 @@ async function buildDiscordBrandingFiles(project) {
 
 function getEngagementChannelId() {
   return process.env.DISCORD_ENGAGEMENT_CHANNEL_ID || process.env.DISCORD_RAID_CHANNEL_ID || null;
+}
+
+/** Official Aquads Discord trending channel (votes + pinned bubbles). Not the general/raid chat. */
+function getDiscordTrendingChannelId() {
+  return (
+    process.env.DISCORD_TRENDING_CHANNEL_ID ||
+    process.env.DISCORD_VOTE_CHANNEL_ID ||
+    process.env.DISCORD_BUBBLES_CHANNEL_ID ||
+    null
+  );
 }
 
 const {
@@ -2076,10 +2089,23 @@ async function deleteDiscordMessage(channelId, messageId) {
   }
 }
 
+async function unpinDiscordMessage(channelId, messageId) {
+  if (!channelId || !messageId || !discordClient?.isReady()) return false;
+  try {
+    const channel = await discordClient.channels.fetch(channelId).catch(() => null);
+    if (!channel) return false;
+    const msg = await channel.messages.fetch(messageId).catch(() => null);
+    if (!msg?.pinned) return false;
+    await msg.unpin();
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
 const DISCORD_RAID_MSG_KEY = 'discordRaidMessageIds';
 const DISCORD_RAID_BY_RAID_KEY = 'discordRaidMessagesByRaidId';
 const DISCORD_COMPLETION_MSG_KEY = 'discordRaidCompletionMessageIds';
-const DISCORD_VOTE_MSG_KEY = 'discordVoteMessageIds';
 const DISCORD_BUBBLES_MSG_KEY = 'discordBubblesMessageIds';
 const DISCORD_SPACES_MSG_KEY = 'discordSpacesBroadcastMessages';
 
@@ -2410,7 +2436,7 @@ async function sendRaidCompletionToChannel(completionData) {
 }
 
 async function sendVoteNotificationToChannel(project) {
-  const globalChannelId = process.env.DISCORD_VOTE_CHANNEL_ID;
+  const trendingChannelId = getDiscordTrendingChannelId();
 
   const allBubbles = await Ad.find({ isBumped: true, status: { $in: ['active', 'approved'] } })
     .sort({ bullishVotes: -1 })
@@ -2443,20 +2469,10 @@ async function sendVoteNotificationToChannel(project) {
 
   let ok = false;
 
-  if (globalChannelId) {
-    const voteMsgIds = await getStoredDiscordMessages(DISCORD_VOTE_MSG_KEY);
-    const oldId = voteMsgIds[globalChannelId];
-    if (oldId) {
-      await deleteDiscordMessage(globalChannelId, oldId);
-      delete voteMsgIds[globalChannelId];
-      await setStoredDiscordMessages(DISCORD_VOTE_MSG_KEY, voteMsgIds);
-    }
-    const message = await sendToChannel(globalChannelId, payload);
-    if (message) {
-      voteMsgIds[globalChannelId] = message.id;
-      await setStoredDiscordMessages(DISCORD_VOTE_MSG_KEY, voteMsgIds);
-      ok = true;
-    }
+  // Official trending channel: keep a full history of vote notifications (same as Telegram).
+  if (trendingChannelId) {
+    const message = await sendToChannel(trendingChannelId, payload);
+    if (message) ok = true;
   }
 
   let linkedChannelId = project.discordChannelId;
@@ -2464,7 +2480,7 @@ async function sendVoteNotificationToChannel(project) {
     const doc = await Ad.findById(project._id).select('discordChannelId').lean();
     linkedChannelId = doc?.discordChannelId;
   }
-  if (linkedChannelId && String(linkedChannelId) !== String(globalChannelId || '')) {
+  if (linkedChannelId && String(linkedChannelId) !== String(trendingChannelId || '')) {
     const sent = await sendToChannel(linkedChannelId, payload);
     if (sent) ok = true;
   }
@@ -2473,12 +2489,13 @@ async function sendVoteNotificationToChannel(project) {
 }
 
 async function sendTopBubblesToChannel() {
-  const channelId = process.env.DISCORD_BUBBLES_CHANNEL_ID;
+  const channelId = getDiscordTrendingChannelId();
   if (!channelId) return false;
 
   const bubblesMsgIds = await getStoredDiscordMessages(DISCORD_BUBBLES_MSG_KEY);
   const oldId = bubblesMsgIds[channelId];
   if (oldId) {
+    await unpinDiscordMessage(channelId, oldId);
     await deleteDiscordMessage(channelId, oldId);
     delete bubblesMsgIds[channelId];
     await setStoredDiscordMessages(DISCORD_BUBBLES_MSG_KEY, bubblesMsgIds);
@@ -2494,19 +2511,29 @@ async function sendTopBubblesToChannel() {
     const r = i + 1;
     const emoji = r === 1 ? '🥇' : r === 2 ? '🥈' : r === 3 ? '🥉' : '🔸';
     const addr = b.pairAddress || b.contractAddress;
-    const url = addr ? `https://aquads.xyz/aquaswap?token=${encodeURIComponent(addr.trim())}&blockchain=${encodeURIComponent(b.blockchain || 'ethereum')}` : null;
-    return `${emoji} #${r}: **${b.title}** · 👍 ${b.bullishVotes} 👎 ${b.bearishVotes}${url ? ` · [Chart](${url})` : ''}`;
+    const chain = b.blockchain || 'ethereum';
+    const url = addr
+      ? `https://aquads.xyz/aquaswap?token=${encodeURIComponent(addr.trim())}&blockchain=${encodeURIComponent(chain)}`
+      : null;
+    return `${emoji} **#${r} ${b.title}**\n📊 👍 ${b.bullishVotes || 0} | 👎 ${b.bearishVotes || 0}\n⛓️ ${chain}${url ? `\n🔗 [Buy Now](${url})` : ''}`;
   });
   const embed = new EmbedBuilder()
-    .setTitle('🔥 Top 10 Bubbles')
-    .setDescription(lines.join('\n\n') + '\n\n🌐 https://aquads.xyz')
+    .setTitle('🔥 AQUADS TRENDING BUBBLES 🔥')
+    .setDescription(lines.join('\n\n') + '\n\n💎 Vote on your favorites at [aquads.xyz](https://aquads.xyz)')
     .setColor(0x00bfff)
     .setURL('https://aquads.xyz');
   const files = fs.existsSync(VIDEO_TOP_BUBBLES) ? [VIDEO_TOP_BUBBLES] : [];
-  const message = await sendToChannel(channelId, { embeds: [embed], files });
+  const message = await sendToChannel(channelId, {
+    embeds: [embed],
+    components: getDiscordPromoComponents(),
+    files
+  });
   if (message) {
     bubblesMsgIds[channelId] = message.id;
     await setStoredDiscordMessages(DISCORD_BUBBLES_MSG_KEY, bubblesMsgIds);
+    await message.pin().catch((e) => {
+      console.log(`[Discord trending] Could not pin bubbles summary in ${channelId}:`, e.message);
+    });
     return true;
   }
   return false;

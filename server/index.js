@@ -259,7 +259,7 @@ setInterval(async () => {
   }
 }, 30000); // Run every 30 seconds to check for expired orders
 
-// Periodic task for sending daily bubble summary to trending channel
+// Periodic task for sending daily bubble summary to trending channel (Telegram + Discord)
 setInterval(async () => {
   try {
     await telegramService.sendDailyBubbleSummary();

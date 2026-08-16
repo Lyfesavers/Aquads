@@ -4774,11 +4774,6 @@ Tap to update:`;
       }
       
       if (result) {
-        // Mirror to Discord if channel configured
-        try {
-          const discordService = require('./discordService');
-          await discordService.sendTopBubblesToChannel().catch(() => {});
-        } catch (_) {}
         console.log(`Top bubbles notification sent to chat ${chatId}`);
         return true;
       } else {
@@ -6093,144 +6088,147 @@ Tap to update:`;
     }
   },
 
-  // Send daily bubble summary to trending channel
+  // Send daily bubble summary to trending channel (Telegram + Discord)
   sendDailyBubbleSummary: async () => {
     try {
       const botToken = process.env.TELEGRAM_BOT_TOKEN;
       if (!botToken) {
         console.error('TELEGRAM_BOT_TOKEN not configured');
-        return;
-      }
+      } else {
+        // Delete old messages first
+        for (const messageId of telegramService.lastTrendingMessages) {
+          // Unpin first to avoid Telegram "pinned deleted message" service clutter
+          await telegramService.unpinMessage(telegramService.TRENDING_CHANNEL_ID, messageId);
+          await telegramService.deleteMessage(telegramService.TRENDING_CHANNEL_ID, messageId);
+        }
+        telegramService.lastTrendingMessages = [];
 
-      // Delete old messages first
-      for (const messageId of telegramService.lastTrendingMessages) {
-        // Unpin first to avoid Telegram "pinned deleted message" service clutter
-        await telegramService.unpinMessage(telegramService.TRENDING_CHANNEL_ID, messageId);
-        await telegramService.deleteMessage(telegramService.TRENDING_CHANNEL_ID, messageId);
-      }
-      telegramService.lastTrendingMessages = [];
+        // Get top 10 bumped bubbles by votes
+        const topBubbles = await Ad.find({ 
+          isBumped: true,
+          status: { $in: ['active', 'approved'] }
+        })
+        .sort({ bullishVotes: -1 })
+        .limit(10);
 
-      // Get top 10 bumped bubbles by votes
-      const topBubbles = await Ad.find({ 
-        isBumped: true,
-        status: { $in: ['active', 'approved'] }
-      })
-      .sort({ bullishVotes: -1 })
-      .limit(10);
+        if (topBubbles.length > 0) {
+          // Create summary message
+          let message = `🔥 AQUADS TRENDING BUBBLES 🔥\n`;
+          message += `━━━━━━━━━━━━━━━━━━━━\n\n`;
 
-      if (topBubbles.length === 0) {
-        return;
-      }
-
-      // Create summary message
-      let message = `🔥 AQUADS TRENDING BUBBLES 🔥\n`;
-      message += `━━━━━━━━━━━━━━━━━━━━\n\n`;
-
-      topBubbles.forEach((bubble, index) => {
-        const rankEmoji = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '🔸';
-        const buyLink = `https://aquads.xyz/aquaswap?token=${bubble.pairAddress}&blockchain=${bubble.blockchain || 'ethereum'}`;
-        
-        message += `${rankEmoji} #${index + 1} ${bubble.title}\n`;
-        message += `📊 👍 ${bubble.bullishVotes || 0} | 👎 ${bubble.bearishVotes || 0}\n`;
-        message += `🔗 <a href="${buyLink}">Buy Now</a>\n`;
-        message += `⛓️ ${bubble.blockchain || 'Ethereum'}\n\n`;
-      });
-
-      message += `━━━━━━━━━━━━━━━━━━━━\n`;
-      message += `💎 Vote on your favorites at aquads.xyz`;
-
-      // Send with video
-      const videoPath = path.join(__dirname, '../../public/newtrendinglist.mp4');
-      const videoExists = fs.existsSync(videoPath);
-
-      const keyboard = getDefaultTelegramPromoKeyboard();
-
-      let messageId = null;
-      if (videoExists || telegramService.cachedVideoFileIds.trend) {
-        try {
-          let response;
-          
-          if (telegramService.cachedVideoFileIds.trend) {
-            // Use cached file_id (much faster)
-            response = await axios.post(
-              `https://api.telegram.org/bot${botToken}/sendVideo`,
-              {
-                chat_id: telegramService.TRENDING_CHANNEL_ID,
-                video: telegramService.cachedVideoFileIds.trend,
-                caption: message,
-                parse_mode: 'HTML',
-                reply_markup: keyboard
-              },
-              { timeout: 15000 }
-            );
-          } else {
-            // First time - upload the video file
-            const formData = new FormData();
-            formData.append('chat_id', telegramService.TRENDING_CHANNEL_ID);
-            formData.append('video', fs.createReadStream(videoPath));
-            formData.append('caption', message);
-            formData.append('parse_mode', 'HTML');
-            formData.append('reply_markup', JSON.stringify(keyboard));
-
-            response = await axios.post(
-              `https://api.telegram.org/bot${botToken}/sendVideo`,
-              formData,
-              {
-                headers: {
-                  ...formData.getHeaders(),
-                },
-                timeout: 60000, // Increased timeout for first upload
-              }
-            );
+          topBubbles.forEach((bubble, index) => {
+            const rankEmoji = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '🔸';
+            const buyLink = `https://aquads.xyz/aquaswap?token=${bubble.pairAddress}&blockchain=${bubble.blockchain || 'ethereum'}`;
             
-            // Cache the file_id for future use
-            if (response.data.ok && response.data.result.video) {
-              telegramService.cachedVideoFileIds.trend = response.data.result.video.file_id;
-              console.log('📹 Cached trend video file_id for faster future sends');
+            message += `${rankEmoji} #${index + 1} ${bubble.title}\n`;
+            message += `📊 👍 ${bubble.bullishVotes || 0} | 👎 ${bubble.bearishVotes || 0}\n`;
+            message += `🔗 <a href="${buyLink}">Buy Now</a>\n`;
+            message += `⛓️ ${bubble.blockchain || 'Ethereum'}\n\n`;
+          });
+
+          message += `━━━━━━━━━━━━━━━━━━━━\n`;
+          message += `💎 Vote on your favorites at aquads.xyz`;
+
+          // Send with video
+          const videoPath = path.join(__dirname, '../../public/newtrendinglist.mp4');
+          const videoExists = fs.existsSync(videoPath);
+
+          const keyboard = getDefaultTelegramPromoKeyboard();
+
+          let messageId = null;
+          if (videoExists || telegramService.cachedVideoFileIds.trend) {
+            try {
+              let response;
+              
+              if (telegramService.cachedVideoFileIds.trend) {
+                // Use cached file_id (much faster)
+                response = await axios.post(
+                  `https://api.telegram.org/bot${botToken}/sendVideo`,
+                  {
+                    chat_id: telegramService.TRENDING_CHANNEL_ID,
+                    video: telegramService.cachedVideoFileIds.trend,
+                    caption: message,
+                    parse_mode: 'HTML',
+                    reply_markup: keyboard
+                  },
+                  { timeout: 15000 }
+                );
+              } else {
+                // First time - upload the video file
+                const formData = new FormData();
+                formData.append('chat_id', telegramService.TRENDING_CHANNEL_ID);
+                formData.append('video', fs.createReadStream(videoPath));
+                formData.append('caption', message);
+                formData.append('parse_mode', 'HTML');
+                formData.append('reply_markup', JSON.stringify(keyboard));
+
+                response = await axios.post(
+                  `https://api.telegram.org/bot${botToken}/sendVideo`,
+                  formData,
+                  {
+                    headers: {
+                      ...formData.getHeaders(),
+                    },
+                    timeout: 60000, // Increased timeout for first upload
+                  }
+                );
+                
+                // Cache the file_id for future use
+                if (response.data.ok && response.data.result.video) {
+                  telegramService.cachedVideoFileIds.trend = response.data.result.video.file_id;
+                  console.log('📹 Cached trend video file_id for faster future sends');
+                }
+              }
+
+              if (response.data.ok) {
+                messageId = response.data.result.message_id;
+              }
+            } catch (error) {
+              console.error('Error sending bubble summary video:', error.message);
             }
           }
 
-          if (response.data.ok) {
-            messageId = response.data.result.message_id;
-          }
-        } catch (error) {
-          console.error('Error sending bubble summary video:', error.message);
-        }
-      }
-
-      if (!messageId) {
-        // Fallback to text
-        try {
-          const response = await axios.post(
-            `https://api.telegram.org/bot${botToken}/sendMessage`,
-            {
-              chat_id: telegramService.TRENDING_CHANNEL_ID,
-              text: message,
-              parse_mode: 'HTML'
+          if (!messageId) {
+            // Fallback to text
+            try {
+              const response = await axios.post(
+                `https://api.telegram.org/bot${botToken}/sendMessage`,
+                {
+                  chat_id: telegramService.TRENDING_CHANNEL_ID,
+                  text: message,
+                  parse_mode: 'HTML'
+                }
+              );
+              if (response.data.ok) {
+                messageId = response.data.result.message_id;
+              }
+            } catch (error) {
+              console.error('Error sending bubble summary text:', error.message);
             }
-          );
-          if (response.data.ok) {
-            messageId = response.data.result.message_id;
           }
-        } catch (error) {
-          console.error('Error sending bubble summary text:', error.message);
+
+          // Store message ID for next cleanup
+          if (messageId) {
+            telegramService.lastTrendingMessages.push(messageId);
+            
+            // Pin the message to the channel
+            try {
+              await telegramService.pinMessage(telegramService.TRENDING_CHANNEL_ID, messageId);
+            } catch (pinError) {
+              console.error('Error pinning bubble summary:', pinError.message);
+            }
+          }
         }
       }
-
-      // Store message ID for next cleanup
-      if (messageId) {
-        telegramService.lastTrendingMessages.push(messageId);
-        
-        // Pin the message to the channel
-        try {
-          await telegramService.pinMessage(telegramService.TRENDING_CHANNEL_ID, messageId);
-        } catch (pinError) {
-          console.error('Error pinning bubble summary:', pinError.message);
-        }
-      }
-
     } catch (error) {
       console.error('Error sending daily bubble summary:', error);
+    }
+
+    try {
+      const discordService = require('./discordService');
+      await discordService.sendTopBubblesToChannel();
+    } catch (discordErr) {
+      console.error('Error sending Discord trending bubble summary:', discordErr.message);
     }
   },
 
