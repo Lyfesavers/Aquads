@@ -12,6 +12,8 @@ import ProfileModal from './ProfileModal';
 import { API_URL } from '../services/api';
 import { getBlogAuthorId } from '../utils/blogEditor';
 import { createBlogSlug as createSlug, getRelatedBlogs, blogPath, getFeatureLinkForBlog } from '../utils/blogRelatedPosts';
+import { isPressReleasePost } from '../utils/blogPressRelease';
+import { BlogPressReleaseBadge, BlogPressReleaseDisclaimer } from './BlogPressReleaseNotice';
 import { StandardDesktopNavLinks, StandardMobileNavLinks } from './StandardNavLinks';
 import {
   MobileHamburgerButton,
@@ -221,7 +223,8 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
         body: JSON.stringify({
           title: blogData.title,
           content: blogData.content,
-          bannerImage: blogData.bannerImage
+          bannerImage: blogData.bannerImage,
+          isPressRelease: Boolean(blogData.isPressRelease)
         })
       });
 
@@ -376,6 +379,9 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
         <meta property="article:published_time" content={blog.createdAt} />
         <meta property="article:modified_time" content={blog.updatedAt || blog.createdAt} />
         <meta property="article:author" content={blog.authorUsername} />
+        {isPressReleasePost(blog) && (
+          <meta property="article:section" content="Sponsored Press Release" />
+        )}
         
         {/* Twitter Card meta tags */}
         <meta name="twitter:card" content="summary_large_image" />
@@ -610,6 +616,12 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
                 </div>
               )}
 
+              {isPressReleasePost(blog) && (
+                <div className="mb-3">
+                  <BlogPressReleaseBadge />
+                </div>
+              )}
+
               {/* Title */}
               <h1 className="text-4xl md:text-5xl font-bold mb-6 leading-tight">
                 {blog.title}
@@ -675,6 +687,9 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
 
             {/* Blog Content */}
             <article className="mb-12">
+              {isPressReleasePost(blog) && (
+                <BlogPressReleaseDisclaimer className="mb-6" />
+              )}
               <div className="blog-content-wrapper">
                 <BlogContentRenderer content={blog.content} />
               </div>
@@ -725,6 +740,11 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
                         />
                       </div>
                       <div className="p-4">
+                        {isPressReleasePost(relatedBlog) && (
+                          <div className="mb-2">
+                            <BlogPressReleaseBadge />
+                          </div>
+                        )}
                         <h3 className="font-semibold mb-2 line-clamp-2 group-hover:text-blue-400 transition-colors">
                           {relatedBlog.title}
                         </h3>

@@ -234,7 +234,7 @@ router.post('/', auth, requireEmailVerification, async (req, res) => {
       return res.status(403).json({ error: 'Only administrators can create blog posts' });
     }
 
-    const { title, content, bannerImage } = req.body;
+    const { title, content, bannerImage, isPressRelease } = req.body;
 
     // Get the full user information including image
     const user = await User.findById(req.user.userId);
@@ -246,6 +246,7 @@ router.post('/', auth, requireEmailVerification, async (req, res) => {
       title,
       content,
       bannerImage,
+      isPressRelease: Boolean(isPressRelease),
       author: req.user.userId,
       authorUsername: req.user.username,
       authorImage: user.image // Use the image from the user model
@@ -282,10 +283,10 @@ router.patch('/:id', auth, requireEmailVerification, async (req, res) => {
     }
 
     // Apply other updates
-    const allowedUpdates = ['title', 'content', 'bannerImage'];
+    const allowedUpdates = ['title', 'content', 'bannerImage', 'isPressRelease'];
     allowedUpdates.forEach(field => {
       if (req.body[field] !== undefined) {
-        blog[field] = req.body[field];
+        blog[field] = field === 'isPressRelease' ? Boolean(req.body[field]) : req.body[field];
       }
     });
 

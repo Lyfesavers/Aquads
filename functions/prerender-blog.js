@@ -122,6 +122,7 @@ function getBlogHtml(blog, description, seoUrl) {
     <meta property="og:site_name" content="Aquads Blog">
     <meta property="og:url" content="${seoUrl}">
     <meta property="og:type" content="article">
+    ${blog.isPressRelease ? '<meta property="article:section" content="Sponsored Press Release">' : ''}
     
     <link rel="canonical" href="${seoUrl}" />
     <title>${blog.title} - Aquads Blog</title>
@@ -136,6 +137,7 @@ function getBlogHtml(blog, description, seoUrl) {
       and let the canonical link tag do its job.
     -->
     <h1>${blog.title}</h1>
+    ${blog.isPressRelease ? `<p><strong>Sponsored Press Release</strong></p><p>This is a paid press release. It was provided by a third party for distribution on Aquads and is not independent editorial content. The views expressed are those of the issuing company and do not necessarily reflect those of Aquads. This is not financial advice.</p>` : ''}
     <div>${blog.content || ''}</div>
   </body>
 </html>`;

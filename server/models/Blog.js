@@ -37,6 +37,10 @@ const blogSchema = new Schema({
     required: true
   },
   authorImage: String,
+  isPressRelease: {
+    type: Boolean,
+    default: false
+  },
   createdAt: {
     type: Date,
     default: Date.now

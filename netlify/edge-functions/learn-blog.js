@@ -35,6 +35,10 @@ import {
   getFeatureLinkForBlog,
   getRelatedBlogs,
 } from '../../src/utils/blogRelatedPostsCore.js';
+import {
+  PRESS_RELEASE_DISCLAIMER,
+  PRESS_RELEASE_LABEL,
+} from '../../src/utils/blogPressRelease.js';
 
 const BLOG_API_BASE = 'https://aquads-production.up.railway.app/api/blogs';
 const CANONICAL_HOST = 'https://www.aquads.xyz';
@@ -118,6 +122,10 @@ function buildMetaBlock(blog, canonicalUrl) {
     },
   };
 
+  if (blog.isPressRelease) {
+    jsonLd.articleSection = PRESS_RELEASE_LABEL;
+  }
+
   const breadcrumbLd = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
@@ -144,6 +152,7 @@ function buildMetaBlock(blog, canonicalUrl) {
     ${publishedAt ? `<meta property="article:published_time" content="${escapeHtml(publishedAt)}">` : ''}
     ${updatedAt ? `<meta property="article:modified_time" content="${escapeHtml(updatedAt)}">` : ''}
     <meta property="article:author" content="${escapeHtml(author)}">
+    ${blog.isPressRelease ? `<meta property="article:section" content="${escapeHtml(PRESS_RELEASE_LABEL)}">` : ''}
 
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:site" content="@_Aquads_">
@@ -209,8 +218,13 @@ function buildBreadcrumbBlock(blog) {
 function buildArticleBlock(blog, relatedBlogs, featureLink) {
   const content = blog.content || '';
   const footerLinks = buildInternalLinksBlock(relatedBlogs, featureLink);
+  const pressReleaseBlock = blog.isPressRelease
+    ? `<p><strong>${escapeHtml(PRESS_RELEASE_LABEL)}</strong></p>
+  <p>${escapeHtml(PRESS_RELEASE_DISCLAIMER)}</p>`
+    : '';
   return `<article id="aquads-seo-content" data-seo-prerender="true">
   ${buildBreadcrumbBlock(blog)}
+  ${pressReleaseBlock}
   <h1>${escapeHtml(blog.title)}</h1>
   <div class="aquads-seo-article-body">${content}</div>
   ${footerLinks}

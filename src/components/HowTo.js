@@ -25,6 +25,8 @@ import CreateAdModal from './CreateAdModal';
 import ProfileModal from './ProfileModal';
 import { API_URL, fetchMarketNews, fetchFreeCourses, fetchTutorialVideos } from '../services/api';
 import { getBlogAuthorId } from '../utils/blogEditor';
+import { isPressReleasePost } from '../utils/blogPressRelease';
+import { BlogPressReleaseBadge } from './BlogPressReleaseNotice';
 import { getDisplayName } from '../utils/nameUtils';
 import { StandardDesktopNavLinks, StandardMobileNavLinks } from './StandardNavLinks';
 import {
@@ -575,7 +577,8 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
         body: JSON.stringify({
           title: blogData.title,
           content: blogData.content,
-          bannerImage: blogData.bannerImage
+          bannerImage: blogData.bannerImage,
+          isPressRelease: Boolean(blogData.isPressRelease)
         })
       });
 
@@ -756,6 +759,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
                 "image": blog.bannerImage || "https://www.aquads.xyz/metalogo.png",
                 "datePublished": blog.createdAt,
                 "dateModified": blog.updatedAt || blog.createdAt,
+                ...(isPressReleasePost(blog) ? { "articleSection": "Sponsored Press Release" } : {}),
                 "author": {
                   "@type": "Person",
                   "name": blog.authorUsername || blog.author?.username || "Aquads"
@@ -1294,6 +1298,11 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
                         </div>
                       )}
                       <div className="p-3 sm:p-4">
+                        {isPressReleasePost(blog) && (
+                          <div className="mb-2">
+                            <BlogPressReleaseBadge />
+                          </div>
+                        )}
                         <h3 className="text-white text-sm sm:text-base font-semibold leading-snug line-clamp-2 group-hover:text-emerald-300 transition-colors">
                           {blog.title}
                         </h3>

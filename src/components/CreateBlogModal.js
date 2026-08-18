@@ -11,6 +11,7 @@ import {
   BLOG_IMAGE_MAX_BYTES,
 } from '../utils/blogEditor';
 import { uploadBlogImage } from '../services/api';
+import { PRESS_RELEASE_DISCLAIMER, PRESS_RELEASE_LABEL } from '../utils/blogPressRelease';
 
 const MenuBar = ({ editor, onUploadInlineImage, inlineImageUploading }) => {
   const inlineImageInputRef = useRef(null);
@@ -321,7 +322,8 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null, isSubmitting =
   const [formData, setFormData] = useState({
     title: initialData?.title || '',
     content: initialData?.content || '',
-    bannerImage: initialData?.bannerImage || ''
+    bannerImage: initialData?.bannerImage || '',
+    isPressRelease: Boolean(initialData?.isPressRelease)
   });
   const [bannerUploading, setBannerUploading] = useState(false);
   const [inlineImageUploading, setInlineImageUploading] = useState(false);
@@ -637,6 +639,40 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null, isSubmitting =
                 alt="Banner preview"
                 className="w-full h-full object-cover"
               />
+            </div>
+          )}
+        </div>
+
+        <div className="rounded-lg border border-gray-600 bg-gray-800/60 p-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <label htmlFor="isPressRelease" className="block text-sm font-medium text-gray-200">
+                Press release
+              </label>
+              <p className="text-xs text-gray-400 mt-1 max-w-2xl">
+                Turn this on for paid Mintfunnel / Coinbound placements. Readers will see a
+                {' '}<span className="text-amber-300">Sponsored Press Release</span> badge and a disclaimer
+                before the article. FTC and publisher-network rules require a clear "Sponsored" or "Ad"
+                label — "press release" alone is not enough.
+              </p>
+            </div>
+            <button
+              id="isPressRelease"
+              type="button"
+              role="switch"
+              aria-checked={formData.isPressRelease}
+              onClick={() => setFormData((prev) => ({ ...prev, isPressRelease: !prev.isPressRelease }))}
+              className={`shrink-0 px-3 py-1.5 text-sm rounded text-white ${
+                formData.isPressRelease ? 'bg-amber-600' : 'bg-gray-600'
+              }`}
+            >
+              {formData.isPressRelease ? 'On' : 'Off'}
+            </button>
+          </div>
+          {formData.isPressRelease && (
+            <div className="mt-3 rounded-lg border border-amber-500/40 bg-amber-950/30 px-3 py-2 text-xs text-amber-100/90">
+              <p className="font-semibold text-amber-200 mb-1">Preview — {PRESS_RELEASE_LABEL}</p>
+              <p>{PRESS_RELEASE_DISCLAIMER}</p>
             </div>
           )}
         </div>

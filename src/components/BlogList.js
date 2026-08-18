@@ -4,6 +4,8 @@ import { FaShare, FaEdit, FaTrash } from 'react-icons/fa';
 import BlogContentRenderer from './BlogContentRenderer';
 import { isMarkdownBlogContent, sanitizeBlogHtml, getBlogAuthorId } from '../utils/blogEditor';
 import { blogPath } from '../utils/blogRelatedPosts';
+import { isPressReleasePost } from '../utils/blogPressRelease';
+import { BlogPressReleaseBadge } from './BlogPressReleaseNotice';
 
 const BlogList = ({ blogs, currentUser, onEditBlog, onDeleteBlog, deletingBlogId = null }) => {
 
@@ -83,12 +85,17 @@ const BlogList = ({ blogs, currentUser, onEditBlog, onDeleteBlog, deletingBlogId
           />
 
           {/* Banner Image */}
-          <div className="aspect-video pointer-events-none">
+          <div className="relative aspect-video pointer-events-none">
             <img
               src={blog.bannerImage}
               alt={blog.title}
               className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300"
             />
+            {isPressReleasePost(blog) && (
+              <div className="absolute top-3 left-3">
+                <BlogPressReleaseBadge />
+              </div>
+            )}
           </div>
 
           {/* Content */}
