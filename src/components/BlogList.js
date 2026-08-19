@@ -85,21 +85,21 @@ const BlogList = ({ blogs, currentUser, onEditBlog, onDeleteBlog, deletingBlogId
           />
 
           {/* Banner Image */}
-          <div className="relative aspect-video pointer-events-none">
+          <div className="aspect-video pointer-events-none">
             <img
               src={blog.bannerImage}
               alt={blog.title}
               className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300"
             />
-            {isPressReleasePost(blog) && (
-              <div className="absolute top-3 left-3">
-                <BlogPressReleaseBadge />
-              </div>
-            )}
           </div>
 
           {/* Content */}
           <div className="p-4 relative">
+            {isPressReleasePost(blog) && (
+              <div className="mb-3 pointer-events-none">
+                <BlogPressReleaseBadge />
+              </div>
+            )}
             <div className="flex items-start justify-between mb-4">
               {/* Author Info */}
               <div className="flex items-center space-x-3 pointer-events-none">
