@@ -240,13 +240,9 @@ const ProjectInfo = ({ currentUser, ads = [], onAdPatched }) => {
     }
   };
 
-  const handleCreateAd = async (adData) => {
-    try {
-      // This will be handled by the CreateAdModal component
-      setShowCreateModal(false);
-    } catch (error) {
-      console.error('Error creating ad:', error);
-    }
+  const handleCreateAd = async () => {
+    // Listing persistence for Starter/AquaPay is handled inside CreateAdModal.
+    // Do not unmount here — CreateAdModal shows the post-submit verification screen.
   };
 
   const handleBumpClick = async () => {

@@ -5,6 +5,7 @@ import DiscountCodeInput from './DiscountCodeInput';
 import BlockchainSelect from './BlockchainSelect';
 import { normalizeBlockchainSlug } from '../constants/blockchains';
 import { createAd as apiCreateAd } from '../services/api';
+import ListingSubmittedPanel, { buildAquaSwapChartUrl } from './ListingSubmittedPanel';
 
 const BLOCKCHAIN_OPTIONS = [
   {
@@ -202,6 +203,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
   // Track if this is an add-on only purchase (no new project listing)
   const [isAddOnOnly, setIsAddOnOnly] = useState(false);
   const [selectedExistingProject, setSelectedExistingProject] = useState(null);
+  const [submittedListing, setSubmittedListing] = useState(null);
 
   // Calculate initial addon total if a package is pre-selected
   const getInitialAddonTotal = () => {
@@ -210,6 +212,18 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
       return addon ? addon.price : 0;
     }
     return 0;
+  };
+
+  const showListingSubmitted = ({ listingTier, paymentPending, createdAd } = {}) => {
+    const tier = listingTier === LISTING_TIER_PREMIUM ? LISTING_TIER_PREMIUM : LISTING_TIER_STARTER;
+    setSubmittedListing({
+      projectName: formData.title,
+      projectId: createdAd?.id || createdAd?._id || null,
+      tokenChartUrl: buildAquaSwapChartUrl(formData.pairAddress, formData.blockchain),
+      pairAddress: formData.pairAddress,
+      listingTier: tier,
+      paymentPending: Boolean(paymentPending)
+    });
   };
 
   const getBaseFee = () => {
@@ -486,7 +500,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
       const starterFreeNoPayment = listingTier === LISTING_TIER_STARTER && formData.totalAmount === 0;
 
       if (starterFreeNoPayment) {
-        await apiCreateAd({
+        const createdAd = await apiCreateAd({
           ...formData,
           listingTier,
           txSignature: 'starter-free',
@@ -497,8 +511,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
           affiliateDiscount,
           discountCode: appliedDiscount ? appliedDiscount.discountCode.code : null
         });
-        onClose();
-        alert('Your Starter listing was submitted for admin approval. Standard review is typically within 24–48 hours. You will be notified when it goes live.');
+        showListingSubmitted({ listingTier, paymentPending: false, createdAd });
         return;
       }
 
@@ -522,13 +535,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
       const aquaPayUrl = `https://aquads.xyz/pay/aquads?amount=${formData.totalAmount}&projectId=${newAd._id || newAd.id}`;
       window.open(aquaPayUrl, '_blank');
       
-      // Close modal and show success message
-      onClose();
-      const reviewNote =
-        listingTier === LISTING_TIER_PREMIUM
-          ? 'Your Premium listing enters our 1-hour fast-track review queue once payment is verified.'
-          : 'Your listing will enter the standard admin review queue (typically 24–48 hours for Starter) once payment is verified.';
-      alert(`Please complete the payment in the opened window. ${reviewNote}`);
+      showListingSubmitted({ listingTier, paymentPending: true, createdAd: newAd });
     } catch (error) {
       console.error('Error submitting:', error);
       setError(error.message || 'Failed to submit. Please try again.');
@@ -597,9 +604,10 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
       }
       
       // Regular project listing with PayPal
-      await onCreateAd({
+      const listingTier = listingTierChoice === LISTING_TIER_STARTER ? LISTING_TIER_STARTER : LISTING_TIER_PREMIUM;
+      const createdAd = await onCreateAd({
         ...formData,
-        listingTier: listingTierChoice === LISTING_TIER_STARTER ? LISTING_TIER_STARTER : LISTING_TIER_PREMIUM,
+        listingTier,
         txSignature: 'paypal',
         paymentMethod: 'paypal',
         paymentChain: 'PayPal',
@@ -610,9 +618,16 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
         discountCode: appliedDiscount ? appliedDiscount.discountCode.code : null
       });
 
-      alert('PayPal payment initiated! Please complete the payment in the opened window. Your listing will be verified by an admin and activated once approved.');
+      if (!createdAd || createdAd.emailVerificationRequired || createdAd.success === false) {
+        return;
+      }
+
+      showListingSubmitted({ listingTier, paymentPending: true, createdAd });
     } catch (error) {
       console.error('Error creating PayPal listing:', error);
+      if (error?.emailVerificationRequired) {
+        return;
+      }
       alert(error.message || 'Failed to create listing');
     }
   };
@@ -734,6 +749,21 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
 
   /** Listing-line portion before discounts (used for breakdown UI). */
   const listingBasePortion = isAddOnOnly ? 0 : (listingTierChoice === LISTING_TIER_STARTER ? 0 : discountedPremiumFee);
+
+  if (submittedListing) {
+    return (
+      <Modal onClose={onClose} fullScreen={true}>
+        <ListingSubmittedPanel
+          projectName={submittedListing.projectName}
+          tokenChartUrl={submittedListing.tokenChartUrl}
+          pairAddress={submittedListing.pairAddress}
+          listingTier={submittedListing.listingTier}
+          paymentPending={submittedListing.paymentPending}
+          onClose={onClose}
+        />
+      </Modal>
+    );
+  }
 
   return (
     <Modal onClose={onClose} fullScreen={true}>

@@ -20,6 +20,8 @@ import { getProjectAgentImageBlobUrl } from '../../services/projectAgentMediaCac
 import ProjectAgentMessageVideo from './ProjectAgentMessageVideo';
 import ProjectAgentMessageBody, { CopyMessageButton } from './ProjectAgentMessageBody';
 import { FaExternalLinkAlt, FaPlus } from 'react-icons/fa';
+import Modal from '../Modal';
+import ListingSubmittedPanel, { buildAquaSwapChartUrl } from '../ListingSubmittedPanel';
 import {
   SKIPPER_AGENT_LOGO_SRC,
   SKIPPER_AGENT_NAME,
@@ -377,6 +379,7 @@ export default function ProjectAgentPanel({
   const [topupOpen, setTopupOpen] = useState(false);
   const [deletingThreadIds, setDeletingThreadIds] = useState(() => new Set());
   const [threadMessagesLoading, setThreadMessagesLoading] = useState(false);
+  const [submittedListing, setSubmittedListing] = useState(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const messagesEndRef = useRef(null);
   const videoPollAbortRef = useRef(null);
@@ -1406,6 +1409,14 @@ export default function ProjectAgentPanel({
         mode: effectiveMode,
         signal: chatAbort.signal,
         onEvent: (evt) => {
+          if (evt.type === 'listing_submitted') {
+            setSubmittedListing({
+              projectName: evt.projectName || '',
+              pairAddress: evt.pairAddress || '',
+              listingTier: evt.listingTier || 'starter',
+              tokenChartUrl: buildAquaSwapChartUrl(evt.pairAddress, evt.blockchain)
+            });
+          }
           if (chatAbort.signal.aborted) return;
           if (evt.type === 'start' && effectiveMode === 'agent') {
             setSearchStatus('Thinking…');
@@ -2117,6 +2128,18 @@ export default function ProjectAgentPanel({
           </div>
         </div>
       </div>
+      {submittedListing && (
+        <Modal onClose={() => setSubmittedListing(null)} fullScreen={true}>
+          <ListingSubmittedPanel
+            projectName={submittedListing.projectName}
+            tokenChartUrl={submittedListing.tokenChartUrl}
+            pairAddress={submittedListing.pairAddress}
+            listingTier={submittedListing.listingTier}
+            paymentPending={false}
+            onClose={() => setSubmittedListing(null)}
+          />
+        </Modal>
+      )}
     </div>
   );
 }

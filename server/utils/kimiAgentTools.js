@@ -475,6 +475,19 @@ async function executeAgentToolCall({ apiKey, baseUrl, toolName, toolCall, toolT
       logoUrl: args.logo_url,
       websiteUrl: args.website_url
     });
+    if (
+      result?.success &&
+      result.code === 'LISTING_SUBMITTED' &&
+      typeof send === 'function'
+    ) {
+      send({
+        type: 'listing_submitted',
+        projectName: result.title || '',
+        pairAddress: result.pairAddress || '',
+        blockchain: result.blockchain || '',
+        listingTier: result.listingTier || 'starter'
+      });
+    }
     return JSON.stringify(result);
   }
 
