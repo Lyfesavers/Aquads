@@ -8,7 +8,7 @@ import CreateAccountModal from './CreateAccountModal';
 import ProfileModal from './ProfileModal';
 import NotificationBell from './NotificationBell';
 import { getDisplayName } from '../utils/nameUtils';
-import { StandardMobileNavLinks } from './StandardNavLinks';
+import { StandardDesktopNavLinks, StandardMobileNavLinks } from './StandardNavLinks';
 import {
   MobileHamburgerButton,
   MobileMenuPanel,
@@ -199,61 +199,7 @@ const PartnerMarketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, o
 
             {/* Desktop menu */}
             <div className="hidden md:flex items-center space-x-3">
-              {/* Main Navigation - Smaller buttons */}
-              <Link
-                to="/home"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
-              >
-                Home
-              </Link>
-              <Link
-                to="/marketplace"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
-              >
-                Marketplace
-              </Link>
-              <Link
-                to="/games"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
-              >
-                Games
-              </Link>
-              <Link
-                to="/bounties"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
-              >
-                Bounties
-              </Link>
-              <Link
-                to="/partner-rewards"
-                className="bg-blue-600/90 hover:bg-blue-500/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-blue-500/30 transition-all duration-300 backdrop-blur-sm text-white"
-              >
-                🤝 Partners
-              </Link>
-              <button
-                onClick={openMintFunnelPlatform}
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
-              >
-                Paid Ads
-              </button>
-              <Link
-                to="/learn"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
-              >
-                Learn
-              </Link>
-              <Link
-                to="/list-token-free"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
-              >
-                List token free
-              </Link>
-              <Link
-                to="/claim-bubble"
-                className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
-              >
-                Claim bubble
-              </Link>
+              <StandardDesktopNavLinks openMintFunnelPlatform={openMintFunnelPlatform} />
 
               {currentUser ? (
                 <>

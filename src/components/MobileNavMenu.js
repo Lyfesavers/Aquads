@@ -74,8 +74,12 @@ export function MobileMenuPanel({
   );
 }
 
-export function MobileNavDivider() {
-  return <div className="h-px bg-white/10 my-2" />;
+export function MobileNavSectionLabel({ children }) {
+  return (
+    <div className="px-4 pt-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-gray-500">
+      {children}
+    </div>
+  );
 }
 
 export function MobileNavLink({ to, onClick, icon, label, className = 'hover:bg-white/5' }) {
@@ -85,7 +89,7 @@ export function MobileNavLink({ to, onClick, icon, label, className = 'hover:bg-
       onClick={onClick}
       className={`flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white transition-all w-full ${className}`}
     >
-      <span className="text-lg">{icon}</span>
+      {icon ? <span className="text-lg">{icon}</span> : null}
       <span className="font-medium">{label}</span>
     </Link>
   );
@@ -98,7 +102,7 @@ export function MobileNavButton({ onClick, icon, label, className = 'hover:bg-wh
       onClick={onClick}
       className={`flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white transition-all w-full text-left ${className}`}
     >
-      <span className="text-lg">{icon}</span>
+      {icon ? <span className="text-lg">{icon}</span> : null}
       <span className="font-medium">{label}</span>
     </button>
   );

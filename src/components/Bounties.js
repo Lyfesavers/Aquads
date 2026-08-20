@@ -486,17 +486,9 @@ const Bounties = ({ currentUser, onLogin, onLogout, onCreateAccount, showNotific
                     {showUserDropdown && (
                       <div className="absolute right-0 mt-2 w-52 bg-gray-800/95 backdrop-blur-sm rounded-lg shadow-xl border border-gray-700/50 z-[60]">
                         <div className="py-2">
-                          <Link to="/dashboard" onClick={() => setShowUserDropdown(false)} className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-blue-600/50 transition-colors">📊 Dashboard</Link>
-                          <Link to="/claim-bubble" onClick={() => setShowUserDropdown(false)} className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-teal-600/50 transition-colors">🫧 Claim your bubble</Link>
+                          <Link to="/dashboard" onClick={() => setShowUserDropdown(false)} className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-blue-600/50 transition-colors">Dashboard</Link>
                           <hr className="my-2 border-gray-700" />
-                          <Link to="/aquafi" onClick={() => setShowUserDropdown(false)} className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-cyan-600/30 transition-colors">💧 AquaFi</Link>
-                          <Link to="/aquaswap" onClick={() => setShowUserDropdown(false)} className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-cyan-600/30 transition-colors">💱 AquaSwap</Link>
-                          <Link to="/partner-rewards" onClick={() => setShowUserDropdown(false)} className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-cyan-600/30 transition-colors">🤝 Partners</Link>
-                          <Link to="/telegram-bot" onClick={() => setShowUserDropdown(false)} className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-cyan-600/30 transition-colors">🤖 Telegram Bot</Link>
-                          <Link to="/aquapay" onClick={() => setShowUserDropdown(false)} className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-cyan-600/30 transition-colors">💸 AquaPay</Link>
-                          <Link to="/hyperspace" onClick={() => setShowUserDropdown(false)} className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-cyan-600/30 transition-colors">🚀 HyperSpace</Link>
-                          <hr className="my-2 border-gray-700" />
-                          <button onClick={() => { onLogout(); setShowUserDropdown(false); }} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-red-600/50 transition-colors">🚪 Logout</button>
+                          <button onClick={() => { onLogout(); setShowUserDropdown(false); }} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-red-600/50 transition-colors">Logout</button>
                         </div>
                       </div>
                     )}

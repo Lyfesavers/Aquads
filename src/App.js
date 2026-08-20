@@ -76,6 +76,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import emailService from './services/emailService';
 import emailjs from '@emailjs/browser';
 import NotificationBell from './components/NotificationBell';
+import { StandardDesktopNavLinks, StandardMobileNavLinks } from './components/StandardNavLinks';
 import { getDisplayName } from './utils/nameUtils';
 import BumpReminderModal from './components/BumpReminderModal';
 import logger from './utils/logger';
@@ -3328,55 +3329,7 @@ function App() {
 
                       {/* Desktop menu */}
                       <div className="hidden md:flex items-center space-x-3">
-                        {/* Main Navigation - Smaller buttons */}
-                        <Link
-                          to="/marketplace"
-                          className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
-                        >
-                          Freelancer
-                        </Link>
-                        <Link
-                          to="/games"
-                          className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
-                        >
-                          Games
-                        </Link>
-                        <Link
-                          to="/bounties"
-                          className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
-                        >
-                          Bounties
-                        </Link>
-                        <button
-                          onClick={openMintFunnelPlatform}
-                          className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
-                        >
-                          Paid Ads
-                        </button>
-                        <Link
-                          to="/learn"
-                          className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
-                        >
-                          Learn
-                        </Link>
-                        <Link
-                          to="/list-token-free"
-                          className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
-                        >
-                          List token free
-                        </Link>
-                        <Link
-                          to="/claim-bubble"
-                          className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
-                        >
-                          Claim bubble
-                        </Link>
-                        <Link
-                          to="/telegram-bot"
-                          className="bg-gray-700/90 hover:bg-gray-600/90 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-gray-500/30 transition-all duration-300 backdrop-blur-sm text-yellow-400"
-                        >
-                          Telegram Bot
-                        </Link>
+                        <StandardDesktopNavLinks openMintFunnelPlatform={openMintFunnelPlatform} />
 
                         {currentUser ? (
                           <>
@@ -3403,14 +3356,7 @@ function App() {
                                       onClick={() => setShowUserDropdown(false)}
                                       className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-blue-600/50 transition-colors"
                                     >
-                                      📊 Dashboard
-                                    </Link>
-                                    <Link
-                                      to="/claim-bubble"
-                                      onClick={() => setShowUserDropdown(false)}
-                                      className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-teal-600/50 transition-colors"
-                                    >
-                                      🫧 Claim your bubble
+                                      Dashboard
                                     </Link>
                                     <button
                                       onClick={() => {
@@ -3419,15 +3365,8 @@ function App() {
                                       }}
                                       className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-purple-600/50 transition-colors"
                                     >
-                                      ➕ List Project
+                                      List Project
                                     </button>
-                                    <Link
-                                      to="/advertise"
-                                      onClick={() => setShowUserDropdown(false)}
-                                      className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-blue-600/50 transition-colors"
-                                    >
-                                      🎨 Advertise
-                                    </Link>
                                     <button
                                       onClick={() => {
                                         setShowProfileModal(true);
@@ -3435,15 +3374,8 @@ function App() {
                                       }}
                                       className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-purple-600/50 transition-colors"
                                     >
-                                      ⚙️ Edit Profile
+                                      Edit Profile
                                     </button>
-                                    <hr className="my-2 border-gray-700" />
-                                    <Link to="/aquafi" onClick={() => setShowUserDropdown(false)} className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-cyan-600/30 transition-colors">💧 AquaFi</Link>
-                                    <Link to="/aquaswap" onClick={() => setShowUserDropdown(false)} className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-cyan-600/30 transition-colors">💱 AquaSwap</Link>
-                                    <Link to="/partner-rewards" onClick={() => setShowUserDropdown(false)} className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-cyan-600/30 transition-colors">🤝 Partners</Link>
-                                    <Link to="/telegram-bot" onClick={() => setShowUserDropdown(false)} className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-cyan-600/30 transition-colors">🤖 Telegram Bot</Link>
-                                    <Link to="/aquapay" onClick={() => setShowUserDropdown(false)} className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-cyan-600/30 transition-colors">💸 AquaPay</Link>
-                                    <Link to="/hyperspace" onClick={() => setShowUserDropdown(false)} className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-cyan-600/30 transition-colors">🚀 HyperSpace</Link>
                                     <hr className="my-2 border-gray-700" />
                                     <button
                                       onClick={() => {
@@ -3452,7 +3384,7 @@ function App() {
                                       }}
                                       className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-red-600/50 transition-colors"
                                     >
-                                      🚪 Logout
+                                      Logout
                                     </button>
                                   </div>
                                 </div>
@@ -3494,86 +3426,10 @@ function App() {
                           >
                             <div className="bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl max-h-[85vh] overflow-y-auto overflow-x-hidden overscroll-contain">
                               <div className="p-2">
-                                <Link
-                                  to="/marketplace"
-                                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-purple-500/10 transition-all"
-                                  onClick={() => setIsMobileMenuOpen(false)}
-                                >
-                                  <span className="text-lg">👥</span>
-                                  <span className="font-medium">Freelancer Hub</span>
-                                </Link>
-                                <Link
-                                  to="/games"
-                                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all"
-                                  onClick={() => setIsMobileMenuOpen(false)}
-                                >
-                                  <span className="text-lg">🎮</span>
-                                  <span className="font-medium">GameHub</span>
-                                </Link>
-                                <Link
-                                  to="/bounties"
-                                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all"
-                                  onClick={() => setIsMobileMenuOpen(false)}
-                                >
-                                  <span className="text-lg">🏆</span>
-                                  <span className="font-medium">Bounties</span>
-                                </Link>
-                                <button
-                                  onClick={() => { openMintFunnelPlatform(); setIsMobileMenuOpen(false); }}
-                                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all w-full text-left"
-                                >
-                                  <span className="text-lg">📢</span>
-                                  <span className="font-medium">Paid Ads</span>
-                                </button>
-                                <Link
-                                  to="/learn"
-                                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all"
-                                  onClick={() => setIsMobileMenuOpen(false)}
-                                >
-                                  <span className="text-lg">📚</span>
-                                  <span className="font-medium">Learn</span>
-                                </Link>
-                                <Link
-                                  to="/list-token-free"
-                                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all"
-                                  onClick={() => setIsMobileMenuOpen(false)}
-                                >
-                                  <span className="text-lg">✨</span>
-                                  <span className="font-medium">List token free</span>
-                                </Link>
-                                <Link
-                                  to="/claim-bubble"
-                                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-teal-500/10 transition-all"
-                                  onClick={() => setIsMobileMenuOpen(false)}
-                                >
-                                  <span className="text-lg">🫧</span>
-                                  <span className="font-medium">Claim your bubble</span>
-                                </Link>
-                                <div className="h-px bg-white/10 my-2" />
-                                <Link to="/aquafi" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all">
-                                  <span className="text-lg">💧</span>
-                                  <span className="font-medium">AquaFi</span>
-                                </Link>
-                                <Link to="/aquaswap" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all">
-                                  <span className="text-lg">💱</span>
-                                  <span className="font-medium">AquaSwap</span>
-                                </Link>
-                                <Link to="/partner-rewards" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all">
-                                  <span className="text-lg">🎁</span>
-                                  <span className="font-medium">Partners</span>
-                                </Link>
-                                <Link to="/telegram-bot" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all">
-                                  <span className="text-lg">🤖</span>
-                                  <span className="font-medium">Telegram Bot</span>
-                                </Link>
-                                <Link to="/aquapay" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all">
-                                  <span className="text-lg">💸</span>
-                                  <span className="font-medium">AquaPay</span>
-                                </Link>
-                                <Link to="/hyperspace" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all">
-                                  <span className="text-lg">🚀</span>
-                                  <span className="font-medium">HyperSpace</span>
-                                </Link>
+                                <StandardMobileNavLinks
+                                  onNavigate={() => setIsMobileMenuOpen(false)}
+                                  openMintFunnelPlatform={openMintFunnelPlatform}
+                                />
                                 {currentUser ? (
                                   <>
                                     <div className="h-px bg-white/10 my-2" />
@@ -3603,14 +3459,6 @@ function App() {
                                       <span className="text-lg">➕</span>
                                       <span className="font-medium">List Project</span>
                                     </button>
-                                    <Link
-                                      to="/advertise"
-                                      onClick={() => setIsMobileMenuOpen(false)}
-                                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all w-full text-left"
-                                    >
-                                      <span className="text-lg">🎨</span>
-                                      <span className="font-medium">Advertise</span>
-                                    </Link>
                                     <div className="h-px bg-white/10 my-2" />
                                     <button
                                       onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }}

@@ -504,7 +504,7 @@ const Advertise = ({
       </div>
 
       {/* Navigation */}
-      <nav className="sticky top-0 z-50 border-b border-gray-700/50 bg-gray-800/90 shadow-2xl shadow-blue-500/10 backdrop-blur-xl">
+      <nav className="sticky top-0 z-50 overflow-visible border-b border-gray-700/50 bg-gray-800/90 shadow-2xl shadow-blue-500/10 backdrop-blur-xl">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             <Link to="/home" className="flex items-center">

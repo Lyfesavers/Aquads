@@ -168,6 +168,8 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
   // Initialize activeTab from sessionStorage or default to 'videos'.
   // Validate against the known tab list so a stale storage value can't render an empty page.
   const [activeTab, setActiveTab] = useState(() => {
+    const fromUrl = new URLSearchParams(window.location.search).get('tab');
+    if (fromUrl && VALID_TAB_IDS.includes(fromUrl)) return fromUrl;
     const stored = sessionStorage.getItem('learnActiveTab');
     return stored && VALID_TAB_IDS.includes(stored) ? stored : 'videos';
   });
@@ -265,6 +267,13 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
   useEffect(() => {
     sessionStorage.setItem('learnActiveTab', activeTab);
   }, [activeTab]);
+
+  useEffect(() => {
+    const tab = new URLSearchParams(location.search).get('tab');
+    if (tab && VALID_TAB_IDS.includes(tab)) {
+      setActiveTab(tab);
+    }
+  }, [location.search]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
