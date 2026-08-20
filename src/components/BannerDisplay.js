@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { API_URL } from '../services/api';
 import logger from '../utils/logger';
 
-const BannerDisplay = ({ rounded = false }) => {
+const BannerDisplay = ({ rounded = true }) => {
   const [banners, setBanners] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -73,17 +73,17 @@ const BannerDisplay = ({ rounded = false }) => {
   const currentBanner = banners[currentIndex];
 
   return (
-    <div className={`banner-container w-full relative z-0 ${rounded ? 'banner-rounded' : ''}`}>
+    <div className={`banner-container w-full relative z-0 flex justify-center ${rounded ? 'banner-rounded' : ''}`}>
       <a 
         href={currentBanner.url} 
         target="_blank" 
         rel="noopener noreferrer"
-        className="block w-full flex items-center justify-center"
+        className="inline-flex items-center justify-center max-w-full"
       >
         <img
           src={currentBanner.gif}
           alt={currentBanner.title}
-          className="w-full h-[60px] sm:h-[80px] md:h-[200px] object-contain"
+          className="w-auto max-w-full h-[60px] sm:h-[80px] md:h-[200px] object-contain"
           width="1280"
           height="200"
           loading="eager"

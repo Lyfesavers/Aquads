@@ -122,17 +122,26 @@ nav .h-16,
   }
 }
 
-/* Rounded banner ads styling */
+/* Rounded banner ads styling — clip the artwork itself (not the full-width box) */
 .banner-rounded {
+  display: flex;
+  justify-content: center;
   padding: 8px 16px !important;
 }
 
 .banner-rounded a {
+  display: inline-flex !important;
+  width: auto !important;
+  max-width: 100%;
   border-radius: 16px !important;
   overflow: hidden !important;
+  line-height: 0;
 }
 
 .banner-rounded img {
+  display: block;
+  width: auto !important;
+  max-width: 100%;
   border-radius: 16px !important;
 }
 

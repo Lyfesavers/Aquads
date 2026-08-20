@@ -256,7 +256,7 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunn
       </Helmet>
 
       {/* Navigation - Same as main page */}
-      <nav className="fixed top-0 left-0 right-0 bg-gray-800/80 backdrop-blur-sm z-[200000] relative overflow-visible">
+      <nav className="sticky top-0 bg-gray-800/80 backdrop-blur-sm z-50 overflow-visible">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
                          <div className="flex items-center">
@@ -415,10 +415,8 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunn
         </div>
       </nav>
       
-      {/* Add top margin for fixed navigation */}
-      <div className="pt-16">
-        {/* Banner display */}
-        <BannerDisplay rounded={true} />
+      {/* Banner display */}
+      <BannerDisplay rounded={true} />
       
       {/* Hero section */}
       <div className="bg-gradient-to-r from-indigo-900 to-purple-900 py-12">
@@ -615,7 +613,6 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunn
           </>
         )}
       </div>
-      </div> {/* Close the top margin wrapper */}
       
              {/* Modals */}
        {showCreateModal && (

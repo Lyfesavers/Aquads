@@ -1825,7 +1825,7 @@
   width: 100% !important;
   height: auto !important;
   object-fit: cover !important;
-  border-radius: 6px;
+  border-radius: 16px;
 }
 
 /* LiFi Widget container optimization */
