@@ -12,7 +12,7 @@ const INTENT_MENUS = [
         title: 'List',
         items: [
           { label: 'Bubble map', to: '/home', blurb: 'See listed projects and tokens' },
-          { label: 'List token free', to: '/list-token-free', blurb: 'Get on the map at no cost' },
+          { label: 'PR campaigns', to: '/list-token-free#pr-campaigns', blurb: 'Press and marketing add-on packages' },
           { label: 'Claim your bubble', to: '/claim-bubble', blurb: 'Take ownership of a listing' },
         ],
       },
@@ -114,7 +114,7 @@ const INTENT_MENUS = [
 const HOVER_CLOSE_MS = 160;
 
 function itemPath(to) {
-  return (to || '').split('?')[0];
+  return (to || '').split('#')[0].split('?')[0];
 }
 
 function isItemActive(pathname, search, item) {

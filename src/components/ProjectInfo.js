@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { requestOwnerBump } from '../services/api';
 import { Helmet } from 'react-helmet';
 import { FaRocket, FaUsers, FaChartLine, FaGlobe, FaShieldAlt, FaCog, FaCheckCircle, FaArrowRight, FaBullhorn, FaGamepad, FaHandshake, FaTrophy, FaArrowLeft, FaCreditCard, FaExchangeAlt, FaUsersCog, FaVideo, FaMicrophone, FaNewspaper, FaStar, FaFire, FaGem, FaCrown, FaGift, FaTwitter, FaLightbulb, FaCrosshairs, FaNetworkWired, FaTelegram, FaDiscord, FaRobot } from 'react-icons/fa';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import CreateAdModal from './CreateAdModal';
 import { LISTING_GUIDE_POSTS, blogPath } from '../utils/blogRelatedPosts';
 import { PAGE_SEO } from '../utils/pageSeoCore';
@@ -207,9 +207,18 @@ const ADDON_PACKAGES = [
 ];
 
 const ProjectInfo = ({ currentUser, ads = [], onAdPatched }) => {
+  const location = useLocation();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [preSelectedPackage, setPreSelectedPackage] = useState(null);
   const [bumpLoading, setBumpLoading] = useState(false);
+
+  useEffect(() => {
+    if (location.hash !== '#pr-campaigns') return undefined;
+    const timer = window.setTimeout(() => {
+      document.getElementById('pr-campaigns')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 80);
+    return () => window.clearTimeout(timer);
+  }, [location.hash]);
 
   // Check if user has any projects listed
   const userHasProjects = ads.some(ad => ad.owner === currentUser?.username);
@@ -1046,7 +1055,7 @@ const ProjectInfo = ({ currentUser, ads = [], onAdPatched }) => {
       </div>
 
       {/* Marketing Add-on Packages Section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      <div id="pr-campaigns" className="max-w-7xl mx-auto scroll-mt-24 px-4 sm:px-6 lg:px-8 py-16">
         <div className="text-center mb-12">
           <div className="inline-flex items-center gap-2 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 px-4 py-2 rounded-full mb-4">
             <span className="text-cyan-400 text-sm font-medium">Powered by Mintfunnel (Coinbound)</span>
