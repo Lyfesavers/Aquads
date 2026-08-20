@@ -31,7 +31,6 @@ const INTENT_MENUS = [
           { label: 'Telegram Bot', to: '/telegram-bot', blurb: 'Raids, Mini App, and Discord bot' },
           { label: 'AquaPay', to: '/aquapay', blurb: 'Payments and escrow' },
           { label: 'Partners', to: '/partner-rewards', blurb: 'Partner store and rewards' },
-          { label: 'Affiliate', to: '/affiliate', blurb: 'Earn from referrals' },
         ],
       },
     ],
@@ -104,6 +103,7 @@ const INTENT_MENUS = [
         items: [
           { label: 'Freelancer workshop', to: '/learn?tab=workshop', blurb: 'Guided onboarding for talent' },
           { label: 'Free courses', to: '/learn?tab=free-courses', blurb: 'Structured lessons' },
+          { label: 'Affiliate', to: '/affiliate', blurb: 'Earn from referrals' },
           { label: 'PFP generator', to: '/pfp-generator', blurb: 'Create a branded profile image' },
         ],
       },
