@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import TokenSparkline from './TokenSparkline';
 import TokenRating from './TokenRating';
 import { FaGlobe, FaTwitter, FaTelegram, FaDiscord, FaGithub, FaReddit, FaSearch, FaTimes } from 'react-icons/fa';
@@ -92,7 +93,14 @@ const formatPrice = (value) => {
 };
 
 /** Full-bleed page shell so the table uses the entire viewport width on every breakpoint. */
-const SHELL_CLASS = 'w-full px-3 sm:px-4 lg:px-6 xl:px-8 py-4';
+const SHELL_CLASS = 'w-full px-3 sm:px-4 lg:px-6 xl:px-8 py-4 scroll-mt-4';
+
+const HOME_VIEW_MODES = new Set(['tokens', 'raids', 'facebook-raids']);
+
+function viewFromSearch(search) {
+  const view = new URLSearchParams(search).get('view');
+  return HOME_VIEW_MODES.has(view) ? view : 'tokens';
+}
 
 /** Column count of the desktop table — the expanded details row must span all of them. */
 const DESKTOP_COLUMN_COUNT = 9;
@@ -307,11 +315,45 @@ const TokenList = ({
   const [sortConfig, setSortConfig] = useState({ key: 'marketCapRank', direction: 'asc' });
   const [showDexFrame, setShowDexFrame] = useState(true);
   const [selectedDex, setSelectedDex] = useState(null);
-  const [viewMode, setViewMode] = useState('tokens');
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [viewMode, setViewMode] = useState(() => viewFromSearch(location.search));
   const [displayCount, setDisplayCount] = useState(20);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const sortConfigRef = useRef({ key: 'marketCapRank', direction: 'asc' });
   sortConfigRef.current = sortConfig;
+
+  useEffect(() => {
+    setViewMode(viewFromSearch(location.search));
+  }, [location.search]);
+
+  const selectViewMode = (mode) => {
+    setViewMode(mode);
+    const params = new URLSearchParams(location.search);
+    if (mode === 'tokens') {
+      params.delete('view');
+    } else {
+      params.set('view', mode);
+    }
+    const next = params.toString();
+    const current = location.search.startsWith('?') ? location.search.slice(1) : location.search;
+    if (next === current && !location.hash) return;
+    navigate(
+      { pathname: location.pathname || '/home', search: next ? `?${next}` : '', hash: '' },
+      { replace: true }
+    );
+  };
+
+  useEffect(() => {
+    const view = viewFromSearch(location.search);
+    const fromEarnLink = location.hash === '#earn-raids';
+    if (view === 'tokens' && !fromEarnLink) return;
+    if (tokensLoading) return;
+    const frame = window.requestAnimationFrame(() => {
+      document.getElementById('earn-raids')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [location.hash, location.search, tokensLoading]);
 
   // Get tokens to display (paginated)
   const displayedTokens = filteredTokens.slice(0, displayCount);
@@ -453,7 +495,7 @@ const TokenList = ({
   // Render loading state
   if (tokensLoading && tokens.length === 0) {
     return (
-      <div className={SHELL_CLASS}>
+      <div id="earn-raids" className={SHELL_CLASS}>
         <div className="rounded-2xl border border-white/10 bg-gray-900/60 backdrop-blur-xl p-6">
           <div className="flex flex-col justify-center items-center h-64 gap-3">
             <div className="h-8 w-8 rounded-full border-2 border-blue-500/30 border-t-blue-400 animate-spin" />
@@ -467,7 +509,7 @@ const TokenList = ({
   // Render error state
   if (tokensError && tokens.length === 0) {
     return (
-      <div className={SHELL_CLASS}>
+      <div id="earn-raids" className={SHELL_CLASS}>
         <div className="rounded-2xl border border-red-500/20 bg-red-500/[0.06] backdrop-blur-xl p-6">
           <div className="flex justify-center items-center h-64">
             <div className="text-red-300 text-sm">Error: {tokensError}</div>
@@ -479,7 +521,7 @@ const TokenList = ({
 
   // Rest of your component code...
   return (
-    <div className={SHELL_CLASS}>
+    <div id="earn-raids" className={SHELL_CLASS}>
       <Helmet>
         <title>List your token free | Aquads bubble map — launch stack</title>
         <meta
@@ -557,7 +599,7 @@ const TokenList = ({
             {/* View Mode Toggle */}
             <div className="flex items-center gap-1 rounded-xl border border-white/10 bg-gray-800/60 p-1">
               <button
-                onClick={() => setViewMode('tokens')}
+                onClick={() => selectViewMode('tokens')}
                 className={`rounded-lg px-3 py-1.5 text-xs sm:text-sm font-medium transition-all ${
                   viewMode === 'tokens'
                     ? 'bg-blue-600 text-white shadow-sm shadow-blue-900/40'
@@ -567,7 +609,7 @@ const TokenList = ({
                 Tokens
               </button>
               <button
-                onClick={() => setViewMode('raids')}
+                onClick={() => selectViewMode('raids')}
                 className={`rounded-lg px-3 py-1.5 text-xs sm:text-sm font-medium transition-all ${
                   viewMode === 'raids'
                     ? 'bg-blue-600 text-white shadow-sm shadow-blue-900/40'
@@ -577,7 +619,7 @@ const TokenList = ({
                 Twitter Raids
               </button>
               <button
-                onClick={() => setViewMode('facebook-raids')}
+                onClick={() => selectViewMode('facebook-raids')}
                 className={`rounded-lg px-3 py-1.5 text-xs sm:text-sm font-medium transition-all ${
                   viewMode === 'facebook-raids'
                     ? 'bg-blue-600 text-white shadow-sm shadow-blue-900/40'

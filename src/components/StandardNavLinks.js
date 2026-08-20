@@ -87,6 +87,33 @@ const INTENT_MENUS = [
     ],
   },
   {
+    id: 'earn',
+    label: 'Earn',
+    intent: 'Earn on Aquads',
+    columns: [
+      {
+        title: 'Raids',
+        items: [
+          { label: 'Twitter Raids', to: '/home?view=raids#earn-raids', blurb: 'Complete raids and earn points' },
+          { label: 'Facebook Raids', to: '/home?view=facebook-raids#earn-raids', blurb: 'Join Facebook raid campaigns' },
+        ],
+      },
+      {
+        title: 'Freelance',
+        items: [
+          { label: 'Freelancer Hub', to: '/marketplace', blurb: 'Offer services and get booked' },
+          { label: 'Bounties', to: '/bounties', blurb: 'Complete paid tasks' },
+        ],
+      },
+      {
+        title: 'Referrals',
+        items: [
+          { label: 'Affiliate', to: '/affiliate', blurb: 'Earn from referrals' },
+        ],
+      },
+    ],
+  },
+  {
     id: 'learn',
     label: 'Learn',
     intent: 'Learn and resources',
@@ -103,7 +130,6 @@ const INTENT_MENUS = [
         items: [
           { label: 'Freelancer workshop', to: '/learn?tab=workshop', blurb: 'Guided onboarding for talent' },
           { label: 'Free courses', to: '/learn?tab=free-courses', blurb: 'Structured lessons' },
-          { label: 'Affiliate', to: '/affiliate', blurb: 'Earn from referrals' },
           { label: 'PFP generator', to: '/pfp-generator', blurb: 'Create a branded profile image' },
         ],
       },
@@ -120,7 +146,8 @@ function itemPath(to) {
 function isItemActive(pathname, search, item) {
   if (!item?.to) return false;
   const path = itemPath(item.to);
-  const query = item.to.includes('?') ? item.to.slice(item.to.indexOf('?') + 1) : '';
+  const withoutHash = item.to.split('#')[0];
+  const query = withoutHash.includes('?') ? withoutHash.slice(withoutHash.indexOf('?') + 1) : '';
   const pathMatch =
     pathname === path ||
     (path !== '/' && pathname.startsWith(`${path}/`)) ||
@@ -129,6 +156,7 @@ function isItemActive(pathname, search, item) {
   if (!query) {
     if (path === '/learn' && new URLSearchParams(search).get('tab')) return false;
     if (path === '/marketplace' && new URLSearchParams(search).get('jobs') === 'true') return false;
+    if (path === '/home' && new URLSearchParams(search).get('view')) return false;
     return true;
   }
   const needed = new URLSearchParams(query);
