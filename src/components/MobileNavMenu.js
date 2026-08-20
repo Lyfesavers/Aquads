@@ -82,6 +82,10 @@ export function MobileNavSectionLabel({ children }) {
   );
 }
 
+export function MobileNavDivider() {
+  return <div className="h-px bg-white/10 my-2" />;
+}
+
 export function MobileNavLink({ to, onClick, icon, label, className = 'hover:bg-white/5' }) {
   return (
     <Link
