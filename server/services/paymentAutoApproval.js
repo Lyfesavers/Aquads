@@ -6,6 +6,7 @@ const AffiliateEarning = require('../models/AffiliateEarning');
 const HyperSpaceAffiliateEarning = require('../models/HyperSpaceAffiliateEarning');
 const TokenPurchase = require('../models/TokenPurchase');
 const Notification = require('../models/Notification');
+const { invalidateActiveBannerAdsCache } = require('../utils/activeBannerAdsCache');
 const { emitTokenPurchaseApproved, emitUserTokenBalanceUpdate, emitAffiliateEarningUpdate } = require('../socket');
 const {
   verifyTransactionSucceeded,
@@ -214,6 +215,7 @@ const paymentAutoApproval = {
       banner.chainSymbol = token || 'USDC';
       banner.chainAddress = senderAddress || '';
       await banner.save();
+      invalidateActiveBannerAdsCache();
 
       console.log(`Banner ad ${banner._id} auto-approved after verified AquaPay payment of ${paymentAmount} USDC on ${chain} by ${senderUsername || 'anonymous'}`);
       return { type: 'banner', id: banner._id, status: banner.status };

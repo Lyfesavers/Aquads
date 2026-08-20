@@ -122,6 +122,14 @@ nav .h-16,
   }
 }
 
+.banner-container {
+  pointer-events: auto;
+}
+
+body:has(.modal-backdrop) .banner-container {
+  pointer-events: none !important;
+}
+
 /* Rounded banner ads styling — clip the artwork itself (not the full-width box) */
 .banner-rounded {
   display: flex;
