@@ -264,7 +264,7 @@ export function StandardDesktopNavLinks({
   return (
     <div
       ref={wrapRef}
-      className="relative hidden items-center gap-0.5 md:flex"
+      className={`relative hidden items-center gap-0.5 md:flex ${openMenu ? 'z-[200050]' : ''}`}
       onMouseLeave={scheduleClose}
       onMouseEnter={clearCloseTimer}
     >
@@ -296,10 +296,13 @@ export function StandardDesktopNavLinks({
 
       {activeMenu && (
         <div
-          className="absolute right-0 top-full z-[200010] w-[min(42rem,calc(100vw-2rem))] pt-2"
+          className="absolute right-0 top-full z-[200050] w-[min(42rem,calc(100vw-2rem))] pt-2"
           onMouseEnter={clearCloseTimer}
         >
-          <div className="overflow-hidden rounded-2xl border border-white/10 bg-slate-900/97 p-4 shadow-2xl shadow-black/40 backdrop-blur-xl">
+          <div
+            className="overflow-hidden rounded-2xl border border-gray-700 p-4 shadow-2xl"
+            style={{ backgroundColor: '#111827' }}
+          >
           <div className="mb-3 px-1">
             <p className="text-[11px] font-semibold uppercase tracking-wider text-cyan-400/90">
               {activeMenu.intent}
