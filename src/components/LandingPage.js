@@ -3671,7 +3671,7 @@ const LaunchStackPillars = () => {
       title: 'Get listed',
       subtitle: 'Your storefront',
       description: 'Free bubble listing with DexScreener auto-fill. Community votes, bumps, and BexTools trending put you in front of traders—not buried on page 47.',
-      link: '/home?openListProject=true',
+      link: '/list-token-free',
       cta: 'List your token',
       accent: 'cyan',
     },
@@ -4273,7 +4273,7 @@ const LandingPage = () => {
               Log in
             </Link>
             <Link
-              to="/home?openListProject=true"
+              to="/list-token-free"
               className="px-4 py-2 rounded-full text-sm font-bold text-white bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 transition-all shadow-lg shadow-cyan-500/20"
             >
               List your token
@@ -4565,7 +4565,7 @@ const LandingPage = () => {
               viewport={{ once: true }}
               transition={{ delay: 0.15, duration: 0.5 }}
             >
-              <Link to="/home?openListProject=true">
+              <Link to="/list-token-free">
                 <motion.span
                   className="inline-flex px-6 py-3 rounded-full bg-gradient-to-r from-cyan-500 to-teal-500 text-white font-bold text-sm md:text-base shadow-lg shadow-cyan-500/25"
                   whileHover={{ scale: 1.03 }}
@@ -4654,7 +4654,7 @@ const LandingPage = () => {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center items-center flex-wrap">
-            <Link to="/home?openListProject=true">
+            <Link to="/list-token-free">
               <motion.button
                 className="px-6 md:px-8 py-3 md:py-4 rounded-full bg-gradient-to-r from-cyan-500 to-teal-500 text-white font-bold text-sm md:text-lg glow-cyan"
                 whileHover={{ scale: 1.05, boxShadow: '0 0 50px rgba(34, 211, 238, 0.5)' }}

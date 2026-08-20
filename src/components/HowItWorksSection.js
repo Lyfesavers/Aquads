@@ -28,7 +28,7 @@ const projectSteps = [
     oneLiner:
       "Free Starter listing—or $99 paid Premium for the full launch stack. DexScreener auto-fill (symbol, chain, pair). Bubble goes live with AquaSwap + Bex routing. Skipper Agent on verified accounts; $5 AI credit on paid Premium; Premium includes 1-hour fast-track listing review.",
     perks: ['Starter $0 · Paid Premium stack', 'Skipper on verified accounts', '5% off for affiliates'],
-    cta: { label: 'List token free', to: '/home?openListProject=true' },
+    cta: { label: 'List token free', to: '/list-token-free' },
     mockup: 'ignite',
   },
   {
@@ -719,7 +719,7 @@ const HowItWorksSection = () => {
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
         >
-          <Link to="/home?openListProject=true">
+          <Link to="/list-token-free">
             <motion.span
               className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-cyan-500 to-teal-500 text-white font-bold text-sm md:text-base shadow-lg shadow-cyan-500/30"
               whileHover={{ scale: 1.04, boxShadow: '0 0 40px rgba(34,211,238,0.5)' }}
