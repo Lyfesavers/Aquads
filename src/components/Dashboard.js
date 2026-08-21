@@ -4564,12 +4564,12 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onAdPatche
                         </p>
                         {freeRaidEligibility.quotaTier === 'starter_unbumped' && (
                           <p className="text-xs text-green-400 mt-1">
-                            Starter listing: 1 coordinated raid/day until you bump (then up to 5/day).
+                            Starter listing: 1 coordinated raid/day (bump does not increase this).
                           </p>
                         )}
                         {freeRaidEligibility.quotaTier === 'starter_bumped' && (
                           <p className="text-xs text-green-400 mt-1">
-                            Starter listing bumped: up to 5 coordinated raids/day.
+                            Starter listing: 1 coordinated raid/day. Upgrade to Premium for 5–10/day.
                           </p>
                         )}
                         {freeRaidEligibility.quotaTier === 'premium_unbumped' && (
@@ -4604,7 +4604,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onAdPatche
                       <div>
                         <h4 className="text-lg font-medium text-white">Unlock free coordinated raids</h4>
                         <p className="text-sm text-gray-300 mt-1">
-                          List an approved project on Aquads. <span className="text-purple-400 font-semibold">Starter</span>: 1 free raid/day until bumped, then up to 5/day.{' '}
+                          List an approved project on Aquads. <span className="text-purple-400 font-semibold">Starter</span>: 1 free raid/day (bump does not increase this).{' '}
                           <span className="text-purple-400 font-semibold">Premium</span>: up to 5 free raids/day before bump, then up to 10/day once bumped (100+ bullish votes, $10k+ liquidity).
                         </p>
                         <div className="mt-3 flex flex-wrap gap-2">

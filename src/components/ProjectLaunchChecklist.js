@@ -182,7 +182,7 @@ const ProjectLaunchChecklist = ({ ad, onTabSelect, onOpenDeepDive, showNotificat
         id: 'daily_raids',
         group: 'Engagement',
         title: 'Set up daily raids (2–5 per day)',
-        description: 'Keep momentum with Twitter and Facebook raids via the bots — free daily quota with a lifetime bump.',
+        description: 'Keep momentum with Twitter and Facebook raids via the bots — Starter: 1 free raid/day; Premium: 5→10/day when bumped.',
         action: { type: 'link', label: 'Raid setup guide', href: '/telegram-bot', internal: true }
       },
       {

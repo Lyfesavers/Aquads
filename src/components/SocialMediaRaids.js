@@ -793,7 +793,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
         setFreeRaidEligibility({
           eligible: false,
           reason:
-            'Could not load eligibility. List an approved project: Starter gets 1 free raid/day until bump, then 5/day; Premium gets up to 5/day until bump, then 10/day once bumped.'
+            'Could not load eligibility. List an approved project: Starter gets 1 free raid/day; Premium gets up to 5/day until bump, then 10/day once bumped.'
         });
       }
     } catch (error) {
@@ -1365,10 +1365,10 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                       }
                     </p>
                     {freeRaidEligibility.eligible && freeRaidEligibility.quotaTier === 'starter_unbumped' && (
-                      <p className="text-xs text-green-300 mt-1">✓ Starter quota: 1/day (bump for up to 5/day)</p>
+                      <p className="text-xs text-green-300 mt-1">✓ Starter quota: 1/day (upgrade to Premium for 5–10/day)</p>
                     )}
                     {freeRaidEligibility.eligible && freeRaidEligibility.quotaTier === 'starter_bumped' && (
-                      <p className="text-xs text-green-300 mt-1">✓ Starter bumped: up to 5/day</p>
+                      <p className="text-xs text-green-300 mt-1">✓ Starter: 1/day (upgrade to Premium for 5–10/day)</p>
                     )}
                     {freeRaidEligibility.eligible && freeRaidEligibility.quotaTier === 'premium_unbumped' && (
                       <p className="text-xs text-green-300 mt-1">✓ Premium quota: 5/day until bump (then up to 10/day)</p>

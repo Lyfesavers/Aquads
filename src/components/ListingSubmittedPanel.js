@@ -7,7 +7,7 @@ const AQUADS_TELEGRAM_URL = 'https://t.me/+6rJbDLqdMxA3ZTUx';
 const AQUADS_BUMP_BOT_URL = 'https://t.me/aquadsbumpbot';
 
 const BOT_FEATURES = [
-  { icon: '🐦', title: 'Twitter & Facebook Raids', desc: 'Starter 1→5/day · Premium 5→10/day when bumped' },
+  { icon: '🐦', title: 'Twitter & Facebook Raids', desc: 'Starter 1/day · Premium 5→10/day when bumped' },
   { icon: '📈', title: 'Trending & Rankings', desc: 'Trend across Aquads, BexTools & trending channel' },
   { icon: '🗳️', title: 'Voting & Boosts', desc: 'Get bullish votes + real TG members' },
   { icon: '🎨', title: 'Custom Branding', desc: 'Your logo in vote notifications on trending channel' },

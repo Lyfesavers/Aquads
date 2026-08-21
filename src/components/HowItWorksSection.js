@@ -45,7 +45,7 @@ const projectSteps = [
     title: 'Unlock the hype toolkit',
     oneLiner:
       "Bumped projects get the full kit to stay loud — every feature designed to refuel momentum, not bill you for it.",
-    perks: ['Free raids by tier (Starter 1→5 · Premium 5→10/day)', 'Telegram raid network', 'HyperSpace boosts', 'Banners', 'Deep Dive Q&A'],
+    perks: ['Free raids by tier (Starter 1/day · Premium 5→10/day)', 'Telegram raid network', 'HyperSpace boosts', 'Banners', 'Deep Dive Q&A'],
     cta: { label: 'Explore the toolkit', to: '/telegram-bot' },
     mockup: 'toolkit',
   },

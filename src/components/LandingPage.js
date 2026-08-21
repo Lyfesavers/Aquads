@@ -2351,13 +2351,13 @@ const CarouselCard = ({ feature, index }) => {
                 </h2>
                 
                 <p className="text-gray-400 text-sm md:text-base lg:text-lg mb-6 max-w-xl">
-                  Boost visibility with coordinated social campaigns. Create Twitter raids—free daily quota by listing tier (Starter: 1→5/day when bumped · Premium: 5→10/day when bumped), then use 2000 points for additional posts. Community earns 5–20 points per completion (5/10/15/20 tiers). Auto-expires in 48hrs.
+                  Boost visibility with coordinated social campaigns. Create Twitter raids—free daily quota by listing tier (Starter: 1/day · Premium: 5→10/day when bumped), then use 2000 points for additional posts. Community earns 5–20 points per completion (5/10/15/20 tiers). Auto-expires in 48hrs.
                 </p>
                 
                 {/* Stats grid */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
                   {[
-                    { icon: '🆓', label: 'Free Daily', value: 'Starter 1→5 · Premium 5→10' },
+                    { icon: '🆓', label: 'Free Daily', value: 'Starter 1/day · Premium 5→10' },
                     { icon: '💎', label: '2000 Points', value: 'After Free' },
                     { icon: '💰', label: '5–20 Pts/Raid', value: 'Earn by Tier' },
                     { icon: '⏱️', label: '48hr Expiry', value: 'Auto-Expires' }
@@ -2743,13 +2743,13 @@ const CarouselCard = ({ feature, index }) => {
                 </h2>
                 
                 <p className="text-gray-400 text-sm md:text-base lg:text-lg mb-6 max-w-xl">
-                  Complete Telegram integration for project growth. Create Twitter & Facebook raids—free daily quota by listing tier (Starter: 1→5/day when bumped · Premium: 5→10/day when bumped), then use points for additional posts. Boost trending across Aquads, BexTools, and bubble rankings. Custom branding in our trending channel.
+                  Complete Telegram integration for project growth. Create Twitter & Facebook raids—free daily quota by listing tier (Starter: 1/day · Premium: 5→10/day when bumped), then use points for additional posts. Boost trending across Aquads, BexTools, and bubble rankings. Custom branding in our trending channel.
                 </p>
                 
                 {/* Stats grid */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
                   {[
-                    { icon: '🐦', label: 'Twitter Raids', value: 'Starter 1→5 · Premium 5→10' },
+                    { icon: '🐦', label: 'Twitter Raids', value: 'Starter 1/day · Premium 5→10' },
                     { icon: '👍', label: 'Bubble votes', value: '1 pt once' },
                     { icon: '📈', label: 'Boost Trending', value: 'Multi-Platform' },
                     { icon: '🎨', label: 'Custom Branding', value: 'Trending Channel' }
@@ -3829,7 +3829,7 @@ const LandingPage = ({ openMintFunnelPlatform }) => {
     {
       icon: '🚀',
       title: 'Twitter Raids',
-      description: 'Coordinated social campaigns to keep momentum in week one. Free raids scale by listing tier—Starter 1→5/day when bumped, Premium 5→10/day when bumped—then scale with points.',
+      description: 'Coordinated social campaigns to keep momentum in week one. Free raids scale by listing tier—Starter 1/day, Premium 5→10/day when bumped—then scale with points.',
       gradient: 'from-sky-900/40 to-slate-900/80'
     },
     {

@@ -707,7 +707,7 @@ const ProjectInfo = ({ currentUser, ads = [], onAdPatched }) => {
               <h3 className="text-xl font-semibold text-white ml-4">Community Raids</h3>
             </div>
             <p className="text-gray-300">
-              Organized Twitter/Facebook raids and Telegram/Discord coordination—daily quotas depend on your listing tier (Starter vs Premium). Bumping unlocks higher caps for Starter listings.
+              Organized Twitter/Facebook raids and Telegram/Discord coordination—daily quotas depend on your listing tier. Starter stays at 1 raid/day; Premium scales to 5/day, then 10/day once bumped.
             </p>
           </div>
 
@@ -958,11 +958,11 @@ const ProjectInfo = ({ currentUser, ads = [], onAdPatched }) => {
               </li>
               <li className="flex items-start gap-3">
                 <FaTrophy className="text-yellow-400 mt-0.5 shrink-0" />
-                <span className="min-w-0 flex-1 leading-relaxed">Higher raid caps once bumped (see Starter vs Premium cards)</span>
+                <span className="min-w-0 flex-1 leading-relaxed">Premium raid caps increase once bumped (Starter stays 1/day)</span>
               </li>
               <li className="flex items-start gap-3">
                 <FaStar className="text-amber-400 mt-0.5 shrink-0" />
-                <span className="min-w-0 flex-1 leading-relaxed">Bump improves visibility &amp; raid caps — it does <strong className="text-white">not</strong> upgrade you to paid Premium features</span>
+                <span className="min-w-0 flex-1 leading-relaxed">Bump improves visibility — it does <strong className="text-white">not</strong> upgrade you to paid Premium or raise Starter&apos;s 1 raid/day cap</span>
               </li>
               <li className="flex items-start gap-3">
                 <FaStar className="text-amber-400 mt-0.5 shrink-0" />
