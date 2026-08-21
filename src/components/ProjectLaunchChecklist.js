@@ -204,8 +204,9 @@ const ProjectLaunchChecklist = ({ ad, onTabSelect, onOpenDeepDive, showNotificat
         id: 'banner_ad',
         group: 'Ads & tools',
         title: 'Create your free banner ad',
-        description: 'Get a rotating homepage banner — included with your listing after approval.',
-        action: { type: 'link', label: 'Go to home', href: '/home', internal: true }
+        description: 'Get a rotating 7-day homepage banner — included with Premium listings after approval.',
+        action: { type: 'link', label: 'Go to home', href: '/home', internal: true },
+        premiumOnly: true
       },
       {
         id: 'chrome_extension',

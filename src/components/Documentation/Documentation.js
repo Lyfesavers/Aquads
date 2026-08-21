@@ -867,12 +867,11 @@ You can pay via:
 
 - **AquaSwap** + **BexTools**-style routing from your bubble (live chart & swap handoff)
 - Homepage bubble map + vote rankings + bump at **100+ bullish** and **$10k+ liquidity** (organic votes and vote boosts both count toward votes)
-- **Complimentary homepage banner** after approval: **24 hours** on **Starter**, **7 days** on **Premium** (rotating placement—see List Project flow)
 - Raids: **Starter** **1**/day (bump does not raise this). **Premium** up to **5**/day before bump, up to **10**/day once bumped. Custom \`/setbranding\` media on notifications is paid Premium when bumped. **Vote bump (100+ bullish) does not upgrade listing tier.**
 
 **Skipper Agent** is on all **email-verified** accounts (pay-as-you-go; top up via AquaPay). See **Skipper Agent → Overview & Guide** in the docs sidebar for modes, wallets, and listing via Agent.
 
-**Paid Premium** adds the bundled **Premium growth bundle** (e.g. **in-house blog & press release on Aquads**, **$5 Skipper wallet credit**, **1-hour fast-track listing review**, AMA, ad credit, higher pre-bump raid cap, **7-day** homepage banner vs **24h** on Starter).
+**Paid Premium** adds the bundled **Premium growth bundle** (e.g. **in-house blog & press release on Aquads**, **$5 Skipper wallet credit**, **1-hour fast-track listing review**, AMA, ad credit, higher pre-bump raid cap, **7-day** homepage banner).
 
 ### Listing review times
 

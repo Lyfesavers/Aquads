@@ -1001,7 +1001,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                   >
                     <div className="font-bold text-white">Starter</div>
                     <div className="mt-1 text-sm text-green-400">Free base listing</div>
-                    <p className="mt-2 text-xs text-gray-400">AquaSwap + Bex path from bubble · 1 complimentary 24h homepage banner · bump at 100+ votes + $10k liq · 1 raid/day · optional packages: pay package prices only</p>
+                    <p className="mt-2 text-xs text-gray-400">AquaSwap + Bex path from bubble · bump at 100+ votes + $10k liq · 1 raid/day · optional packages: pay package prices only</p>
                   </button>
                   <button
                     type="button"
@@ -1285,7 +1285,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                   >
                     <div className="font-bold text-white">Starter</div>
                     <div className="text-green-400 text-sm mt-1">Free base listing</div>
-                    <p className="text-gray-400 text-xs mt-2">AquaSwap + Bex routing · 1 complimentary 24h homepage banner · bump at 100+ votes + $10k liq · 1 raid/day · optional paid add-ons</p>
+                    <p className="text-gray-400 text-xs mt-2">AquaSwap + Bex routing · bump at 100+ votes + $10k liq · 1 raid/day · optional paid add-ons</p>
                   </button>
                   <button
                     type="button"
@@ -1335,16 +1335,6 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                       </div>
                     </div>
 
-                    <div className="flex items-start space-x-4 p-4 bg-gray-800/50 rounded-lg border border-amber-500/35">
-                      <div className="bg-amber-500 p-2 rounded-full flex-shrink-0">
-                        <FaBullhorn className="text-white" />
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-white">Homepage banner ad spot</h4>
-                        <p className="text-gray-300 text-sm"><strong className="text-white">1</strong> complimentary <strong className="text-white">24-hour</strong> rotating banner placement on Aquads after your listing is approved (premium visibility slot—coordinate timing in your dashboard).</p>
-                      </div>
-                    </div>
-
                     <div className="flex items-start space-x-4 p-4 bg-gray-800/50 rounded-lg">
                       <div className="bg-cyan-500 p-2 rounded-full flex-shrink-0">
                         <FaTwitter className="text-white" />
@@ -1381,7 +1371,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                       </div>
                       <div>
                         <h4 className="font-semibold text-white">Upgrade path</h4>
-                        <p className="text-gray-300 text-sm">Switch to <strong className="text-white">paid Premium</strong> anytime from your dashboard for <strong className="text-white">1-hour fast-track listing review</strong>, an <strong className="text-white">in-house blog &amp; press release</strong>, a <strong className="text-white">$5</strong> Skipper AI wallet credit, AMA, a <strong className="text-white">7-day</strong> homepage banner (vs Starter&apos;s 24h), $50 ad credit, custom bots/branding when bumped, <strong className="text-white">5→10 raids/day</strong>, and more.</p>
+                        <p className="text-gray-300 text-sm">Switch to <strong className="text-white">paid Premium</strong> anytime from your dashboard for <strong className="text-white">1-hour fast-track listing review</strong>, an <strong className="text-white">in-house blog &amp; press release</strong>, a <strong className="text-white">$5</strong> Skipper AI wallet credit, AMA, a <strong className="text-white">7-day</strong> homepage banner, $50 ad credit, custom bots/branding when bumped, <strong className="text-white">5→10 raids/day</strong>, and more.</p>
                       </div>
                     </div>
                   </div>
@@ -1390,7 +1380,6 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                     <p className="text-green-200 text-sm leading-relaxed">
                       ✓ Starter skips the $99 Premium package—you keep full Aquads bubble visibility<br/>
                       ✓ Same AquaSwap/Bex funnel &amp; map discovery as Premium; Premium adds the full launch bundle<br/>
-                      ✓ <strong className="text-green-100">1 complimentary 24-hour homepage banner</strong> ad spot after approval<br/>
                       ✓ Same fair-play rules and bump mechanics as Premium listings
                     </p>
                   </div>
@@ -1430,7 +1419,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                     </div>
                     <div>
                       <h4 className="font-semibold text-white">Homepage banner ad spot</h4>
-                      <p className="text-gray-300 text-sm"><strong className="text-white">1</strong> complimentary <strong className="text-white">7-day</strong> rotating banner placement on Aquads after your listing is approved (vs <strong className="text-white">24 hours</strong> on Starter)—coordinate creative and timing in your dashboard.</p>
+                      <p className="text-gray-300 text-sm"><strong className="text-white">1</strong> complimentary <strong className="text-white">7-day</strong> rotating banner placement on Aquads after your listing is approved—coordinate creative and timing in your dashboard.</p>
                     </div>
                   </div>
 
@@ -1541,7 +1530,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                     ✓ Everything in Starter + over $1000 in bundled launch services<br/>
                     ✓ <strong className="text-green-200">1-hour fast-track</strong> listing review (vs 24–48h on Starter)<br/>
                     ✓ <strong className="text-green-200">$5</strong> Skipper AI wallet credit on paid Premium (Skipper access itself is on all verified accounts)<br/>
-                    ✓ <strong className="text-green-200">1 complimentary 7-day homepage banner</strong> (vs 24h on Starter)<br/>
+                    ✓ <strong className="text-green-200">1 complimentary 7-day homepage banner</strong><br/>
                     ✓ Admin review & refund if rejected<br/>
                     ✓ Optional Mintfunnel add-ons still available separately (step 2)
                   </p>

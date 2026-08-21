@@ -817,12 +817,6 @@ const ProjectInfo = ({ currentUser, ads = [], onAdPatched }) => {
               <li className="flex items-start gap-3">
                 <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
                 <span className="min-w-0 flex-1 leading-relaxed">
-                  <strong className="text-white">1 complimentary 24-hour</strong> homepage banner ad spot after approval (rotating placement—coordinate in your dashboard)
-                </span>
-              </li>
-              <li className="flex items-start gap-3">
-                <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
-                <span className="min-w-0 flex-1 leading-relaxed">
                   Bump free at <strong className="text-white">100+</strong> bullish votes (organic + boosts)
                 </span>
               </li>
@@ -884,7 +878,7 @@ const ProjectInfo = ({ currentUser, ads = [], onAdPatched }) => {
               <li className="flex items-start gap-3">
                 <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
                 <span className="min-w-0 flex-1 leading-relaxed">
-                  <strong className="text-white">1 complimentary 7-day</strong> homepage banner ad spot after approval (vs <strong className="text-white">24 hours</strong> on Starter)
+                  <strong className="text-white">1 complimentary 7-day</strong> homepage banner ad spot after approval
                 </span>
               </li>
               <li className="flex items-start gap-3">
