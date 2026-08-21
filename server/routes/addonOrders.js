@@ -5,9 +5,10 @@ const auth = require('../middleware/auth');
 const requireEmailVerification = require('../middleware/emailVerification');
 const socket = require('../socket');
 
-// Aquads-branded marketing add-on packages (server-side pricing)
+// Mintfunnel PR add-ons (server-side pricing). In-house blog + press release ships with Premium.
+const RETIRED_ADDON_IDS = new Set(['aqua_splash']);
+
 const ADDON_PACKAGES = [
-  { id: 'aqua_splash', name: 'AquaSplash', price: 99 },
   { id: 'aqua_ripple', name: 'AquaRipple', price: 284 },
   { id: 'aqua_wave', name: 'AquaWave', price: 1329 },
   { id: 'aqua_flow', name: 'AquaFlow', price: 2754 },
@@ -33,6 +34,12 @@ router.post('/', auth, requireEmailVerification, async (req, res) => {
     // Validate required fields
     if (!projectId || !projectTitle || !selectedAddons || selectedAddons.length === 0) {
       return res.status(400).json({ error: 'Missing required fields: projectId, projectTitle, and at least one addon required' });
+    }
+
+    if (selectedAddons.some((addonId) => RETIRED_ADDON_IDS.has(addonId))) {
+      return res.status(400).json({
+        error: 'In-house blog and press release are included with Premium listings and are not sold separately. Choose a Mintfunnel package such as AquaRipple instead.'
+      });
     }
 
     // Calculate addon costs server-side for security

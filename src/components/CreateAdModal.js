@@ -34,25 +34,8 @@ const BLOCKCHAIN_OPTIONS = [
   }
 ];
 
-// Aquads-branded marketing add-on packages
-// AquaSplash is in-house (blog + press release on Aquads). Higher tiers are powered by Mintfunnel (Coinbound).
+// Mintfunnel (Coinbound) PR add-on packages. In-house blog + press release is included with Premium, not sold separately.
 const ADDON_PACKAGES = [
-  {
-    id: 'aqua_splash',
-    name: 'AquaSplash',
-    partnerName: 'In-House PR',
-    originalPrice: 99,
-    price: 99,
-    icon: FaNewspaper,
-    color: 'from-green-500 to-emerald-500',
-    turnaround: 'Same Day Available',
-    features: [
-      'Professional blog written in-house for your project',
-      'Published as a press release on Aquads',
-      'Posted to the Aquads newsroom',
-      'Same Day Distribution Available'
-    ]
-  },
   {
     id: 'aqua_ripple',
     name: 'AquaRipple',
@@ -179,7 +162,7 @@ function SharedListingBenefitsNote({ className = '' }) {
           <strong className="text-white">Trading:</strong> bubble opens <strong className="text-white">AquaSwap</strong> + <strong className="text-white">BexTools</strong>-style routing so traders jump to live charts and swaps.
         </li>
         <li>
-          <strong className="text-white">Discovery &amp; momentum:</strong> map, vote rankings, raids, boosts &amp; Bump Bot. <strong className="text-white">Skipper Agent</strong> on all verified accounts (pay-as-you-go; top up via AquaPay). <strong className="text-white">Premium</strong> (paid listing) adds <strong className="text-white">1-hour fast-track listing review</strong>, a <strong className="text-white">$5</strong> Skipper AI wallet credit, PR/AMA bundle, ad credit, higher pre-bump raid cap &amp; <strong className="text-white">custom branding</strong> when bumped (<strong className="text-white">paid Premium listing</strong> required for <code className="text-cyan-300">/setbranding</code> — vote bump alone does not upgrade tier).
+          <strong className="text-white">Discovery &amp; momentum:</strong> map, vote rankings, raids, boosts &amp; Bump Bot. <strong className="text-white">Skipper Agent</strong> on all verified accounts (pay-as-you-go; top up via AquaPay). <strong className="text-white">Premium</strong> (paid listing) adds <strong className="text-white">1-hour fast-track listing review</strong>, an <strong className="text-white">in-house blog &amp; press release</strong>, a <strong className="text-white">$5</strong> Skipper AI wallet credit, AMA, ad credit, higher pre-bump raid cap &amp; <strong className="text-white">custom branding</strong> when bumped (<strong className="text-white">paid Premium listing</strong> required for <code className="text-cyan-300">/setbranding</code> — vote bump alone does not upgrade tier).
         </li>
       </ul>
     </div>
@@ -252,7 +235,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
     paymentChain: '',
     chainSymbol: '',
     chainAddress: '',
-    selectedAddons: preSelectedPackage ? [preSelectedPackage] : [], // Pre-select package if provided
+    selectedAddons: (preSelectedPackage && ADDON_PACKAGES.some((pkg) => pkg.id === preSelectedPackage)) ? [preSelectedPackage] : [],
     totalAmount: discountedPremiumFee + getInitialAddonTotal(),
     isAffiliate: isAffiliate,
     affiliateDiscount: affiliateDiscount
@@ -1035,7 +1018,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                         `$${PREMIUM_LISTING_FEE_USDC} USDC`
                       )}
                     </div>
-                    <p className="mt-2 text-xs text-gray-400">$5 Skipper AI credit · PR/AMA · 7-day banner · ad credit · custom branding when bumped (100+ votes, $10k+ liq) · 5 raids/day → 10 when bumped</p>
+                    <p className="mt-2 text-xs text-gray-400">$5 Skipper AI credit · in-house blog &amp; press release · AMA · 7-day banner · ad credit · custom branding when bumped (100+ votes, $10k+ liq) · 5 raids/day → 10 when bumped</p>
                   </button>
                 </div>
               </div>
@@ -1317,7 +1300,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                         `$${PREMIUM_LISTING_FEE_USDC} USDC`
                       )}
                     </div>
-                    <p className="text-gray-400 text-xs mt-2">$5 Skipper AI credit · PR, AMA, 7-day banner, ad credit, custom branding when bumped · 5→10 raids/day</p>
+                    <p className="text-gray-400 text-xs mt-2">$5 Skipper AI credit · in-house blog &amp; press release · AMA · 7-day banner · ad credit · custom branding when bumped · 5→10 raids/day</p>
                   </button>
                 </div>
 
@@ -1391,7 +1374,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                       </div>
                       <div>
                         <h4 className="font-semibold text-white">Optional Mintfunnel PR (paid)</h4>
-                        <p className="text-gray-300 text-sm">Add AquaSplash, AquaRipple, and other PR packages in step 2—you pay <strong className="text-white">only those prices</strong>; no base listing fee on Starter.</p>
+                        <p className="text-gray-300 text-sm">Add AquaRipple and other Mintfunnel packages in step 2—you pay <strong className="text-white">only those prices</strong>; no base listing fee on Starter. In-house blog &amp; press release is included with <strong className="text-white">Premium</strong>.</p>
                       </div>
                     </div>
 
@@ -1411,7 +1394,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                       </div>
                       <div>
                         <h4 className="font-semibold text-white">Upgrade path</h4>
-                        <p className="text-gray-300 text-sm">Switch to <strong className="text-white">paid Premium</strong> anytime from your dashboard for <strong className="text-white">1-hour fast-track listing review</strong>, a <strong className="text-white">$5</strong> Skipper AI wallet credit, PR, AMA, a <strong className="text-white">7-day</strong> homepage banner (vs Starter&apos;s 24h), $50 ad credit, custom bots/branding when bumped, higher pre-bump raid quota, and more.</p>
+                        <p className="text-gray-300 text-sm">Switch to <strong className="text-white">paid Premium</strong> anytime from your dashboard for <strong className="text-white">1-hour fast-track listing review</strong>, an <strong className="text-white">in-house blog &amp; press release</strong>, a <strong className="text-white">$5</strong> Skipper AI wallet credit, AMA, a <strong className="text-white">7-day</strong> homepage banner (vs Starter&apos;s 24h), $50 ad credit, custom bots/branding when bumped, higher pre-bump raid quota, and more.</p>
                       </div>
                     </div>
                   </div>
@@ -1482,8 +1465,8 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                       <FaBullhorn className="text-white" />
                     </div>
                     <div>
-                      <h4 className="font-semibold text-white">PR Press Release Publication</h4>
-                      <p className="text-gray-300 text-sm">One Professional press release published on Aquads and our partner publications website, with access to 20+ premium newsroom platforms available for upgrade</p>
+                      <h4 className="font-semibold text-white">In-house blog &amp; press release</h4>
+                      <p className="text-gray-300 text-sm">Professional blog written in-house for your project, published as a press release on Aquads and posted to the Aquads newsroom.</p>
                     </div>
                   </div>
                   

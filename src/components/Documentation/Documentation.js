@@ -842,11 +842,10 @@ Thresholds may change over time at Aquads' discretion.
 
 ### Step 2: Marketing Add-ons (Optional)
 
-After entering project info, you can add premium marketing packages:
+After entering project info, you can add Mintfunnel distribution packages. **In-house blog & press release** is included with **Premium** (not sold as a separate add-on).
 
 | Package | Price | Features |
 |---------|-------|----------|
-| **AquaSplash** | $99 | In-house blog & press release, same day |
 | **AquaRipple** | $284 | 4+ media pickups guaranteed |
 | **AquaWave** | $1,329 | 9+ pickups, SEO optimization |
 | **AquaFlow** | $2,754 | Major crypto news coverage |
@@ -873,7 +872,7 @@ You can pay via:
 
 **Skipper Agent** is on all **email-verified** accounts (pay-as-you-go; top up via AquaPay). See **Skipper Agent → Overview & Guide** in the docs sidebar for modes, wallets, and listing via Agent.
 
-**Paid Premium** adds the bundled **Premium growth bundle** (e.g. **$5 Skipper wallet credit**, **1-hour fast-track listing review**, PR / AMA, ad credit, higher pre-bump raid cap, **7-day** homepage banner vs **24h** on Starter).
+**Paid Premium** adds the bundled **Premium growth bundle** (e.g. **in-house blog & press release on Aquads**, **$5 Skipper wallet credit**, **1-hour fast-track listing review**, AMA, ad credit, higher pre-bump raid cap, **7-day** homepage banner vs **24h** on Starter).
 
 ### Listing review times
 

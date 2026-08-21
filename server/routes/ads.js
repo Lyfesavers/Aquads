@@ -85,20 +85,10 @@ const LAUNCH_CHECKLIST_STEPS = [
   'chrome_extension'
 ];
 
-// Aquads-branded marketing add-on packages (server-side)
+// Mintfunnel PR add-ons (server-side). In-house blog + press release ships with Premium.
+const RETIRED_ADDON_IDS = new Set(['aqua_splash']);
+
 const ADDON_PACKAGES = [
-  {
-    id: 'aqua_splash',
-    name: 'AquaSplash',
-    originalPrice: 99,
-    price: 99,
-    features: [
-      'Professional blog written in-house for your project',
-      'Published as a press release on Aquads',
-      'Posted to the Aquads newsroom',
-      'Same Day Distribution Available'
-    ]
-  },
   {
     id: 'aqua_ripple',
     name: 'AquaRipple',
@@ -586,11 +576,13 @@ router.post('/', auth, requireEmailVerification, emitAdEvent('create'), async (r
     const calculatedListingFee =
       listingTier === LISTING_TIER_STARTER ? 0 : PREMIUM_LISTING_FEE_USDC - calculatedAffiliateDiscount;
 
+    const purchasableAddons = (selectedAddons || []).filter((addonId) => !RETIRED_ADDON_IDS.has(addonId));
+
     // Calculate addon costs
-    const addonCosts = selectedAddons ? selectedAddons.reduce((total, addonId) => {
+    const addonCosts = purchasableAddons.reduce((total, addonId) => {
       const addon = ADDON_PACKAGES.find(pkg => pkg.id === addonId);
       return total + (addon ? addon.price : 0);
-    }, 0) : 0;
+    }, 0);
 
     // Calculate total before discount codes
     const totalBeforeDiscount = calculatedListingFee + addonCosts;
@@ -658,7 +650,7 @@ router.post('/', auth, requireEmailVerification, emitAdEvent('create'), async (r
       paymentChain,
       chainSymbol,
       chainAddress,
-      selectedAddons: selectedAddons || [],
+      selectedAddons: purchasableAddons,
       totalAmount: finalAmount,
       listingFee: calculatedListingFee,
       listingTier,

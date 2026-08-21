@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { requestOwnerBump } from '../services/api';
 import { Helmet } from 'react-helmet';
-import { FaRocket, FaUsers, FaChartLine, FaGlobe, FaShieldAlt, FaCog, FaCheckCircle, FaArrowRight, FaBullhorn, FaGamepad, FaHandshake, FaTrophy, FaArrowLeft, FaCreditCard, FaExchangeAlt, FaUsersCog, FaVideo, FaMicrophone, FaNewspaper, FaStar, FaFire, FaGem, FaCrown, FaGift, FaTwitter, FaLightbulb, FaCrosshairs, FaNetworkWired, FaTelegram, FaDiscord, FaRobot } from 'react-icons/fa';
+import { FaRocket, FaUsers, FaChartLine, FaGlobe, FaShieldAlt, FaCog, FaCheckCircle, FaArrowRight, FaBullhorn, FaGamepad, FaHandshake, FaTrophy, FaArrowLeft, FaCreditCard, FaExchangeAlt, FaUsersCog, FaVideo, FaMicrophone, FaStar, FaFire, FaGem, FaCrown, FaGift, FaTwitter, FaLightbulb, FaCrosshairs, FaNetworkWired, FaTelegram, FaDiscord, FaRobot } from 'react-icons/fa';
 import { Link, useLocation } from 'react-router-dom';
 import CreateAdModal from './CreateAdModal';
 import { LISTING_GUIDE_POSTS, blogPath } from '../utils/blogRelatedPosts';
@@ -12,33 +12,8 @@ const AQUADS_X_URL = 'https://x.com/_Aquads_';
 const AQUADS_TELEGRAM_URL = 'https://t.me/+6rJbDLqdMxA3ZTUx';
 const LISTING_TWEET_INTENT = `https://twitter.com/intent/tweet?text=${encodeURIComponent('Listing our project on @_Aquads_ — excited to join the bubble map! 🚀')}`;
 
-// Aquads-branded marketing add-on packages
-// AquaSplash is in-house (blog + press release on Aquads). Higher tiers are powered by Mintfunnel (Coinbound).
+// Mintfunnel (Coinbound) PR add-on packages. In-house blog + press release is included with Premium, not sold separately.
 const ADDON_PACKAGES = [
-  {
-    id: 'aqua_splash',
-    name: 'AquaSplash',
-    partnerName: 'In-House PR',
-    originalPrice: 99,
-    price: 99,
-    icon: FaNewspaper,
-    color: 'from-green-500 to-emerald-500',
-    tier: 'starter',
-    idealFor: 'Projects that want an in-house blog article published as a press release on Aquads',
-    turnaround: 'Same Day Available',
-    features: [
-      'Professional blog written in-house for your project',
-      'Published as a press release on Aquads',
-      'Posted to the Aquads newsroom',
-      'Same Day Distribution Available'
-    ],
-    highlights: [
-      { label: 'Written', value: 'In-House Blog' },
-      { label: 'Published', value: 'Aquads PR' },
-      { label: 'Speed', value: 'Same Day' }
-    ],
-    platforms: ['Aquads Newsroom']
-  },
   {
     id: 'aqua_ripple',
     name: 'AquaRipple',
@@ -362,7 +337,7 @@ const ProjectInfo = ({ currentUser, ads = [], onAdPatched }) => {
         </script>
 
         {/*
-          ItemList of paid Marketing & PR add-on packages (AquaSplash → AquaLegend).
+          ItemList of paid Mintfunnel Marketing & PR add-on packages (AquaRipple → AquaLegend).
           Each tier is a partner-delivered Service with a real Offer so price
           snippets can show in Google without Product review/rating expectations.
         */}
@@ -654,7 +629,7 @@ const ProjectInfo = ({ currentUser, ads = [], onAdPatched }) => {
               <h3 className="text-xl font-semibold text-white ml-4">Professional PR</h3>
             </div>
             <p className="text-gray-300">
-              Included with <strong className="text-white">Premium</strong> listings (press release & tier‑1 distribution access). <strong className="text-white">Starter</strong> listings can add professional PR anytime via the Mintfunnel add‑on packages below.
+              Included with <strong className="text-white">Premium</strong> listings (in-house blog &amp; press release on Aquads). <strong className="text-white">Starter</strong> listings can add Mintfunnel distribution packages below, or upgrade to Premium from the dashboard.
             </p>
           </div>
 
@@ -813,7 +788,7 @@ const ProjectInfo = ({ currentUser, ads = [], onAdPatched }) => {
               </li>
             </ul>
             <p className="text-gray-400 text-xs mt-3">
-              <strong className="text-white">Paid Premium</strong> also includes the bundled PR tier‑1 rails, AMA, ad credits, <strong className="text-white">1-hour fast-track listing review</strong>, higher pre-bump raid cap, longer homepage banner, and custom ping branding when bumped.
+              <strong className="text-white">Paid Premium</strong> also includes the in-house blog &amp; press release, AMA, ad credits, <strong className="text-white">1-hour fast-track listing review</strong>, higher pre-bump raid cap, longer homepage banner, and custom ping branding when bumped.
             </p>
           </div>
         </div>
@@ -920,7 +895,7 @@ const ProjectInfo = ({ currentUser, ads = [], onAdPatched }) => {
               </li>
               <li className="flex items-start gap-3">
                 <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
-                <span className="min-w-0 flex-1 leading-relaxed">PR press release & premium distribution access</span>
+                <span className="min-w-0 flex-1 leading-relaxed">In-house blog written for your project, published as a press release on Aquads</span>
               </li>
               <li className="flex items-start gap-3">
                 <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
