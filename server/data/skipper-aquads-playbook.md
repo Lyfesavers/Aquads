@@ -69,7 +69,7 @@ Projects post **paid tasks** with reward in **Aquads escrow** until a winner is 
 ## Listing tiers
 
 - **Starter (free)** — Map presence, votes, bumps, AquaSwap. Skipper: **$1** trial credit per wallet (top up via AquaPay).
-- **Premium (~$99 USDC)** — **1-hour fast-track review**, **$5 Skipper credit** (tops up $1→$5 if trial used), PR/AMA bundle, ad credit, longer banner, higher pre-bump raid cap, **custom bot branding when bumped**.
+- **Premium (~$99 USDC)** — **1-hour fast-track review**, **$5 Skipper credit** (tops up $1→$5 if trial used), PR/AMA bundle, ad credit, longer banner, higher pre-bump raid cap, **custom bot branding as soon as approved** (no bump).
 
 **Important:** **Premium** = paid listing package, not vote bump. Bumped Starter keeps Starter benefits unless upgraded.
 

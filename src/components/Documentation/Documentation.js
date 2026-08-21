@@ -4368,14 +4368,19 @@ For Facebook raid participation:
 - ✅ Create extra raids (2000 pts each after your free daily quota)
 - **Starter vs Premium bots:** Starter gets the **same bot commands** (raids, votes, boosts, bumps). **Only Premium** unlocks **custom** logo/video on notifications via \`/setbranding\` as soon as the listing is approved.
 
-### Premium Features (listed project + bump tier required)
+### Paid Premium (as soon as the listing is approved)
 
-When you list your project as **Premium** and it reaches **bumped** status (**100+ bullish votes**, **$10k+ liquidity**):
-- 🔥 Trending across Aquads homepage
+Custom branding does **not** wait for a bump. **Paid Premium** listings can use \`/setbranding\` immediately after approval; Starter keeps default Aquads styling on pings.
+
+- 🎨 Custom logo/video on vote notifications, raids you create, \`/mybubble\`, and \`/bubbles\`
+
+### Bump tier (100+ bullish votes + $10k+ liquidity)
+
+Bump is separate from listing tier. It unlocks max bubble size and (for **Premium**) the higher raid cap. When a listing is **bumped**:
+- 🔥 Trending-style visibility on the Aquads homepage
 - 🔥 BexTools trending section visibility
 - 🔥 Bubble ranking boost
 - 🔥 Trending channel exposure
-- 🔥 Custom branding on vote notifications
 - 🔥 Vote + Member boost packages
 
 ### Adding Bot to Your Group

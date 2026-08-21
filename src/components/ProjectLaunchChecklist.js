@@ -105,7 +105,7 @@ const ProjectLaunchChecklist = ({ ad, onTabSelect, onOpenDeepDive, showNotificat
         id: 'telegram_bot',
         group: 'Community bots',
         title: 'Add the Telegram bot to your group',
-        description: '@aquadsbumpbot — free raids, trending, vote boosts, and custom branding.',
+        description: '@aquadsbumpbot — free raids, trending, vote boosts. Paid Premium: custom branding as soon as approved.',
         action: { type: 'link', label: 'Open bot', href: TELEGRAM_BOT_URL }
       },
       {

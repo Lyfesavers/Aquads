@@ -49,7 +49,7 @@ const TelegramBot = ({ currentUser }) => {
       description: 'Branding image or direct https .mp4 link (max 5MB; e.g. catbox.moe) for vote notifications—same video style as default alerts; we only store the URL.',
       command: '/setbranding • /removebranding',
       color: 'from-pink-500 to-rose-600',
-      details: ['Trending channel reach', 'Image max 500KB or direct .mp4 URL (max 5MB)', 'Try catbox.moe for easy hosting', 'Exclusive for bumped projects'],
+      details: ['Trending channel reach', 'Image max 500KB or direct .mp4 URL (max 5MB)', 'Try catbox.moe for easy hosting', 'Paid Premium — as soon as approved (no bump)'],
       premium: true
     },
     {
@@ -114,13 +114,13 @@ const TelegramBot = ({ currentUser }) => {
         { name: 'BexTools Trending Section', included: false },
         { name: 'Bubble Ranking Visibility', included: false },
         { name: 'Trending Channel Exposure', included: false },
-        { name: 'Custom Branding on Notifications', included: false },
+        { name: 'Custom Branding (Premium listing, no bump)', included: false },
         { name: 'Vote boost packages (Telegram & Discord)', included: false }
       ]
     },
     premium: {
       title: 'Full Access',
-      subtitle: 'List & Bump Your Meme Coin',
+      subtitle: 'Paid Premium listing · bump to trend',
       icon: FaUnlock,
       color: 'from-cyan-500 to-blue-600',
       features: [
@@ -136,7 +136,7 @@ const TelegramBot = ({ currentUser }) => {
         { name: 'BexTools Trending Section', included: true, highlight: true },
         { name: 'Bubble Ranking Visibility', included: true, highlight: true },
         { name: 'Trending Channel Exposure', included: true, highlight: true },
-        { name: 'Custom Branding on Notifications', included: true, highlight: true },
+        { name: 'Custom Branding (Premium listing, no bump)', included: true, highlight: true },
         { name: 'Vote boost packages (Telegram & Discord)', included: true, highlight: true }
       ]
     }
@@ -199,7 +199,7 @@ const TelegramBot = ({ currentUser }) => {
     {
       icon: FaImage,
       title: 'Trending Channel',
-      description: 'Your custom branding and vote notifications appear in our trending channel.',
+      description: 'Paid Premium listings can put custom branding on vote notifications in our trending channel — available as soon as the listing is approved.',
       highlight: 'Trending channel exposure'
     },
     {
@@ -876,8 +876,8 @@ const TelegramBot = ({ currentUser }) => {
               },
               {
                 step: '05',
-                title: 'Trend Everywhere',
-                description: 'List & bump to trend on Aquads homepage, BexTools, bubble rankings + custom branding.',
+                title: 'Brand & trend',
+                description: 'Paid Premium unlocks /setbranding as soon as the listing is approved (no bump). List & bump to trend on Aquads, BexTools, and bubble rankings.',
                 icon: FaCrown
               }
             ].map((item, index) => (
@@ -925,7 +925,7 @@ const TelegramBot = ({ currentUser }) => {
               </h2>
               
               <p className="text-gray-400 text-lg mb-8 max-w-2xl mx-auto">
-                Start with free coordinated raids by listing tier (Starter: 1/day · Premium: 5→10/day when bumped). Use the bot on Telegram or Discord — same features. Boost bubble ranking with `/boostvote` (votes only), and list & bump to trend across Aquads, BexTools, and bubble rankings with your custom branding.
+                Start with free coordinated raids by listing tier (Starter: 1/day · Premium: 5→10/day when bumped). Use the bot on Telegram or Discord — same features. Boost bubble ranking with `/boostvote` (votes only). Paid Premium unlocks `/setbranding` as soon as the listing is approved. List & bump to trend across Aquads, BexTools, and bubble rankings.
               </p>
               
               <div className="flex flex-col sm:flex-row flex-wrap gap-4 justify-center">
