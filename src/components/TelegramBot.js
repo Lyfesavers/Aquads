@@ -157,7 +157,7 @@ const TelegramBot = ({ currentUser }) => {
     { cmd: '/leaders', desc: 'Top 15 — lifetime points & USDC earnings', category: 'Bubbles' },
     { cmd: '/mybubble', desc: 'View YOUR projects with voting buttons', category: 'Bubbles' },
     { cmd: '/boostvote', desc: 'Purchase vote boost packages for your bubble', category: 'Bubbles' },
-    { cmd: '/setbranding', desc: 'Photo or direct .mp4 URL, max 5MB (e.g. catbox) — bumped only', category: 'Branding' },
+    { cmd: '/setbranding', desc: 'Photo or direct .mp4 URL, max 5MB (e.g. catbox) — Premium listings', category: 'Branding' },
     { cmd: '/removebranding', desc: 'Remove custom branding', category: 'Branding' },
     { cmd: '/raidin', desc: 'Opt-in your group to community raid sharing', category: 'Groups' },
     { cmd: '/raidout', desc: 'Opt-out your group from community raids', category: 'Groups' }

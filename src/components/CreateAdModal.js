@@ -162,7 +162,7 @@ function SharedListingBenefitsNote({ className = '' }) {
           <strong className="text-white">Trading:</strong> bubble opens <strong className="text-white">AquaSwap</strong> + <strong className="text-white">BexTools</strong>-style routing so traders jump to live charts and swaps.
         </li>
         <li>
-          <strong className="text-white">Discovery &amp; momentum:</strong> map, vote rankings, raids, boosts &amp; Bump Bot. <strong className="text-white">Skipper Agent</strong> on all verified accounts (pay-as-you-go; top up via AquaPay). <strong className="text-white">Starter</strong> listings are <strong className="text-white">not announced</strong> by Aquads. <strong className="text-white">Premium</strong> rolls out <strong className="text-white">social and email marketing campaigns</strong> to announce your project (including the newsletter to all users), plus <strong className="text-white">1-hour fast-track listing review</strong>, an <strong className="text-white">in-house blog &amp; press release</strong>, a <strong className="text-white">$5</strong> Skipper AI wallet credit, AMA, ad credit, higher raid cap &amp; <strong className="text-white">custom branding</strong> when bumped (<strong className="text-white">paid Premium listing</strong> required for <code className="text-cyan-300">/setbranding</code> — vote bump alone does not upgrade tier).
+          <strong className="text-white">Discovery &amp; momentum:</strong> map, vote rankings, raids, boosts &amp; Bump Bot. <strong className="text-white">Skipper Agent</strong> on all verified accounts (pay-as-you-go; top up via AquaPay). <strong className="text-white">Starter</strong> listings are <strong className="text-white">not announced</strong> by Aquads. <strong className="text-white">Premium</strong> rolls out <strong className="text-white">social and email marketing campaigns</strong> to announce your project (including the newsletter to all users), plus <strong className="text-white">1-hour fast-track listing review</strong>, an <strong className="text-white">in-house blog &amp; press release</strong>, a <strong className="text-white">$5</strong> Skipper AI wallet credit, AMA, ad credit, higher raid cap &amp; <strong className="text-white">custom branding</strong> on bot pings as soon as the listing is live (<strong className="text-white">paid Premium listing</strong> required for <code className="text-cyan-300">/setbranding</code> — vote bump alone does not upgrade tier).
         </li>
       </ul>
     </div>
@@ -1021,7 +1021,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                         `$${PREMIUM_LISTING_FEE_USDC} USDC`
                       )}
                     </div>
-                    <p className="mt-2 text-xs text-gray-400">$5 Skipper AI credit · we announce your listing (social + email) · in-house blog &amp; press release · 5% off Mintfunnel PR · AMA · 7-day banner · ad credit · custom branding when bumped (100+ votes, $10k+ liq) · 5 raids/day → 10 when bumped</p>
+                    <p className="mt-2 text-xs text-gray-400">$5 Skipper AI credit · we announce your listing (social + email) · in-house blog &amp; press release · 5% off Mintfunnel PR · AMA · 7-day banner · ad credit · custom branding on bot pings immediately · 5 raids/day → 10 when bumped</p>
                   </button>
                 </div>
               </div>
@@ -1321,7 +1321,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                         `$${PREMIUM_LISTING_FEE_USDC} USDC`
                       )}
                     </div>
-                    <p className="text-gray-400 text-xs mt-2">$5 Skipper AI credit · we announce your listing (social + email) · in-house blog &amp; press release · 5% off Mintfunnel PR · AMA · 7-day banner · ad credit · custom branding when bumped · 5→10 raids/day</p>
+                    <p className="text-gray-400 text-xs mt-2">$5 Skipper AI credit · we announce your listing (social + email) · in-house blog &amp; press release · 5% off Mintfunnel PR · AMA · 7-day banner · ad credit · custom branding on bot pings immediately · 5→10 raids/day</p>
                   </button>
                 </div>
 
@@ -1402,7 +1402,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                       </div>
                       <div>
                         <h4 className="font-semibold text-white">Upgrade path</h4>
-                        <p className="text-gray-300 text-sm">Switch to <strong className="text-white">paid Premium</strong> anytime from your dashboard so we <strong className="text-white">announce your project</strong> with social and email campaigns (newsletter to all users), plus <strong className="text-white">1-hour fast-track listing review</strong>, an <strong className="text-white">in-house blog &amp; press release</strong>, <strong className="text-white">5% off Mintfunnel PR packages</strong>, a <strong className="text-white">$5</strong> Skipper AI wallet credit, AMA, a <strong className="text-white">7-day</strong> homepage banner, $50 ad credit, custom bots/branding when bumped, <strong className="text-white">5→10 raids/day</strong>, and more.</p>
+                        <p className="text-gray-300 text-sm">Switch to <strong className="text-white">paid Premium</strong> anytime from your dashboard so we <strong className="text-white">announce your project</strong> with social and email campaigns (newsletter to all users), plus <strong className="text-white">1-hour fast-track listing review</strong>, an <strong className="text-white">in-house blog &amp; press release</strong>, <strong className="text-white">5% off Mintfunnel PR packages</strong>, a <strong className="text-white">$5</strong> Skipper AI wallet credit, AMA, a <strong className="text-white">7-day</strong> homepage banner, $50 ad credit, custom branding on bot pings immediately, <strong className="text-white">5→10 raids/day</strong>, and more.</p>
                       </div>
                     </div>
                   </div>
@@ -1539,7 +1539,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                         Custom Telegram & Discord bots
                         <span className="bg-green-500 text-white px-2 py-0.5 rounded text-xs">Included</span>
                       </h4>
-                      <p className="text-gray-300 text-sm">Raid coordination and engagement on both platforms. <strong className="text-white">Custom branding</strong> on notifications when your <strong className="text-white">paid Premium</strong> bubble is <strong className="text-white">bumped</strong> (100+ bullish votes, $10k+ liquidity).</p>
+                      <p className="text-gray-300 text-sm">Raid coordination and engagement on both platforms. <strong className="text-white">Custom branding</strong> on vote, raid, and bubble pings as soon as your <strong className="text-white">paid Premium</strong> listing is approved — no bump required. Starter keeps default Aquads styling.</p>
                     </div>
                   </div>
                   

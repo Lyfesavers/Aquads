@@ -25,6 +25,10 @@ function getListingTier(ad) {
   return LISTING_TIER_PREMIUM;
 }
 
+/**
+ * Paid Premium listings can set /setbranding immediately after approval.
+ * Starter always uses default Aquads styling on bot pings. Bump is not required.
+ */
 function allowsCustomBranding(ad) {
   return getListingTier(ad) === LISTING_TIER_PREMIUM;
 }

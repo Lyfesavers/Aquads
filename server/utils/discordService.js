@@ -246,8 +246,9 @@ async function handleHelp(interaction) {
   if (user) {
     const tw = user.twitterUsername ? `✅ @${user.twitterUsername}` : '❌ Not set';
     const fb = user.facebookUsername ? `✅ @${user.facebookUsername}` : '❌ Not set';
-    const bumped = await Ad.findOne({ owner: user.username, isBumped: true, status: { $in: ['active', 'approved'] } }).select('customBrandingImage customBrandingVideoUrl');
-    const branding = projectHasCustomBrandingMedia(bumped) ? '✅ Set' : '❌ Not set';
+    const withMedia = await Ad.find({ owner: user.username, status: { $in: ['active', 'approved'] } }).select('customBrandingImage customBrandingVideoUrl listingTier').limit(12);
+    const brandingAd = withMedia.find((a) => allowsCustomBranding(a) && projectHasCustomBrandingMedia(a));
+    const branding = brandingAd ? '✅ Set' : '❌ Not set';
     profileSection = `**${user.username}** | 💰 ${user.points || 0} pts\n🐦 Twitter: ${tw}\n📘 Facebook: ${fb}\n🎨 Branding: ${branding}\n\n`;
   }
   const embed = new EmbedBuilder()
@@ -494,7 +495,6 @@ async function handleBubbles(interaction) {
   if (user) {
     const withMedia = await Ad.find({
       owner: user.username,
-      isBumped: true,
       status: { $in: ['active', 'approved'] },
       $or: [{ customBrandingImage: { $ne: null } }, { customBrandingVideoUrl: { $ne: null } }],
     })
@@ -1115,21 +1115,20 @@ async function handleSetBranding(interaction) {
   }
   const candidates = await Ad.find({
     owner: user.username,
-    isBumped: true,
     status: { $in: ['active', 'approved'] },
   })
     .sort({ updatedAt: -1 })
     .limit(12);
 
-  const bumped = candidates.find((a) => allowsCustomBranding(a));
-  if (!bumped) {
-    const starterBump = candidates.find((a) => getListingTier(a) === LISTING_TIER_STARTER);
-    if (starterBump) {
+  const premiumListing = candidates.find((a) => allowsCustomBranding(a));
+  if (!premiumListing) {
+    const starterListing = candidates.find((a) => getListingTier(a) === LISTING_TIER_STARTER);
+    if (starterListing) {
       return reply(interaction, '❌ Custom branding is included with Premium listings. Upgrade at https://aquads.xyz/dashboard\n\n✅ Starter still has full bot access: raids, votes, boosts & bumps.', true);
     }
-    return reply(interaction, '❌ Custom branding requires a bumped Premium listing. https://aquads.xyz', true);
+    return reply(interaction, '❌ Custom branding is included with Premium listings. https://aquads.xyz/dashboard', true);
   }
-  setState(discordUserId, { action: 'waiting_branding_image', projectId: bumped._id.toString() });
+  setState(discordUserId, { action: 'waiting_branding_image', projectId: premiumListing._id.toString() });
   return reply(
     interaction,
     `🎨 **Set custom branding**\n\n📷 **Image:** attach JPG/PNG (max 500KB)\n${BRANDING_VIDEO_URL_GUIDANCE}\nWe only store the link.\n\nAppears in vote notifications, \`/mybubble\`, and \`/bubbles\`.\n\n**Next message:** attach an image **or** paste a video URL (in this channel or DMs).\n\nUse \`/cancel\` to abort.`,
@@ -1145,7 +1144,6 @@ async function handleRemoveBranding(interaction) {
   }
   const projects = await Ad.find({
     owner: user.username,
-    isBumped: true,
     status: { $in: ['active', 'approved'] },
     $or: [{ customBrandingImage: { $ne: null } }, { customBrandingVideoUrl: { $ne: null } }],
   })
@@ -1733,12 +1731,12 @@ async function startBot() {
           const embed = new EmbedBuilder()
             .setTitle('🎨 Custom Branding')
             .setDescription(
-              '**Premium bumped listings only** (100+ bullish votes).\n\n' +
+              '**Paid Premium listings only** — available as soon as your listing is approved. No bump required.\n\n' +
               '**Starter:** full bot—raids, votes, boosts, bumps—with default Aquads styling on pings. Upgrade to Premium for `/setbranding`.\n\n' +
               '• `/setbranding` – Image (max 500KB) **or** direct **https://** **.mp4** link (max **5MB**, e.g. **catbox.moe** → **files.catbox.moe** link)\n' +
               '• `/removebranding` – Remove custom branding\n\n' +
-              'Shows in vote notifications, /mybubble, and /bubbles.\n\n' +
-              'Bump your project at https://aquads.xyz'
+              'Shows in vote notifications, /mybubble, /bubbles, and raid posts you create.\n\n' +
+              'Upgrade at https://aquads.xyz/dashboard'
             )
             .setColor(0x00bfff)
             .setURL('https://aquads.xyz');
@@ -1824,8 +1822,9 @@ async function startBot() {
           if (user) {
             const tw = user.twitterUsername ? `✅ @${user.twitterUsername}` : '❌ Not set';
             const fb = user.facebookUsername ? `✅ @${user.facebookUsername}` : '❌ Not set';
-            const bumped = await Ad.findOne({ owner: user.username, isBumped: true, status: { $in: ['active', 'approved'] } }).select('customBrandingImage customBrandingVideoUrl');
-            const branding = projectHasCustomBrandingMedia(bumped) ? '✅ Set' : '❌ Not set';
+            const withMedia = await Ad.find({ owner: user.username, status: { $in: ['active', 'approved'] } }).select('customBrandingImage customBrandingVideoUrl listingTier').limit(12);
+            const brandingAd = withMedia.find((a) => allowsCustomBranding(a) && projectHasCustomBrandingMedia(a));
+            const branding = brandingAd ? '✅ Set' : '❌ Not set';
             profileSection = `**${user.username}** | 💰 ${user.points || 0} pts\n🐦 Twitter: ${tw}\n📘 Facebook: ${fb}\n🎨 Branding: ${branding}\n\n`;
           }
           const embed = new EmbedBuilder()

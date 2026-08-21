@@ -404,12 +404,12 @@ function OverviewTab({ status, setActiveTab }) {
   const { telegram, discord, groups, freeRaids, socials, projects } = status;
   const optedInCount = groups.filter((g) => g.optedInToCommunityRaids).length;
   const brandedCount = projects.filter((p) => p.hasCustomBranding).length;
-  const eligibleForBranding = projects.filter((p) => p.allowsCustomBranding && p.isBumped).length;
+  const eligibleForBranding = projects.filter((p) => p.allowsCustomBranding).length;
 
   const actions = [
     { id: 'raids', icon: FaBolt, title: 'Create a raid', desc: `${freeRaids.raidsRemaining} free left today`, gradientFrom: 'from-emerald-500', gradientTo: 'to-green-500' },
     { id: 'groups', icon: FaUsers, title: 'Manage groups', desc: `${groups.length} linked · ${optedInCount} in community raids`, gradientFrom: 'from-cyan-500', gradientTo: 'to-blue-500' },
-    { id: 'branding', icon: FaPalette, title: 'Customize branding', desc: eligibleForBranding > 0 ? `${brandedCount}/${eligibleForBranding} projects branded` : 'Bump a Premium listing to unlock', gradientFrom: 'from-pink-500', gradientTo: 'to-purple-500' },
+    { id: 'branding', icon: FaPalette, title: 'Customize branding', desc: eligibleForBranding > 0 ? `${brandedCount}/${eligibleForBranding} projects branded` : 'Upgrade to Premium to unlock', gradientFrom: 'from-pink-500', gradientTo: 'to-purple-500' },
     { id: 'socials', icon: FaTwitter, title: 'Set social handles', desc: `${socials.twitterUsername ? '✓' : '·'} Twitter · ${socials.facebookUsername ? '✓' : '·'} Facebook`, gradientFrom: 'from-sky-500', gradientTo: 'to-cyan-500' },
   ];
 
@@ -910,8 +910,8 @@ function RaidRow({ raid, onCancel, cancelling }) {
 function BrandingTab({ status, token, refresh, toast }) {
   const [busy, setBusy] = useState(null);
   const [editorFor, setEditorFor] = useState(null);
-  const eligible = status.projects.filter((p) => p.allowsCustomBranding && p.isBumped);
-  const nonEligible = status.projects.filter((p) => !p.allowsCustomBranding || !p.isBumped);
+  const eligible = status.projects.filter((p) => p.allowsCustomBranding);
+  const nonEligible = status.projects.filter((p) => !p.allowsCustomBranding);
 
   const removeBranding = async (projectId) => {
     if (!window.confirm('Remove custom branding from this project? It will fall back to the default video.')) return;
@@ -961,13 +961,13 @@ function BrandingTab({ status, token, refresh, toast }) {
             </div>
             <h3 className="text-lg sm:text-xl font-bold text-white mb-2">No eligible projects yet</h3>
             <p className="text-gray-400 text-sm max-w-md mx-auto mb-6">
-              Custom branding is exclusive to <span className="text-purple-300 font-semibold">Premium bumped listings</span>. Bump a project to unlock it.
+              Custom branding is exclusive to <span className="text-purple-300 font-semibold">Paid Premium listings</span>. It is available as soon as the listing is approved — no bump required.
             </p>
             <Link
-              to="/dashboard/ads"
+              to="/dashboard"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-400 hover:to-pink-400 text-white font-semibold shadow-lg shadow-purple-500/30 transition-transform hover:scale-105"
             >
-              <FaCrown /> Bump a listing
+              <FaCrown /> Upgrade to Premium
             </Link>
           </div>
         </Card>
@@ -1057,7 +1057,7 @@ function BrandingTab({ status, token, refresh, toast }) {
             <SectionHeader
               icon={FaCrown}
               title="Not eligible"
-              subtitle="Bump these to Premium to unlock branding"
+              subtitle="Starter listings keep default Aquads styling on pings"
               gradientFrom="from-gray-500"
               gradientTo="to-gray-600"
             />
@@ -1071,7 +1071,7 @@ function BrandingTab({ status, token, refresh, toast }) {
                   )}
                   <div className="flex-1 truncate text-gray-300">{p.title}</div>
                   <span className="text-xs text-gray-500 uppercase whitespace-nowrap">
-                    {!p.isBumped ? 'not bumped' : `${p.listingTier}`}
+                    {p.listingTier === 'starter' ? 'starter' : p.listingTier || 'starter'}
                   </span>
                 </div>
               ))}

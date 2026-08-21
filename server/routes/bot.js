@@ -373,13 +373,12 @@ router.post('/branding/:adId', auth, async (req, res) => {
     const ad = await Ad.findOne({
       _id: adId,
       owner: user.username,
-      isBumped: true,
       status: { $in: ['active', 'approved'] },
     });
     if (!ad) return res.status(404).json({ error: 'Project not found or not eligible' });
     if (!allowsCustomBranding(ad)) {
       return res.status(403).json({
-        error: 'Custom branding requires a bumped Premium listing. Upgrade at https://aquads.xyz/dashboard.'
+        error: 'Custom branding is included with Premium listings. Upgrade at https://aquads.xyz/dashboard.'
       });
     }
 
@@ -445,7 +444,6 @@ router.delete('/branding/:adId', auth, async (req, res) => {
     const ad = await Ad.findOne({
       _id: adId,
       owner: user.username,
-      isBumped: true,
       status: { $in: ['active', 'approved'] },
     });
     if (!ad) return res.status(404).json({ error: 'Project not found' });

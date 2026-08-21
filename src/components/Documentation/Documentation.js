@@ -770,7 +770,7 @@ Skipper uses a **prepaid USD wallet** (separate from affiliate points):
 | **Starter (free listing)** | Full Skipper access + **$1** trial credit per listing wallet |
 | **Premium (paid listing)** | Full Skipper access + **$5** starter wallet credit (see List Project modal for current USDC price) |
 
-**Paid Premium** also includes the bundled **Premium growth bundle** (**we announce your listing** with social and email campaigns / newsletter to all users, **1-hour fast-track listing review**, in-house blog & press release, PR/AMA where offered, ad credit, longer homepage banner, higher raid cap, custom bot branding when bumped, etc.). **Starter** listings go on the map only — Aquads does not announce them. See **Listing Your Token** for the full comparison.
+**Paid Premium** also includes the bundled **Premium growth bundle** (**we announce your listing** with social and email campaigns / newsletter to all users, **1-hour fast-track listing review**, in-house blog & press release, PR/AMA where offered, ad credit, longer homepage banner, higher raid cap, custom bot branding as soon as the listing is live, etc.). **Starter** listings go on the map only — Aquads does not announce them. See **Listing Your Token** for the full comparison.
 
 ### Suggested first-week workflow
 
@@ -867,7 +867,7 @@ You can pay via:
 
 - **AquaSwap** + **BexTools**-style routing from your bubble (live chart & swap handoff)
 - Homepage bubble map + vote rankings + bump at **100+ bullish** and **$10k+ liquidity** (organic votes and vote boosts both count toward votes)
-- Raids: **Starter** **1**/day (bump does not raise this). **Premium** up to **5**/day before bump, up to **10**/day once bumped. Custom \`/setbranding\` media on notifications is paid Premium when bumped. **Vote bump (100+ bullish) does not upgrade listing tier.**
+- Raids: **Starter** **1**/day (bump does not raise this). **Premium** up to **5**/day before bump, up to **10**/day once bumped. Custom \`/setbranding\` media on notifications is paid Premium as soon as the listing is live. **Vote bump (100+ bullish) does not upgrade listing tier.**
 
 **Skipper Agent** is on all **email-verified** accounts (pay-as-you-go; top up via AquaPay). See **Skipper Agent → Overview & Guide** in the docs sidebar for modes, wallets, and listing via Agent.
 
@@ -4366,7 +4366,7 @@ For Facebook raid participation:
 - ✅ Vote on projects (earn 1 pt per first vote)
 - ✅ View top 10 bubble rankings
 - ✅ Create extra raids (2000 pts each after your free daily quota)
-- **Starter vs Premium bots:** Starter gets the **same bot commands** (raids, votes, boosts, bumps). **Only Premium** unlocked **custom** logo/video on notifications via \`/setbranding\` once bumped (**100+ bullish**, **$10k+ liquidity**).
+- **Starter vs Premium bots:** Starter gets the **same bot commands** (raids, votes, boosts, bumps). **Only Premium** unlocks **custom** logo/video on notifications via \`/setbranding\` as soon as the listing is approved.
 
 ### Premium Features (listed project + bump tier required)
 
@@ -4439,7 +4439,7 @@ Full reference of all 16 commands available in @aquadsbumpbot.
 
 | Command | Description |
 |---------|-------------|
-| \`/setbranding\` | Photo or **direct** \`.mp4\` URL (max **5MB**, e.g. **catbox.moe**); not YouTube (**Premium bumped only** — Starter uses default Aquads styling on pings) |
+| \`/setbranding\` | Photo or **direct** \`.mp4\` URL (max **5MB**, e.g. **catbox.moe**); not YouTube (**Paid Premium only**, available immediately — Starter uses default Aquads styling on pings) |
 | \`/removebranding\` | Remove your custom branding |
 
 ### Group Commands
@@ -4542,7 +4542,7 @@ Purchase boosts via \`/boostvote\`:
 
 ### Custom Branding
 
-**Premium bumped projects only** (**100+ bullish votes**, **$10k+ liquidity**):
+**Paid Premium listings only** (available as soon as the listing is approved; no bump required):
 
 - Starter listings use the bot for everything **except** custom notification media—they keep **default Aquads** styling on pings until upgraded.
 - Upload your logo/image (max 500KB, JPG/PNG)
@@ -4582,7 +4582,7 @@ Purchase boosts via \`/boostvote\`:
 | Create extra raid | -2000 pts |
 | Redeem for cash | 10,000 pts = $100 CAD |
 
-> 💡 **Tip**: **Starter** stays at **1** free raid/day even when bumped. **Premium** scales free raids from **up to 5**/day before bump to **up to 10**/day once bumped (**100+ bullish**, **$10k+ liq**). Custom \`/setbranding\` on notifications is **Premium** when bumped.
+> 💡 **Tip**: **Starter** stays at **1** free raid/day even when bumped. **Premium** scales free raids from **up to 5**/day before bump to **up to 10**/day once bumped (**100+ bullish**, **$10k+ liq**). Custom \`/setbranding\` on notifications is **Premium** as soon as the listing is live.
     `,
     prevPage: { id: 'bot-commands', title: 'Bot Commands' },
     nextPage: { id: 'browser-extension', title: 'Browser Extension' },

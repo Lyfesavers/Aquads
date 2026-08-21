@@ -41,7 +41,6 @@ async function getCreatorBrandingFromRaidId(raidId, platform = null) {
     if (!user) return null;
     const ads = await Ad.find({
       owner: user.username,
-      isBumped: true,
       status: { $in: ['active', 'approved'] },
       $or: [
         { customBrandingImage: { $exists: true, $ne: null } },
@@ -1716,14 +1715,12 @@ const telegramService = {
         const twitter = user.twitterUsername ? `✅ @${user.twitterUsername}` : '❌ Not set';
         const facebook = user.facebookUsername ? `✅ @${user.facebookUsername}` : '❌ Not set';
         
-        // Check if user has a bumped project with branding
-        const bumpedProject = await Ad.findOne({
+        const brandingAds = await Ad.find({
           owner: user.username,
-          isBumped: true,
           status: { $in: ['active', 'approved'] }
-        }).select('customBrandingImage customBrandingVideoUrl');
-        
-        const branding = projectHasCustomBrandingMedia(bumpedProject) ? '✅ Set' : '❌ Not set';
+        }).select('customBrandingImage customBrandingVideoUrl listingTier');
+        const brandingAd = brandingAds.find((a) => allowsCustomBranding(a) && projectHasCustomBrandingMedia(a));
+        const branding = brandingAd ? '✅ Set' : '❌ Not set';
         
         profileSection = `👤 <b>${user.username}</b> | 💰 ${user.points || 0} pts
 🐦 Twitter: ${twitter}
@@ -1775,14 +1772,12 @@ ${profileSection}Select a category below:`;
         const twitter = user.twitterUsername ? `✅ @${user.twitterUsername}` : '❌ Not set';
         const facebook = user.facebookUsername ? `✅ @${user.facebookUsername}` : '❌ Not set';
         
-        // Check if user has a bumped project with branding
-        const bumpedProject = await Ad.findOne({
+        const brandingAds = await Ad.find({
           owner: user.username,
-          isBumped: true,
           status: { $in: ['active', 'approved'] }
-        }).select('customBrandingImage customBrandingVideoUrl');
-        
-        const branding = projectHasCustomBrandingMedia(bumpedProject) ? '✅ Set' : '❌ Not set';
+        }).select('customBrandingImage customBrandingVideoUrl listingTier');
+        const brandingAd = brandingAds.find((a) => allowsCustomBranding(a) && projectHasCustomBrandingMedia(a));
+        const branding = brandingAd ? '✅ Set' : '❌ Not set';
         
         profileSection = `👤 <b>${user.username}</b> | 💰 ${user.points || 0} pts
 🐦 Twitter: ${twitter}
@@ -1946,7 +1941,7 @@ Vote on projects and view trending bubbles!
   editHelpBranding: async (chatId, messageId) => {
     const message = `🎨 Custom Branding
 
-**Premium listings only**, with a **bumped** bubble (100+ bullish votes).
+**Paid Premium listings only** — available as soon as your listing is approved. No bump required.
 
 Starter listings still use the bot for raids, votes, boosts & bumps—Aquads keeps default styling on notifications until you upgrade.
 
@@ -1961,7 +1956,7 @@ Starter listings still use the bot for raids, votes, boosts & bumps—Aquads kee
 
 ✨ Appears in vote notifications, /mybubble, /bubbles, and raid posts when you're the raid creator
 
-🚀 Bump your project at: https://aquads.xyz`;
+🚀 Upgrade at: https://aquads.xyz/dashboard`;
 
     const keyboard = {
       inline_keyboard: [[
@@ -3209,7 +3204,7 @@ ${raidLinkLine}
         const gid = callbackQuery.data.slice('mygroup_remove_'.length);
         await telegramService.handleMyGroupRemoveCallback(chatId, userId, messageId, gid);
       }
-      // /setbranding — project picker when the user owns multiple bumped projects
+      // /setbranding — project picker when the user owns multiple Premium listings
       else if (callbackQuery.data.startsWith('setbrand_')) {
         const adId = callbackQuery.data.slice('setbrand_'.length);
         await telegramService.handleSetBrandingProjectCallback(chatId, userId, messageId, adId);
@@ -4605,15 +4600,15 @@ Tap to update:`;
       if (telegramUserId) {
         const user = await User.findOne({ telegramId: telegramUserId.toString() });
         if (user) {
-          const userProject = await Ad.findOne({ 
+          const withMedia = await Ad.find({ 
             owner: user.username,
-            isBumped: true,
             status: { $in: ['active', 'approved'] },
             $or: [
               { customBrandingImage: { $ne: null } },
               { customBrandingVideoUrl: { $ne: null } },
             ],
-          }).select('customBrandingImage customBrandingVideoUrl');
+          }).select('customBrandingImage customBrandingVideoUrl listingTier').limit(12);
+          const userProject = withMedia.find((a) => allowsCustomBranding(a));
           
           if (userProject) {
             if (projectUsesVideoBranding(userProject)) {
@@ -6375,7 +6370,6 @@ Tap to update:`;
 
       const candidates = await Ad.find({
         owner: user.username,
-        isBumped: true,
         status: { $in: ['active', 'approved'] }
       })
         .sort({ updatedAt: -1 })
@@ -6385,14 +6379,14 @@ Tap to update:`;
       const eligible = candidates.filter((a) => allowsCustomBranding(a));
 
       if (eligible.length === 0) {
-        const starterBump = candidates.find((a) => getListingTier(a) === LISTING_TIER_STARTER);
-        if (starterBump) {
+        const starterListing = candidates.find((a) => getListingTier(a) === LISTING_TIER_STARTER);
+        if (starterListing) {
           await telegramService.sendBotMessage(chatId,
             '❌ Custom branding is included with Premium listings. Upgrade at https://aquads.xyz/dashboard\n\n✅ Starter still has full bot access: raids, votes, boosts & bumps—only custom logo/video on notifications is Premium.');
           return;
         }
         await telegramService.sendBotMessage(chatId,
-          '❌ Custom branding requires a bumped Premium listing.\n\n🚀 https://aquads.xyz');
+          '❌ Custom branding is included with Premium listings.\n\n🚀 https://aquads.xyz/dashboard');
         return;
       }
 
@@ -6418,7 +6412,7 @@ Tap to update:`;
       await telegramService.sendBotMessageWithKeyboard(
         chatId,
         `🎨 <b>Pick which project to set branding on</b>\n\n` +
-        `You have <b>${eligible.length}</b> Premium bumped projects eligible for custom branding. Choose which one below — the bot will then ask you for the image or video URL.\n\n` +
+        `You have <b>${eligible.length}</b> Premium projects eligible for custom branding. Choose which one below — the bot will then ask you for the image or video URL.\n\n` +
         `🎨 = already has custom branding · ⚪️ = default branding`,
         { inline_keyboard: rows },
         { parseMode: 'HTML' }
@@ -6446,7 +6440,6 @@ Tap to update:`;
       const project = await Ad.findOne({
         _id: adId,
         owner: user.username,
-        isBumped: true,
         status: { $in: ['active', 'approved'] }
       });
       if (!project || !allowsCustomBranding(project)) {
@@ -6482,7 +6475,6 @@ Tap to update:`;
 
       const projects = await Ad.find({
         owner: user.username,
-        isBumped: true,
         status: { $in: ['active', 'approved'] },
         $or: [
           { customBrandingImage: { $ne: null } },
@@ -6547,7 +6539,6 @@ Tap to update:`;
       const project = await Ad.findOne({
         _id: adId,
         owner: user.username,
-        isBumped: true,
         status: { $in: ['active', 'approved'] }
       });
       if (!project) {

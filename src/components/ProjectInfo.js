@@ -538,7 +538,7 @@ const ProjectInfo = ({ currentUser, ads = [], onAdPatched }) => {
                 <li className="flex items-start gap-3"><FaCheckCircle className="text-cyan-300 mt-0.5 shrink-0 text-xs" /><span><strong className="text-white">1-hour fast-track</strong> listing review after payment</span></li>
                 <li className="flex items-start gap-3"><FaCheckCircle className="text-cyan-300 mt-0.5 shrink-0 text-xs" /><span><strong className="text-white">7-day</strong> complimentary homepage banner</span></li>
                 <li className="flex items-start gap-3"><FaCheckCircle className="text-cyan-300 mt-0.5 shrink-0 text-xs" /><span>Free AMA, ad campaign exposure, and $50 ad credit</span></li>
-                <li className="flex items-start gap-3"><FaCheckCircle className="text-cyan-300 mt-0.5 shrink-0 text-xs" /><span>Raids <strong className="text-white">5/day</strong>, then <strong className="text-white">10/day</strong> once bumped · custom branding when bumped</span></li>
+                <li className="flex items-start gap-3"><FaCheckCircle className="text-cyan-300 mt-0.5 shrink-0 text-xs" /><span>Raids <strong className="text-white">5/day</strong>, then <strong className="text-white">10/day</strong> once bumped · custom branding on bot pings immediately</span></li>
                 <li className="flex items-start gap-3"><FaCheckCircle className="text-cyan-300 mt-0.5 shrink-0 text-xs" /><span><strong className="text-white">$5 Skipper</strong> AI wallet credit</span></li>
               </ul>
               <button
@@ -709,7 +709,7 @@ const ProjectInfo = ({ currentUser, ads = [], onAdPatched }) => {
               <p className="flex items-start gap-2.5"><FaCheckCircle className="text-cyan-400 mt-0.5 shrink-0 text-xs" /><span>Liquidity is re-checked every 2 days — restore the pool and tap Bump to re-qualify</span></p>
               <p className="flex items-start gap-2.5"><FaCheckCircle className="text-cyan-400 mt-0.5 shrink-0 text-xs" /><span>Below 100 votes or $10k liquidity, size shrinks over time</span></p>
               <p className="flex items-start gap-2.5"><FaCheckCircle className="text-cyan-400 mt-0.5 shrink-0 text-xs" /><span>Premium raid caps rise once bumped; Starter stays at 1/day</span></p>
-              <p className="flex items-start gap-2.5 sm:col-span-2"><FaStar className="text-amber-300 mt-0.5 shrink-0 text-xs" /><span>Bump does not upgrade listing tier. Custom <strong className="text-white">/setbranding</strong> is Premium-only when bumped; Starter keeps default Aquads styling.</span></p>
+              <p className="flex items-start gap-2.5 sm:col-span-2"><FaStar className="text-amber-300 mt-0.5 shrink-0 text-xs" /><span>Bump does not upgrade listing tier. Custom <strong className="text-white">/setbranding</strong> is a Premium perk as soon as the listing is live; Starter keeps default Aquads styling.</span></p>
             </div>
           </div>
         </div>
