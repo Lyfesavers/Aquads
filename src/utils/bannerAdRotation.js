@@ -12,6 +12,7 @@ let inFlight = null;
 let fetchSeq = 0;
 let queuedRefetch = false;
 const listeners = new Set();
+const primedMedia = new Set();
 let rotationTimer = null;
 let refreshTimer = null;
 let expiryTimer = null;
@@ -53,13 +54,19 @@ function emit() {
   listeners.forEach((listener) => listener(state));
 }
 
+function preloadOnce(url) {
+  if (!url || primedMedia.has(url)) return;
+  primedMedia.add(url);
+  preloadBannerMedia(url);
+}
+
 function preloadAround({ banners: list, currentIndex }) {
   if (!list.length) return;
   const current = list[currentIndex];
-  if (current?.gif) preloadBannerMedia(current.gif);
+  preloadOnce(current?.gif);
   if (list.length > 1) {
     const next = list[(currentIndex + 1) % list.length];
-    if (next?.gif) preloadBannerMedia(next.gif);
+    preloadOnce(next?.gif);
   }
 }
 
