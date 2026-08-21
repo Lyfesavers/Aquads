@@ -455,3 +455,4 @@ const warmupBlogsCache = async () => {
 
 module.exports = router;
 module.exports.warmupBlogsCache = warmupBlogsCache;
+module.exports.invalidateBlogsCache = invalidateBlogsCache;

@@ -16,13 +16,17 @@ const blogSchema = new Schema({
     required: true,
     validate: {
       validator: function (v) {
-        if (!v || typeof v !== 'string') return false;
+        if (!v || typeof v !== 'string' || v.length > 2048) return false;
         // External image hosts (legacy)
         if (/^https?:\/\/.+\.(jpg|jpeg|png|gif|webp)(\?.*)?$/i.test(v)) {
           return true;
         }
         // Aquads-hosted blog media stored in MongoDB
-        return /^https?:\/\/[^/]+\/api\/blogs\/media\/[a-fA-F0-9]{24}(\?.*)?$/i.test(v);
+        if (/^https?:\/\/[^/]+\/api\/blogs\/media\/[a-fA-F0-9]{24}(\?.*)?$/i.test(v)) {
+          return true;
+        }
+        // Mintfunnel / CDN hero images that omit a file extension
+        return /^https:\/\/[^\s<>"']+$/i.test(v);
       },
       message: (props) => `${props.value} is not a valid image URL!`,
     },
@@ -40,6 +44,13 @@ const blogSchema = new Schema({
   isPressRelease: {
     type: Boolean,
     default: false
+  },
+  mintfunnelOrderId: {
+    type: Number
+  },
+  mintfunnelOrderNumber: {
+    type: String,
+    trim: true
   },
   createdAt: {
     type: Date,
@@ -63,6 +74,7 @@ blogSchema.index({ author: 1, createdAt: -1 }); // For author's blogs by date
 blogSchema.index({ createdAt: -1 }); // For blogs by creation date
 blogSchema.index({ updatedAt: -1 }); // For blogs by update date
 blogSchema.index({ authorUsername: 1 }); // For author username lookups
+blogSchema.index({ mintfunnelOrderId: 1 }, { unique: true, sparse: true });
 
 
 module.exports = mongoose.model('Blog', blogSchema); 

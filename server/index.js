@@ -546,6 +546,10 @@ app.use((req, res, next) => {
   next();
 });
 
+// Mintfunnel signs the raw POST body. Mount this BEFORE express.json() so
+// the receiver can HMAC the exact bytes (see routes/mintfunnelWebhook.js).
+app.use('/api/webhooks/mintfunnel', require('./routes/mintfunnelWebhook'));
+
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
@@ -563,7 +567,8 @@ app.use('/api', (req, res, next) => {
     const isPfpGeneratorStatus = /^\/pfp-generator\/status$/.test(req.path);
     // Per-user PFP collection list (Authorization); must not be shared CDN cache
     const isPfpGeneratorList = /^\/pfp-generator\/list$/.test(req.path);
-    if (isOrderStatus || isLinkInBioPublicData || isPfpGeneratorStatus || isPfpGeneratorList) {
+    const isMintfunnelWebhook = /^\/webhooks\/mintfunnel\/?$/.test(req.path);
+    if (isOrderStatus || isLinkInBioPublicData || isPfpGeneratorStatus || isPfpGeneratorList || isMintfunnelWebhook) {
       res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
     } else {
       res.set('Cache-Control', 'public, max-age=300');
