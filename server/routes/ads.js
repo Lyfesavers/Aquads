@@ -93,11 +93,10 @@ const ADDON_PACKAGES = [
     originalPrice: 99,
     price: 99,
     features: [
-      'Newsroom Press Release',
-      'Leading Web3 Press Release Site',
-      'Approx. Monthly Visitors: 15000',
-      'Includes Social Media Posting',
-      'Domain Authority: 43'
+      'Professional blog written in-house for your project',
+      'Published as a press release on Aquads',
+      'Posted to the Aquads newsroom',
+      'Same Day Distribution Available'
     ]
   },
   {

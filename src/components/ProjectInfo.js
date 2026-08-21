@@ -12,32 +12,32 @@ const AQUADS_X_URL = 'https://x.com/_Aquads_';
 const AQUADS_TELEGRAM_URL = 'https://t.me/+6rJbDLqdMxA3ZTUx';
 const LISTING_TWEET_INTENT = `https://twitter.com/intent/tweet?text=${encodeURIComponent('Listing our project on @_Aquads_ — excited to join the bubble map! 🚀')}`;
 
-// Aquads-branded marketing add-on packages - Powered by Mintfunnel (Coinbound)
-// All information sourced directly from https://mintfunnel.co/crypto-press-release-distribution/
+// Aquads-branded marketing add-on packages
+// AquaSplash is in-house (blog + press release on Aquads). Higher tiers are powered by Mintfunnel (Coinbound).
 const ADDON_PACKAGES = [
   {
     id: 'aqua_splash',
     name: 'AquaSplash',
-    partnerName: 'On-Demand Media',
+    partnerName: 'In-House PR',
     originalPrice: 99,
     price: 99,
     icon: FaNewspaper,
     color: 'from-green-500 to-emerald-500',
     tier: 'starter',
-    idealFor: 'Projects seeking targeted distribution with flexibility in media selection',
+    idealFor: 'Projects that want an in-house blog article published as a press release on Aquads',
     turnaround: 'Same Day Available',
     features: [
-      'Pick Your Own Media Outlets',
-      'Create Custom Campaigns',
-      'Mintfunnel Newsroom Inclusion',
+      'Professional blog written in-house for your project',
+      'Published as a press release on Aquads',
+      'Posted to the Aquads newsroom',
       'Same Day Distribution Available'
     ],
     highlights: [
-      { label: 'Flexibility', value: 'Choose Your Outlets' },
-      { label: 'Speed', value: 'Same Day' },
-      { label: 'Support', value: 'Standard' }
+      { label: 'Written', value: 'In-House Blog' },
+      { label: 'Published', value: 'Aquads PR' },
+      { label: 'Speed', value: 'Same Day' }
     ],
-    platforms: []
+    platforms: ['Aquads Newsroom']
   },
   {
     id: 'aqua_ripple',

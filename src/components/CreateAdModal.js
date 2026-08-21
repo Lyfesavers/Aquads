@@ -34,22 +34,22 @@ const BLOCKCHAIN_OPTIONS = [
   }
 ];
 
-// Aquads-branded marketing add-on packages - Powered by Mintfunnel (Coinbound)
-// All information sourced directly from https://mintfunnel.co/crypto-press-release-distribution/
+// Aquads-branded marketing add-on packages
+// AquaSplash is in-house (blog + press release on Aquads). Higher tiers are powered by Mintfunnel (Coinbound).
 const ADDON_PACKAGES = [
   {
     id: 'aqua_splash',
     name: 'AquaSplash',
-    partnerName: 'On-Demand Media',
+    partnerName: 'In-House PR',
     originalPrice: 99,
     price: 99,
     icon: FaNewspaper,
     color: 'from-green-500 to-emerald-500',
     turnaround: 'Same Day Available',
     features: [
-      'Pick Your Own Media Outlets',
-      'Create Custom Campaigns',
-      'Mintfunnel Newsroom Inclusion',
+      'Professional blog written in-house for your project',
+      'Published as a press release on Aquads',
+      'Posted to the Aquads newsroom',
       'Same Day Distribution Available'
     ]
   },
@@ -1391,7 +1391,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                       </div>
                       <div>
                         <h4 className="font-semibold text-white">Optional Mintfunnel PR (paid)</h4>
-                        <p className="text-gray-300 text-sm">Add AquaSplash, AquaRipple, and other partner packages in step 2—you pay <strong className="text-white">only those prices</strong>; no base listing fee on Starter.</p>
+                        <p className="text-gray-300 text-sm">Add AquaSplash, AquaRipple, and other PR packages in step 2—you pay <strong className="text-white">only those prices</strong>; no base listing fee on Starter.</p>
                       </div>
                     </div>
 

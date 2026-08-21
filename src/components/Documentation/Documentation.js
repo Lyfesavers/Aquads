@@ -846,7 +846,7 @@ After entering project info, you can add premium marketing packages:
 
 | Package | Price | Features |
 |---------|-------|----------|
-| **AquaSplash** | $99 | On-demand media, same day |
+| **AquaSplash** | $99 | In-house blog & press release, same day |
 | **AquaRipple** | $284 | 4+ media pickups guaranteed |
 | **AquaWave** | $1,329 | 9+ pickups, SEO optimization |
 | **AquaFlow** | $2,754 | Major crypto news coverage |
