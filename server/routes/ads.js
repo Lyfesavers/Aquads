@@ -218,13 +218,12 @@ const updateAdSize = async (ad) => {
       return;
     }
 
-    const timeSinceCreation = now - new Date(ad.createdAt).getTime();
-    const shrinkIntervals = Math.floor(timeSinceCreation / SHRINK_INTERVAL);
-    let newSize = MAX_SIZE;
-    for (let i = 0; i < shrinkIntervals; i++) {
-      newSize *= SHRINK_PERCENTAGE;
-    }
-    newSize = Math.max(MIN_SIZE, Math.round(newSize * 10) / 10);
+    const newSize = computeShrunkSize(ad.createdAt, now, {
+      shrinkInterval: SHRINK_INTERVAL,
+      maxSize: MAX_SIZE,
+      minSize: MIN_SIZE,
+      shrinkPercentage: SHRINK_PERCENTAGE
+    });
 
     if (newSize !== ad.size) {
       const result = await Ad.findByIdAndUpdate(
@@ -242,17 +241,49 @@ const updateAdSize = async (ad) => {
 };
 
 // Periodic bubble shrink — only fetch fields needed for size math (NOT full docs).
+// Skip overlapping ticks so a slow Mongo round cannot stack 15s jobs on the event loop.
+let shrinkTickRunning = false;
 setInterval(async () => {
+  if (shrinkTickRunning) return;
+  shrinkTickRunning = true;
   try {
+    const now = Date.now();
     const ads = await Ad.find({ status: { $in: ['active', 'approved'] } })
       .select('_id id size bullishVotes createdAt status meetsLiquidityRequirement isBumped bumpedAt bumpExpiresAt bumpDuration')
       .lean();
 
+    const ops = [];
+    const changedAds = [];
     for (const ad of ads) {
-      await updateAdSize(ad);
+      const { changed, $set } = getBumpSyncUpdate(ad, ad.bullishVotes, sizeOptsForBump(now));
+      if (!changed) continue;
+      ops.push({
+        updateOne: {
+          filter: { _id: ad._id },
+          update: { $set }
+        }
+      });
+      changedAds.push({
+        _id: ad._id,
+        id: ad.id,
+        size: $set.size,
+        bullishVotes: ad.bullishVotes,
+        isBumped: $set.isBumped,
+        status: ad.status
+      });
+    }
+
+    if (ops.length > 0) {
+      await Ad.bulkWrite(ops, { ordered: false });
+      invalidateAdsCache();
+      for (const ad of changedAds) {
+        socket.emitAdUpdate('update', ad);
+      }
     }
   } catch (error) {
     // Periodic check error
+  } finally {
+    shrinkTickRunning = false;
   }
 }, SHRINK_INTERVAL);
 

@@ -96,7 +96,10 @@ setInterval(async () => {
 }, 2 * 60 * 1000); // Run every 2 minutes
 
 // Vote Boost Background Service - Add votes every 30 seconds for active boosts
+let voteBoostTickRunning = false;
 setInterval(async () => {
+  if (voteBoostTickRunning) return;
+  voteBoostTickRunning = true;
   try {
     const { syncAdBumpState } = require('./utils/bumpFromVotes');
     const adsRoutesForCache = require('./routes/ads');
@@ -168,11 +171,16 @@ setInterval(async () => {
     }
   } catch (error) {
     console.error('[Vote Boost] Error in vote boost service:', error.message);
+  } finally {
+    voteBoostTickRunning = false;
   }
 }, 30000); // Run every 30 seconds
 
 // HyperSpace Auto-Complete Service - Complete orders when delivery timer expires
+let hyperSpaceTickRunning = false;
 setInterval(async () => {
+  if (hyperSpaceTickRunning) return;
+  hyperSpaceTickRunning = true;
   try {
     const HyperSpaceOrder = require('./models/HyperSpaceOrder');
     const HyperSpaceAffiliateEarning = require('./models/HyperSpaceAffiliateEarning');
@@ -256,6 +264,8 @@ setInterval(async () => {
     }
   } catch (error) {
     console.error('[HyperSpace Auto-Complete] Error in auto-complete service:', error.message);
+  } finally {
+    hyperSpaceTickRunning = false;
   }
 }, 30000); // Run every 30 seconds to check for expired orders
 
@@ -675,11 +685,23 @@ mongoose.connection.on('connected', () => {
   // Mongoose connected to MongoDB
 });
 
-// Graceful shutdown
-process.on('SIGINT', async () => {
-  await mongoose.connection.close();
+// Graceful shutdown — Railway sends SIGTERM (SIGINT alone never runs on deploy/restart)
+const shutdown = async (signal) => {
+  console.log(`[Shutdown] ${signal} received`);
+  try {
+    server.close();
+  } catch (e) {
+    // ignore
+  }
+  try {
+    await mongoose.connection.close();
+  } catch (e) {
+    // ignore
+  }
   process.exit(0);
-});
+};
+process.on('SIGINT', () => shutdown('SIGINT'));
+process.on('SIGTERM', () => shutdown('SIGTERM'));
 
 // Routes
 app.use('/api/vote-boosts', voteBoostRoutes);
@@ -1083,6 +1105,10 @@ app.use('/api', apiLimiter);
 
 // THEN start the server
 const PORT = process.env.PORT || 5000;
+// Railway/GCP proxies idle longer than Node's 5s default. If Node closes the
+// socket first, reused edge connections wait ~10s then look like "slow APIs."
+server.keepAliveTimeout = 120000;
+server.headersTimeout = 125000;
 server.listen(PORT, () => {
   // Start Telegram bot (fire-and-forget)
   telegramService.startBot();

@@ -26,12 +26,29 @@ function computeShrunkSize(createdAt, now, {
   minSize,
   shrinkPercentage
 }) {
-  const timeSinceCreation = now - new Date(createdAt).getTime();
-  const shrinkIntervals = Math.floor(timeSinceCreation / shrinkInterval);
-  let newSize = maxSize;
-  for (let i = 0; i < shrinkIntervals; i++) {
-    newSize *= shrinkPercentage;
+  const createdMs = new Date(createdAt).getTime();
+  if (!Number.isFinite(createdMs) || !(shrinkInterval > 0)) {
+    return maxSize;
   }
+  const timeSinceCreation = now - createdMs;
+  if (timeSinceCreation <= 0) {
+    return maxSize;
+  }
+  const shrinkIntervals = Math.floor(timeSinceCreation / shrinkInterval);
+  // Size hits minSize after ~7 intervals (100 * 0.9^n). A loop of `age/15s`
+  // iterations per listing blocks the Node event loop for seconds as ads age.
+  if (
+    shrinkPercentage > 0 &&
+    shrinkPercentage < 1 &&
+    minSize > 0 &&
+    minSize < maxSize
+  ) {
+    const intervalsToMin = Math.ceil(Math.log(minSize / maxSize) / Math.log(shrinkPercentage));
+    const n = Math.min(shrinkIntervals, Math.max(0, intervalsToMin));
+    const newSize = maxSize * Math.pow(shrinkPercentage, n);
+    return Math.max(minSize, Math.round(newSize * 10) / 10);
+  }
+  const newSize = maxSize * Math.pow(shrinkPercentage, shrinkIntervals);
   return Math.max(minSize, Math.round(newSize * 10) / 10);
 }
 
