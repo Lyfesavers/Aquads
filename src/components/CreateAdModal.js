@@ -1046,19 +1046,19 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
               {addonsPremiumPriced ? (
                 <div className="mb-4 p-3 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 border border-emerald-500/40 rounded-lg">
                   <p className="text-center text-emerald-200 text-sm font-semibold">
-                    Premium perk: 5% off Mintfunnel PR packages
+                    Premium listing perk: 5% off these PR packages
                   </p>
                   <p className="text-center text-emerald-200/80 text-xs mt-1">
-                    Starter listings pay the full partner rate.
+                    Affiliate 5% is separate and applies only to the $99 Premium listing fee.
                   </p>
                 </div>
               ) : (
                 <div className="mb-4 p-3 bg-gray-800/80 border border-amber-500/40 rounded-lg">
                   <p className="text-center text-amber-200 text-sm font-semibold">
-                    5% off PR packages is a Premium listing perk
+                    Full partner rate — 5% off PR is Premium-only
                   </p>
                   <p className="text-center text-gray-400 text-xs mt-1">
-                    Upgrade to Paid Premium to unlock the Aquads partnership rate on these campaigns.
+                    Switch to Paid Premium to unlock 5% off Mintfunnel campaigns. Affiliate 5% never applies to these packages.
                   </p>
                 </div>
               )}
@@ -1103,7 +1103,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                                   </span>
                                   {addonsPremiumPriced && addon.originalPrice > addon.price && (
                                     <span className="bg-emerald-500 text-white text-xs px-2 py-0.5 rounded-full font-bold">
-                                      5% OFF
+                                      PREMIUM 5% OFF
                                     </span>
                                   )}
                                 </div>
@@ -1167,7 +1167,12 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                     return addon ? (
                       <div key={addonId} className="flex justify-between items-center">
                         <span className="text-gray-300">{addon.name}</span>
-                        <span className="text-green-400 font-bold">${getAddonChargePrice(addon, addonsPremiumPriced).toLocaleString()} USDC</span>
+                        <span className="text-green-400 font-bold">
+                          {addonsPremiumPriced && addon.originalPrice > addon.price && (
+                            <span className="text-xs text-gray-400 line-through mr-2">${addon.originalPrice.toLocaleString()}</span>
+                          )}
+                          ${getAddonChargePrice(addon, addonsPremiumPriced).toLocaleString()} USDC
+                        </span>
                       </div>
                     ) : null;
                   })}
@@ -1265,7 +1270,12 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                                   <h5 className="font-semibold text-white">{addon.name}</h5>
                                   <p className="text-gray-500 text-xs">{addon.partnerName}</p>
                                 </div>
-                                <span className="text-green-400 font-bold">${getAddonChargePrice(addon, addonsPremiumPriced).toLocaleString()}</span>
+                                <span className="text-green-400 font-bold">
+                                  {addonsPremiumPriced && addon.originalPrice > addon.price && (
+                                    <span className="text-xs text-gray-400 line-through mr-2">${addon.originalPrice.toLocaleString()}</span>
+                                  )}
+                                  ${getAddonChargePrice(addon, addonsPremiumPriced).toLocaleString()}
+                                </span>
                               </div>
                               <p className="text-gray-400 text-xs mt-1">{addon.turnaround}</p>
                             </div>
@@ -1421,7 +1431,9 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                     )}
                   </h3>
                 <p className="text-gray-300 mb-6 text-sm">
-                  Includes <strong className="text-white">everything in Starter</strong> plus the premium launch services below. Referred users save <strong className="text-white">5%</strong> on the Premium base fee.
+                  Includes <strong className="text-white">everything in Starter</strong> plus the premium launch services below.{isAffiliate ? (
+                    <> Referred users save <strong className="text-white">5%</strong> on the <strong className="text-white">$99 Premium listing fee only</strong> — not on PR add-ons.</>
+                  ) : null}
                 </p>
                 
                 <div className="space-y-4">
@@ -1617,7 +1629,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                             </div>
                             {listingTierChoice === LISTING_TIER_PREMIUM && isAffiliate && (
                               <div className="flex justify-between text-green-400">
-                                <span>Affiliate Discount (5%):</span>
+                                <span>Affiliate perk (5% off $99 listing fee):</span>
                                 <span>-${affiliateDiscount.toFixed(2)} USDC</span>
                               </div>
                             )}
@@ -1633,8 +1645,13 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                           const addon = ADDON_PACKAGES.find(pkg => pkg.id === addonId);
                           return addon ? (
                             <div key={addonId} className="flex justify-between">
-                              <span>{addon.name}:</span>
-                              <span>${getAddonChargePrice(addon, addonsPremiumPriced).toLocaleString()} USDC</span>
+                              <span>{addon.name}{addonsPremiumPriced ? ' (Premium 5% off)' : ''}:</span>
+                              <span>
+                                {addonsPremiumPriced && addon.originalPrice > addon.price && (
+                                  <span className="text-gray-500 line-through mr-2">${addon.originalPrice.toLocaleString()}</span>
+                                )}
+                                ${getAddonChargePrice(addon, addonsPremiumPriced).toLocaleString()} USDC
+                              </span>
                             </div>
                           ) : null;
                         })}

@@ -853,7 +853,7 @@ After entering project info, you can add Mintfunnel distribution packages. **In-
 | **AquaTidal** | $12,999 | $12,349 | 125+ pickups, CoinTelegraph |
 | **AquaLegend** | $21,999 | $20,899 | Epic package, guaranteed Forbes |
 
-> 💡 **Paid Premium perk**: 5% off Mintfunnel PR packages. Starter listings pay the full partner rate.
+> 💡 **Paid Premium perk**: 5% off Mintfunnel PR packages only. Starter listings pay the full partner rate. The affiliate **5% off** applies only to the **$99 Premium listing fee**, not to PR add-ons.
 
 ### Payment Options
 

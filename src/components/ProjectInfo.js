@@ -539,7 +539,7 @@ const ProjectInfo = ({ currentUser, ads = [], onAdPatched }) => {
                 <li className="flex items-start gap-3"><FaCheckCircle className="text-cyan-300 mt-0.5 shrink-0 text-xs" /><span><strong className="text-white">7-day</strong> complimentary homepage banner</span></li>
                 <li className="flex items-start gap-3"><FaCheckCircle className="text-cyan-300 mt-0.5 shrink-0 text-xs" /><span>Free AMA, ad campaign exposure, and $50 ad credit</span></li>
                 <li className="flex items-start gap-3"><FaCheckCircle className="text-cyan-300 mt-0.5 shrink-0 text-xs" /><span>Raids <strong className="text-white">5/day</strong>, then <strong className="text-white">10/day</strong> once bumped · custom branding when bumped</span></li>
-                <li className="flex items-start gap-3"><FaCheckCircle className="text-cyan-300 mt-0.5 shrink-0 text-xs" /><span><strong className="text-white">$5 Skipper</strong> AI wallet credit · referred users save 5%</span></li>
+                <li className="flex items-start gap-3"><FaCheckCircle className="text-cyan-300 mt-0.5 shrink-0 text-xs" /><span><strong className="text-white">$5 Skipper</strong> AI wallet credit</span></li>
               </ul>
               <button
                 onClick={handleListProjectClick}
@@ -929,9 +929,12 @@ const ProjectInfo = ({ currentUser, ads = [], onAdPatched }) => {
           <p className="text-xl text-gray-300 max-w-3xl mx-auto mb-6">
             Amplify reach after you pick a listing plan. These Mintfunnel campaigns stack <strong className="text-white">on top of</strong> Starter or Premium — priced separately from the base listing fee.
           </p>
-          <div className="mt-4 p-4 bg-gradient-to-r from-cyan-700 to-blue-700 rounded-xl max-w-2xl mx-auto">
-            <p className="text-white font-semibold text-lg">5% off Mintfunnel PR with Paid Premium</p>
-            <p className="text-cyan-100 text-sm mt-1">Starter listings can still buy these campaigns at the full partner rate. Upgrade to Premium to unlock the Aquads partnership discount.</p>
+          <div className="mt-4 p-4 bg-gray-800/80 border border-cyan-500/30 rounded-xl max-w-2xl mx-auto">
+            <p className="text-white font-semibold text-lg">Prices below are the full partner rate</p>
+            <p className="text-gray-300 text-sm mt-1">
+              <strong className="text-white">Paid Premium listings</strong> get 5% off these PR campaigns at checkout.
+              The separate <strong className="text-white">affiliate 5%</strong> applies only to the $99 Premium listing fee — not to these packages.
+            </p>
           </div>
         </div>
 
@@ -994,15 +997,13 @@ const ProjectInfo = ({ currentUser, ads = [], onAdPatched }) => {
                   <p className="text-gray-500 text-xs">{pkg.partnerName}</p>
                 </div>
 
-                {/* Price */}
+                {/* Price — list/Starter rate. Premium 5% is applied at checkout only. */}
                 <div className="text-center mb-4">
                   <div className="flex items-center justify-center gap-2">
                     <span className="text-3xl font-bold text-white">${pkg.originalPrice.toLocaleString()}</span>
                   </div>
-                  <p className="text-emerald-400 text-xs mt-1 font-semibold">
-                    Premium: ${pkg.price.toLocaleString()} USDC (5% off)
-                  </p>
-                  <p className="text-gray-400 text-xs">USDC • {pkg.turnaround}</p>
+                  <p className="text-gray-400 text-xs mt-1">USDC • {pkg.turnaround}</p>
+                  <p className="text-cyan-300/80 text-[11px] mt-1">Premium listings save 5% at checkout</p>
                 </div>
 
                 {/* Highlights */}

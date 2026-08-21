@@ -212,7 +212,7 @@ const Affiliate = () => {
                 </li>
                 <li className="flex items-center space-x-2">
                   <span className="text-green-400">•</span>
-                  <span>5% off project listing fee for projects only</span>
+                  <span>5% off the $99 Premium listing fee only (not Mintfunnel PR add-ons)</span>
                 </li>
               </ul>
             </div>
