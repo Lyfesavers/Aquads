@@ -6,10 +6,10 @@ const LISTING_TIER_PREMIUM = 'premium';
 /** Base Premium listing fee in USDC before affiliate discount */
 const PREMIUM_LISTING_FEE_USDC = 99;
 
-/** Starter: free raids per day while listing exists but no bubble is bumped yet */
+/** Starter: 1 free raid per day (bump does not raise this cap) */
 const STARTER_UNBUMPED_FREE_RAID_DAILY = 1;
-/** Starter: free raids per day once any Starter bubble is bumped */
-const STARTER_BUMPED_FREE_RAID_DAILY = 5;
+/** Starter stays at 1/day even after a bubble bump — extra raids are a Premium unlock */
+const STARTER_BUMPED_FREE_RAID_DAILY = 1;
 /** Premium: free raids per day while listing exists but no Premium bubble is bumped yet */
 const PREMIUM_UNBUMPED_FREE_RAID_DAILY = 5;
 /** Premium: free raids per day once any Premium bubble is bumped */
@@ -31,7 +31,7 @@ function allowsCustomBranding(ad) {
 
 /**
  * Daily free raid cap for Twitter/Facebook (and aligned bot flows).
- * Starter: 1/day unbumped → 5/day bumped.
+ * Starter: 1/day whether bumped or not.
  * Premium: 5/day unbumped → 10/day bumped.
  * Returns { dailyLimit, quotaTier } where quotaTier drives UI copy.
  */
@@ -82,7 +82,7 @@ async function getFreeRaidDailyLimitForUsername(username) {
 
 /** User-visible hint when no live listings qualify for free raids */
 const FREE_RAIDS_REQUIRES_LISTING_REASON =
-  'List an approved project on Aquads first. Starter: 1 free raid/day before bump, then 5/day once bumped. Premium: up to 5/day before bump, then 10/day once bumped.';
+  'List an approved project on Aquads first. Starter: 1 free raid/day (bump does not increase this). Premium: up to 5/day before bump, then 10/day once bumped.';
 
 async function userHasBumpedAdForFreeRaids(username) {
   return (await getFreeRaidDailyLimitForUsername(username)) > 0;

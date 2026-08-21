@@ -829,13 +829,7 @@ const ProjectInfo = ({ currentUser, ads = [], onAdPatched }) => {
               <li className="flex items-start gap-3">
                 <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
                 <span className="min-w-0 flex-1 leading-relaxed">
-                  Coordinated raids: <strong className="text-white">1/day</strong> until bumped, then <strong className="text-white">up to 5/day</strong>
-                </span>
-              </li>
-              <li className="flex items-start gap-3">
-                <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
-                <span className="min-w-0 flex-1 leading-relaxed">
-                  Telegram &amp; Discord Bump Bot — raids, voting, boosts &amp; bumps; <strong className="text-white">custom branding</strong> on notifications is <strong className="text-white">paid Premium only</strong> once bumped
+                  Coordinated raids: <strong className="text-white">1/day</strong> (bump does not increase this — upgrade to Premium for 5→10/day)
                 </span>
               </li>
               <li className="flex items-start gap-3">

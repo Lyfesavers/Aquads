@@ -1001,7 +1001,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                   >
                     <div className="font-bold text-white">Starter</div>
                     <div className="mt-1 text-sm text-green-400">Free base listing</div>
-                    <p className="mt-2 text-xs text-gray-400">AquaSwap + Bex path from bubble · 1 complimentary 24h homepage banner · bump at 100+ votes + $10k liq · 1 raid/day → 5/day when bumped · optional packages: pay package prices only</p>
+                    <p className="mt-2 text-xs text-gray-400">AquaSwap + Bex path from bubble · 1 complimentary 24h homepage banner · bump at 100+ votes + $10k liq · 1 raid/day · optional packages: pay package prices only</p>
                   </button>
                   <button
                     type="button"
@@ -1285,7 +1285,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                   >
                     <div className="font-bold text-white">Starter</div>
                     <div className="text-green-400 text-sm mt-1">Free base listing</div>
-                    <p className="text-gray-400 text-xs mt-2">AquaSwap + Bex routing · 1 complimentary 24h homepage banner · bump at 100+ votes + $10k liq · 1 raid/day → 5 when bumped · optional paid add-ons</p>
+                    <p className="text-gray-400 text-xs mt-2">AquaSwap + Bex routing · 1 complimentary 24h homepage banner · bump at 100+ votes + $10k liq · 1 raid/day · optional paid add-ons</p>
                   </button>
                   <button
                     type="button"
@@ -1351,20 +1351,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                       </div>
                       <div>
                         <h4 className="font-semibold text-white">Coordinated Twitter & Facebook raids</h4>
-                        <p className="text-gray-300 text-sm"><strong className="text-white">1</strong> free raid per day until your bubble is bumped, then up to <strong className="text-white">5</strong>/day once you meet the bump threshold (100+ votes, $10k+ liquidity).</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start space-x-4 p-4 bg-gray-800/50 rounded-lg">
-                      <div className="bg-blue-500 p-2 rounded-full flex-shrink-0">
-                        <FaTelegram className="text-white" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-semibold text-white flex flex-wrap items-center gap-2">
-                          Telegram & Discord raid flows
-                          <FaDiscord className="text-indigo-300 text-lg" />
-                        </h4>
-                        <p className="text-gray-300 text-sm">Use Aquads shared bot flows to coordinate raids with your community. Full bot access on Starter—including bumps and vote boosts—with Aquads default styling on notifications. <strong className="text-white">Custom branding</strong> on pings requires <strong className="text-white">paid Premium</strong> when bumped (vote bump alone does not unlock it).</p>
+                        <p className="text-gray-300 text-sm"><strong className="text-white">1</strong> free coordinated raid per day. Bump does not raise this cap — upgrade to <strong className="text-white">Premium</strong> for 5/day before bump and 10/day once bumped.</p>
                       </div>
                     </div>
 
