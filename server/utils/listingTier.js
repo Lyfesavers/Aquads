@@ -30,6 +30,15 @@ function allowsCustomBranding(ad) {
 }
 
 /**
+ * Mintfunnel PR add-on 5% partnership rate is paid Premium only.
+ * pkg.price is the discounted Premium rate; pkg.originalPrice is the list/Starter rate.
+ */
+function getMintfunnelAddonChargePrice(pkg, listingTier) {
+  if (!pkg) return 0;
+  return listingTier === LISTING_TIER_PREMIUM ? pkg.price : (pkg.originalPrice ?? pkg.price);
+}
+
+/**
  * Daily free raid cap for Twitter/Facebook (and aligned bot flows).
  * Starter: 1/day whether bumped or not.
  * Premium: 5/day unbumped → 10/day bumped.
@@ -100,6 +109,7 @@ module.exports = {
   BUMPED_FREE_RAID_DAILY: PREMIUM_BUMPED_FREE_RAID_DAILY,
   FREE_RAIDS_REQUIRES_LISTING_REASON,
   getListingTier,
+  getMintfunnelAddonChargePrice,
   allowsCustomBranding,
   getFreeRaidQuotaForUsername,
   getFreeRaidDailyLimitForUsername,

@@ -368,7 +368,7 @@ const ProjectInfo = ({ currentUser, ads = [], onAdPatched }) => {
                 "image": "https://www.aquads.xyz/metalogo.png",
                 "offers": {
                   "@type": "Offer",
-                  "price": String(pkg.price),
+                  "price": String(pkg.originalPrice),
                   "priceCurrency": "USD",
                   "availability": "https://schema.org/InStock",
                   "url": "https://www.aquads.xyz/list-token-free",
@@ -875,6 +875,7 @@ const ProjectInfo = ({ currentUser, ads = [], onAdPatched }) => {
             <ul className="space-y-3 text-sm text-gray-200 flex-1">
               <li className="flex items-start gap-3"><FaCheckCircle className="text-cyan-300 mt-0.5 shrink-0 text-xs" /><span><strong className="text-white">Social &amp; email campaigns</strong> to announce your project, including the newsletter to all users</span></li>
               <li className="flex items-start gap-3"><FaCheckCircle className="text-cyan-300 mt-0.5 shrink-0 text-xs" /><span>In-house blog written for you, published as a press release on Aquads</span></li>
+              <li className="flex items-start gap-3"><FaCheckCircle className="text-cyan-300 mt-0.5 shrink-0 text-xs" /><span><strong className="text-white">5% off</strong> Mintfunnel PR campaigns (AquaRipple and up)</span></li>
               <li className="flex items-start gap-3"><FaCheckCircle className="text-cyan-300 mt-0.5 shrink-0 text-xs" /><span><strong className="text-white">1-hour fast-track</strong> listing review after payment</span></li>
               <li className="flex items-start gap-3"><FaCheckCircle className="text-cyan-300 mt-0.5 shrink-0 text-xs" /><span><strong className="text-white">7-day</strong> complimentary homepage banner</span></li>
               <li className="flex items-start gap-3"><FaCheckCircle className="text-cyan-300 mt-0.5 shrink-0 text-xs" /><span>Free AMA, ad campaign exposure, and $50 ad credit</span></li>
@@ -924,9 +925,9 @@ const ProjectInfo = ({ currentUser, ads = [], onAdPatched }) => {
           <p className="text-xl text-gray-300 max-w-3xl mx-auto mb-6">
             Amplify your project's reach with guaranteed coverage on leading crypto news platforms. Stack these <strong className="text-white">on top of</strong> your Starter or Premium listing—priced separately from the base bubble listing fee.
           </p>
-          <div className="mt-4 p-4 bg-gradient-to-r from-green-600 to-emerald-600 rounded-xl max-w-2xl mx-auto">
-            <p className="text-white font-semibold text-lg">🎉 Exclusive 5% Discount Through Aquads Partnership</p>
-            <p className="text-green-100 text-sm mt-1">All packages include same pricing as direct - but with Aquads support!</p>
+          <div className="mt-4 p-4 bg-gradient-to-r from-cyan-700 to-blue-700 rounded-xl max-w-2xl mx-auto">
+            <p className="text-white font-semibold text-lg">5% off Mintfunnel PR with Paid Premium</p>
+            <p className="text-cyan-100 text-sm mt-1">Starter listings can still buy these campaigns at the full partner rate. Upgrade to Premium to unlock the Aquads partnership discount.</p>
           </div>
         </div>
 
@@ -992,11 +993,11 @@ const ProjectInfo = ({ currentUser, ads = [], onAdPatched }) => {
                 {/* Price */}
                 <div className="text-center mb-4">
                   <div className="flex items-center justify-center gap-2">
-                    <span className="text-3xl font-bold text-white">${pkg.price.toLocaleString()}</span>
-                    {pkg.originalPrice !== pkg.price && (
-                      <span className="text-gray-500 line-through text-sm">${pkg.originalPrice.toLocaleString()}</span>
-                    )}
+                    <span className="text-3xl font-bold text-white">${pkg.originalPrice.toLocaleString()}</span>
                   </div>
+                  <p className="text-emerald-400 text-xs mt-1 font-semibold">
+                    Premium: ${pkg.price.toLocaleString()} USDC (5% off)
+                  </p>
                   <p className="text-gray-400 text-xs">USDC • {pkg.turnaround}</p>
                 </div>
 

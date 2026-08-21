@@ -41,7 +41,7 @@ const ADDON_PACKAGES = [
     name: 'AquaRipple',
     partnerName: 'Basic Package',
     originalPrice: 299,
-    price: 284, // 5% discount
+    price: 284, // Premium 5% partnership rate
     icon: FaStar,
     color: 'from-blue-500 to-cyan-500',
     turnaround: '24-48 Hours',
@@ -57,7 +57,7 @@ const ADDON_PACKAGES = [
     name: 'AquaWave',
     partnerName: 'Starter Package',
     originalPrice: 1399,
-    price: 1329, // 5% discount
+    price: 1329, // Premium 5% partnership rate
     icon: FaRocket,
     color: 'from-green-500 to-teal-500',
     turnaround: '24-72 Hours',
@@ -73,7 +73,7 @@ const ADDON_PACKAGES = [
     name: 'AquaFlow',
     partnerName: 'Growth Package',
     originalPrice: 2899,
-    price: 2754, // 5% discount
+    price: 2754, // Premium 5% partnership rate
     icon: FaChartLine,
     color: 'from-purple-500 to-indigo-500',
     turnaround: '24-72 Hours',
@@ -93,7 +93,7 @@ const ADDON_PACKAGES = [
     name: 'AquaStorm',
     partnerName: 'Launch Package',
     originalPrice: 6499,
-    price: 6174, // 5% discount
+    price: 6174, // Premium 5% partnership rate
     icon: FaFire,
     color: 'from-orange-500 to-red-500',
     turnaround: '24-72 Hours',
@@ -111,7 +111,7 @@ const ADDON_PACKAGES = [
     name: 'AquaTidal',
     partnerName: 'Hypergrowth Package',
     originalPrice: 12999,
-    price: 12349, // 5% discount
+    price: 12349, // Premium 5% partnership rate
     icon: FaGem,
     color: 'from-indigo-500 to-purple-500',
     turnaround: '24-72 Hours',
@@ -129,7 +129,7 @@ const ADDON_PACKAGES = [
     name: 'AquaLegend',
     partnerName: 'Epic Package',
     originalPrice: 21999,
-    price: 20899, // 5% discount
+    price: 20899, // Premium 5% partnership rate
     icon: FaCrown,
     color: 'from-yellow-500 to-amber-500',
     turnaround: '24-72 Hours',
@@ -169,6 +169,11 @@ function SharedListingBenefitsNote({ className = '' }) {
   );
 }
 
+function getAddonChargePrice(addon, premiumQualified) {
+  if (!addon) return 0;
+  return premiumQualified ? addon.price : (addon.originalPrice ?? addon.price);
+}
+
 const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = null, userAds = [] }) => {
   // Check if user is an affiliate (referred by another user)
   const isAffiliate = currentUser && currentUser.referredBy;
@@ -192,7 +197,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
   const getInitialAddonTotal = () => {
     if (preSelectedPackage) {
       const addon = ADDON_PACKAGES.find(pkg => pkg.id === preSelectedPackage);
-      return addon ? addon.price : 0;
+      return getAddonChargePrice(addon, true);
     }
     return 0;
   };
@@ -214,13 +219,21 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
     return listingTierChoice === LISTING_TIER_STARTER ? 0 : discountedPremiumFee;
   };
 
+  const addonsPremiumPriced = isAddOnOnly
+    ? Boolean(selectedExistingProject) && selectedExistingProject.listingTier !== LISTING_TIER_STARTER
+    : listingTierChoice === LISTING_TIER_PREMIUM;
+
+  const sumAddonCharges = (addonIds, premiumQualified = addonsPremiumPriced) =>
+    addonIds.reduce((sum, id) => {
+      const addon = ADDON_PACKAGES.find((pkg) => pkg.id === id);
+      return sum + getAddonChargePrice(addon, premiumQualified);
+    }, 0);
+
   const handleListingTierSelect = (tier) => {
     setListingTierChoice(tier);
     setAppliedDiscount(null);
-    const addonTotal = formData.selectedAddons.reduce((sum, id) => {
-      const addon = ADDON_PACKAGES.find(pkg => pkg.id === id);
-      return sum + (addon ? addon.price : 0);
-    }, 0);
+    const premiumQualified = !isAddOnOnly && tier === LISTING_TIER_PREMIUM;
+    const addonTotal = sumAddonCharges(formData.selectedAddons, premiumQualified);
     const base = tier === LISTING_TIER_STARTER ? 0 : discountedPremiumFee;
     setFormData(prev => ({ ...prev, totalAmount: base + addonTotal }));
   };
@@ -630,10 +643,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
         ? prev.selectedAddons.filter(id => id !== addonId)
         : [...prev.selectedAddons, addonId];
       
-      const addonTotal = selectedAddons.reduce((sum, id) => {
-        const addon = ADDON_PACKAGES.find(pkg => pkg.id === id);
-        return sum + (addon ? addon.price : 0);
-      }, 0);
+      const addonTotal = sumAddonCharges(selectedAddons);
       
       const baseFee = getBaseFee();
       
@@ -648,15 +658,13 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
   // Handle switching to add-on only mode
   const handleSkipToAddons = (projectId = null) => {
     setIsAddOnOnly(true);
+    let project = null;
     if (projectId) {
-      const project = userProjects.find(p => p._id === projectId || p.id === projectId);
+      project = userProjects.find(p => p._id === projectId || p.id === projectId);
       setSelectedExistingProject(project);
     }
-    // Recalculate total without base listing fee
-    const addonTotal = formData.selectedAddons.reduce((sum, id) => {
-      const addon = ADDON_PACKAGES.find(pkg => pkg.id === id);
-      return sum + (addon ? addon.price : 0);
-    }, 0);
+    const premiumQualified = project && project.listingTier !== LISTING_TIER_STARTER;
+    const addonTotal = sumAddonCharges(formData.selectedAddons, Boolean(premiumQualified));
     setFormData(prev => ({
       ...prev,
       totalAmount: addonTotal // Just add-ons, no base fee
@@ -668,11 +676,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
   const handleBackToListing = () => {
     setIsAddOnOnly(false);
     setSelectedExistingProject(null);
-    // Recalculate total with base listing fee
-    const addonTotal = formData.selectedAddons.reduce((sum, id) => {
-      const addon = ADDON_PACKAGES.find(pkg => pkg.id === id);
-      return sum + (addon ? addon.price : 0);
-    }, 0);
+    const addonTotal = sumAddonCharges(formData.selectedAddons, listingTierChoice === LISTING_TIER_PREMIUM);
     const base = listingTierChoice === LISTING_TIER_STARTER ? 0 : discountedPremiumFee;
     setFormData(prev => ({
       ...prev,
@@ -706,7 +710,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
     const baseFee = getBaseFee();
     const addonCosts = formData.selectedAddons.reduce((total, addonId) => {
       const addon = ADDON_PACKAGES.find(pkg => pkg.id === addonId);
-      return total + (addon ? addon.price : 0);
+      return total + getAddonChargePrice(addon, addonsPremiumPriced);
     }, 0);
     const newTotal = baseFee + addonCosts;
     setFormData(prev => ({ ...prev, totalAmount: newTotal }));
@@ -988,9 +992,8 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
             {!isAddOnOnly && (
               <div className="mb-8 rounded-xl border border-gray-600 bg-gray-800/40 p-4 sm:p-5">
                 <p className="mb-4 text-center text-sm text-gray-300">
-                  Pick your listing plan first. <strong className="text-white">Starter</strong> has no base listing fee — if you add Mintfunnel packages below, checkout charges{' '}
-                  <strong className="text-white">only those package totals</strong> (same idea as buying add-ons later).{' '}
-                  <strong className="text-white">Premium</strong> adds the base listing fee plus any packages you select.
+                  Pick your listing plan first. <strong className="text-white">Starter</strong> has no base listing fee — Mintfunnel packages below are charged at the <strong className="text-white">full partner rate</strong>.{' '}
+                  <strong className="text-white">Premium</strong> adds the base listing fee and unlocks <strong className="text-white">5% off</strong> those PR packages.
                 </p>
                 <SharedListingBenefitsNote className="mb-4" />
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -1001,7 +1004,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                   >
                     <div className="font-bold text-white">Starter</div>
                     <div className="mt-1 text-sm text-green-400">Free base listing</div>
-                    <p className="mt-2 text-xs text-gray-400">On the map with AquaSwap · no Aquads listing announcement · bump at 100+ votes + $10k liq · 1 raid/day · optional packages: pay package prices only</p>
+                    <p className="mt-2 text-xs text-gray-400">On the map with AquaSwap · no Aquads listing announcement · bump at 100+ votes + $10k liq · 1 raid/day · optional PR packages at full partner rate</p>
                   </button>
                   <button
                     type="button"
@@ -1018,7 +1021,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                         `$${PREMIUM_LISTING_FEE_USDC} USDC`
                       )}
                     </div>
-                    <p className="mt-2 text-xs text-gray-400">$5 Skipper AI credit · we announce your listing (social + email) · in-house blog &amp; press release · AMA · 7-day banner · ad credit · custom branding when bumped (100+ votes, $10k+ liq) · 5 raids/day → 10 when bumped</p>
+                    <p className="mt-2 text-xs text-gray-400">$5 Skipper AI credit · we announce your listing (social + email) · in-house blog &amp; press release · 5% off Mintfunnel PR · AMA · 7-day banner · ad credit · custom branding when bumped (100+ votes, $10k+ liq) · 5 raids/day → 10 when bumped</p>
                   </button>
                 </div>
               </div>
@@ -1040,17 +1043,25 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                 Marketing Add-on Packages
               </h3>
               
-              {/* 5% Discount Promotion Banner */}
-              <div className="mb-4 p-3 bg-gradient-to-r from-red-500/20 to-orange-500/20 border border-red-500/50 rounded-lg">
-                <div className="flex items-center justify-center space-x-2">
-                  <span className="bg-red-500 text-white text-sm px-3 py-1 rounded-full font-bold animate-pulse">
-                    🎉 SPECIAL OFFER: 5% OFF ALL ADD-ON PACKAGES
-                  </span>
+              {addonsPremiumPriced ? (
+                <div className="mb-4 p-3 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 border border-emerald-500/40 rounded-lg">
+                  <p className="text-center text-emerald-200 text-sm font-semibold">
+                    Premium perk: 5% off Mintfunnel PR packages
+                  </p>
+                  <p className="text-center text-emerald-200/80 text-xs mt-1">
+                    Starter listings pay the full partner rate.
+                  </p>
                 </div>
-                <p className="text-center text-red-200 text-xs mt-1">
-                  Save on premium marketing services - confirmed discount from our partners!
-                </p>
-              </div>
+              ) : (
+                <div className="mb-4 p-3 bg-gray-800/80 border border-amber-500/40 rounded-lg">
+                  <p className="text-center text-amber-200 text-sm font-semibold">
+                    5% off PR packages is a Premium listing perk
+                  </p>
+                  <p className="text-center text-gray-400 text-xs mt-1">
+                    Upgrade to Paid Premium to unlock the Aquads partnership rate on these campaigns.
+                  </p>
+                </div>
+              )}
               
               <p className="text-gray-300 mb-4 text-sm">
                 Supercharge your listing with premium marketing packages designed to maximize your project's reach and impact.
@@ -1082,16 +1093,16 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                               <h4 className="font-semibold text-white flex items-center">
                                 {addon.name}
                                 <div className="ml-2 flex items-center space-x-2">
-                                  {addon.originalPrice > addon.price && (
+                                  {addonsPremiumPriced && addon.originalPrice > addon.price && (
                                     <span className="text-xs text-gray-400 line-through">
                                       ${addon.originalPrice.toLocaleString()}
                                     </span>
                                   )}
                                   <span className="text-sm font-bold text-green-400">
-                                    ${addon.price.toLocaleString()} USDC
+                                    ${getAddonChargePrice(addon, addonsPremiumPriced).toLocaleString()} USDC
                                   </span>
-                                  {addon.originalPrice > addon.price && (
-                                    <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full font-bold">
+                                  {addonsPremiumPriced && addon.originalPrice > addon.price && (
+                                    <span className="bg-emerald-500 text-white text-xs px-2 py-0.5 rounded-full font-bold">
                                       5% OFF
                                     </span>
                                   )}
@@ -1156,7 +1167,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                     return addon ? (
                       <div key={addonId} className="flex justify-between items-center">
                         <span className="text-gray-300">{addon.name}</span>
-                        <span className="text-green-400 font-bold">${addon.price.toLocaleString()} USDC</span>
+                        <span className="text-green-400 font-bold">${getAddonChargePrice(addon, addonsPremiumPriced).toLocaleString()} USDC</span>
                       </div>
                     ) : null;
                   })}
@@ -1254,7 +1265,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                                   <h5 className="font-semibold text-white">{addon.name}</h5>
                                   <p className="text-gray-500 text-xs">{addon.partnerName}</p>
                                 </div>
-                                <span className="text-green-400 font-bold">${addon.price.toLocaleString()}</span>
+                                <span className="text-green-400 font-bold">${getAddonChargePrice(addon, addonsPremiumPriced).toLocaleString()}</span>
                               </div>
                               <p className="text-gray-400 text-xs mt-1">{addon.turnaround}</p>
                             </div>
@@ -1300,7 +1311,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                         `$${PREMIUM_LISTING_FEE_USDC} USDC`
                       )}
                     </div>
-                    <p className="text-gray-400 text-xs mt-2">$5 Skipper AI credit · we announce your listing (social + email) · in-house blog &amp; press release · AMA · 7-day banner · ad credit · custom branding when bumped · 5→10 raids/day</p>
+                    <p className="text-gray-400 text-xs mt-2">$5 Skipper AI credit · we announce your listing (social + email) · in-house blog &amp; press release · 5% off Mintfunnel PR · AMA · 7-day banner · ad credit · custom branding when bumped · 5→10 raids/day</p>
                   </button>
                 </div>
 
@@ -1361,7 +1372,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                       </div>
                       <div>
                         <h4 className="font-semibold text-white">Optional Mintfunnel PR (paid)</h4>
-                        <p className="text-gray-300 text-sm">Add AquaRipple and other Mintfunnel packages in step 2—you pay <strong className="text-white">only those prices</strong>; no base listing fee on Starter. In-house blog &amp; press release is included with <strong className="text-white">Premium</strong>.</p>
+                        <p className="text-gray-300 text-sm">Add AquaRipple and other Mintfunnel packages in step 2—you pay the <strong className="text-white">full partner rate</strong> (no 5% off). The Aquads partnership discount on PR campaigns is a <strong className="text-white">Premium</strong> perk. In-house blog &amp; press release is included with Premium.</p>
                       </div>
                     </div>
 
@@ -1381,7 +1392,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                       </div>
                       <div>
                         <h4 className="font-semibold text-white">Upgrade path</h4>
-                        <p className="text-gray-300 text-sm">Switch to <strong className="text-white">paid Premium</strong> anytime from your dashboard so we <strong className="text-white">announce your project</strong> with social and email campaigns (newsletter to all users), plus <strong className="text-white">1-hour fast-track listing review</strong>, an <strong className="text-white">in-house blog &amp; press release</strong>, a <strong className="text-white">$5</strong> Skipper AI wallet credit, AMA, a <strong className="text-white">7-day</strong> homepage banner, $50 ad credit, custom bots/branding when bumped, <strong className="text-white">5→10 raids/day</strong>, and more.</p>
+                        <p className="text-gray-300 text-sm">Switch to <strong className="text-white">paid Premium</strong> anytime from your dashboard so we <strong className="text-white">announce your project</strong> with social and email campaigns (newsletter to all users), plus <strong className="text-white">1-hour fast-track listing review</strong>, an <strong className="text-white">in-house blog &amp; press release</strong>, <strong className="text-white">5% off Mintfunnel PR packages</strong>, a <strong className="text-white">$5</strong> Skipper AI wallet credit, AMA, a <strong className="text-white">7-day</strong> homepage banner, $50 ad credit, custom bots/branding when bumped, <strong className="text-white">5→10 raids/day</strong>, and more.</p>
                       </div>
                     </div>
                   </div>
@@ -1454,6 +1465,16 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                     <div>
                       <h4 className="font-semibold text-white">In-house blog &amp; press release</h4>
                       <p className="text-gray-300 text-sm">Professional blog written in-house for your project, published as a press release on Aquads and posted to the Aquads newsroom.</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start space-x-4 p-4 bg-gray-800/50 rounded-lg border border-emerald-500/40">
+                    <div className="bg-emerald-600 p-2 rounded-full">
+                      <FaGift className="text-white" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-white">5% off Mintfunnel PR campaigns</h4>
+                      <p className="text-gray-300 text-sm">Paid Premium unlocks the Aquads partnership rate on AquaRipple and every Mintfunnel package. Starter listings pay the full partner price.</p>
                     </div>
                   </div>
 
@@ -1613,7 +1634,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                           return addon ? (
                             <div key={addonId} className="flex justify-between">
                               <span>{addon.name}:</span>
-                              <span>${addon.price.toLocaleString()} USDC</span>
+                              <span>${getAddonChargePrice(addon, addonsPremiumPriced).toLocaleString()} USDC</span>
                             </div>
                           ) : null;
                         })}

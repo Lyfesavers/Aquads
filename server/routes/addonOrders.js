@@ -1,18 +1,27 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const router = express.Router();
 const AddonOrder = require('../models/AddonOrder');
+const Ad = require('../models/Ad');
 const auth = require('../middleware/auth');
 const requireEmailVerification = require('../middleware/emailVerification');
 const socket = require('../socket');
+const {
+  LISTING_TIER_STARTER,
+  getListingTier,
+  getMintfunnelAddonChargePrice
+} = require('../utils/listingTier');
 
 // Mintfunnel PR add-ons (server-side pricing). In-house blog + press release ships with Premium.
 const RETIRED_ADDON_IDS = new Set(['aqua_splash']);
 
 const ADDON_PACKAGES = [
-  { id: 'aqua_ripple', name: 'AquaRipple', price: 284 },
-  { id: 'aqua_wave', name: 'AquaWave', price: 1329 },
-  { id: 'aqua_flow', name: 'AquaFlow', price: 2754 },
-  { id: 'aqua_storm', name: 'AquaStorm', price: 6174 }
+  { id: 'aqua_ripple', name: 'AquaRipple', originalPrice: 299, price: 284 },
+  { id: 'aqua_wave', name: 'AquaWave', originalPrice: 1399, price: 1329 },
+  { id: 'aqua_flow', name: 'AquaFlow', originalPrice: 2899, price: 2754 },
+  { id: 'aqua_storm', name: 'AquaStorm', originalPrice: 6499, price: 6174 },
+  { id: 'aqua_tidal', name: 'AquaTidal', originalPrice: 12999, price: 12349 },
+  { id: 'aqua_legend', name: 'AquaLegend', originalPrice: 21999, price: 20899 }
 ];
 
 // POST - Create new add-on order
@@ -42,10 +51,17 @@ router.post('/', auth, requireEmailVerification, async (req, res) => {
       });
     }
 
+    let projectAd = await Ad.findOne({ owner: req.user.username, id: projectId });
+    if (!projectAd && mongoose.Types.ObjectId.isValid(projectId)) {
+      projectAd = await Ad.findOne({ owner: req.user.username, _id: projectId });
+    }
+    // No matching listing → charge list price (5% partnership rate is Premium-only)
+    const listingTier = projectAd ? getListingTier(projectAd) : LISTING_TIER_STARTER;
+
     // Calculate addon costs server-side for security
     const addonCosts = selectedAddons.reduce((total, addonId) => {
       const addon = ADDON_PACKAGES.find(pkg => pkg.id === addonId);
-      return total + (addon ? addon.price : 0);
+      return total + getMintfunnelAddonChargePrice(addon, listingTier);
     }, 0);
 
     // Apply discount code if provided

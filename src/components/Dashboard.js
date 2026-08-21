@@ -3608,13 +3608,13 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onEditAd, onAdPatche
 
   // Add-on package names for display
   const ADDON_PACKAGE_NAMES = {
-    'aqua_splash': 'AquaSplash ($99)',
-    'aqua_ripple': 'AquaRipple ($284)',
-    'aqua_wave': 'AquaWave ($1,329)',
-    'aqua_flow': 'AquaFlow ($2,754)',
-    'aqua_storm': 'AquaStorm ($6,174)',
-    'aqua_tidal': 'AquaTidal ($12,349)',
-    'aqua_legend': 'AquaLegend ($20,899)'
+    'aqua_splash': 'AquaSplash (retired)',
+    'aqua_ripple': 'AquaRipple',
+    'aqua_wave': 'AquaWave',
+    'aqua_flow': 'AquaFlow',
+    'aqua_storm': 'AquaStorm',
+    'aqua_tidal': 'AquaTidal',
+    'aqua_legend': 'AquaLegend'
   };
 
   const formatListingPaymentStatus = (listing) => {

@@ -38,7 +38,8 @@ const {
   LISTING_TIER_STARTER,
   LISTING_TIER_PREMIUM,
   PREMIUM_LISTING_FEE_USDC,
-  getListingTier
+  getListingTier,
+  getMintfunnelAddonChargePrice
 } = require('../utils/listingTier');
 const { grantStarterIfNeeded } = require('../services/projectAgentWallet');
 const { transferDexFeedListing } = require('../utils/transferDexFeedListing');
@@ -142,6 +143,18 @@ const ADDON_PACKAGES = [
       '24-72 Hour Distribution',
       'SEO Optimizations'
     ]
+  },
+  {
+    id: 'aqua_tidal',
+    name: 'AquaTidal',
+    originalPrice: 12999,
+    price: 12349
+  },
+  {
+    id: 'aqua_legend',
+    name: 'AquaLegend',
+    originalPrice: 21999,
+    price: 20899
   }
 ];
 
@@ -582,7 +595,7 @@ router.post('/', auth, requireEmailVerification, emitAdEvent('create'), async (r
     // Calculate addon costs
     const addonCosts = purchasableAddons.reduce((total, addonId) => {
       const addon = ADDON_PACKAGES.find(pkg => pkg.id === addonId);
-      return total + (addon ? addon.price : 0);
+      return total + getMintfunnelAddonChargePrice(addon, listingTier);
     }, 0);
 
     // Calculate total before discount codes
