@@ -767,261 +767,146 @@ const ProjectInfo = ({ currentUser, ads = [], onAdPatched }) => {
 
       {/* Pricing Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="text-center mb-16">
+        <div className="text-center mb-12">
+          <p className="text-cyan-300/90 text-xs font-semibold uppercase tracking-[0.22em] mb-3">Listing</p>
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-            Listing packages & extras
+            Choose how you go live
           </h2>
-          <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-            Pick <strong className="text-green-300">Starter</strong> for a free bubble listing or <strong className="text-blue-300">Premium</strong> for the full launch stack ($99 USDC). Optional Mintfunnel PR packages are separate—add them when you list or anytime from your dashboard.
+          <p className="text-lg text-gray-300 max-w-2xl mx-auto leading-relaxed">
+            <strong className="text-white">Starter</strong> puts you on the map. <strong className="text-white">Premium</strong> is the launch stack we announce — $99 USDC. Mintfunnel PR packages stay optional.
           </p>
-          <div className="mt-8 max-w-4xl mx-auto rounded-xl border border-cyan-500/35 bg-gray-900/60 px-6 py-5 text-left">
-            <p className="text-cyan-200/95 text-sm font-semibold uppercase tracking-wide mb-2">Included with every listing (Starter or Premium)</p>
-            <ul className="text-gray-300 text-sm space-y-2 list-disc list-inside">
-              <li>
-                <strong className="text-white">Trading flow:</strong> your bubble opens <strong className="text-white">AquaSwap</strong> + <strong className="text-white">BexTools</strong>-style routing so degens tap through to live charts and swaps—not just a static banner.
-              </li>
-              <li>
-                <strong className="text-white">Discovery &amp; momentum:</strong> vote rankings, homepage bubble map exposure, Telegram Bump Bot syncing, raids and boosts.
-              </li>
-              <li>
-                <strong className="text-white">Skipper Agent:</strong> available on all <strong className="text-white">verified</strong> Aquads accounts — pay-as-you-go AI wallet (top up via AquaPay). <strong className="text-white">Paid Premium</strong> adds a <strong className="text-white">$5</strong> starter AI credit; vote bump alone does not upgrade listing tier.
-              </li>
-            </ul>
-            <p className="text-gray-400 text-xs mt-3">
-              <strong className="text-white">Paid Premium</strong> is how we <strong className="text-white">announce your listing</strong> — social and email marketing campaigns (newsletter to all users), plus the in-house blog &amp; press release, AMA, ad credits, <strong className="text-white">1-hour fast-track listing review</strong>, higher raid cap, homepage banner, and custom ping branding when bumped. Starter listings go on the map only; Aquads does not announce them.
-            </p>
+        </div>
+
+        <div className="mb-8 rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.06] to-transparent p-6 md:p-8">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-200/80 mb-6">Included with every listing</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+            <div className="rounded-xl border border-white/10 bg-black/20 p-4">
+              <FaExchangeAlt className="text-cyan-300 mb-3" />
+              <p className="text-white text-sm font-semibold mb-1">AquaSwap trading</p>
+              <p className="text-gray-400 text-xs leading-relaxed">Bubble opens live charts and swaps via AquaSwap + BexTools-style routing.</p>
+            </div>
+            <div className="rounded-xl border border-white/10 bg-black/20 p-4">
+              <FaGlobe className="text-cyan-300 mb-3" />
+              <p className="text-white text-sm font-semibold mb-1">Map &amp; votes</p>
+              <p className="text-gray-400 text-xs leading-relaxed">Homepage bubble, bullish/bearish rankings, raids, boosts, and Bump Bot access.</p>
+            </div>
+            <div className="rounded-xl border border-white/10 bg-black/20 p-4">
+              <FaRobot className="text-cyan-300 mb-3" />
+              <p className="text-white text-sm font-semibold mb-1">Skipper Agent</p>
+              <p className="text-gray-400 text-xs leading-relaxed">On verified accounts, pay-as-you-go. Premium adds a $5 AI credit.</p>
+            </div>
+            <div className="rounded-xl border border-white/10 bg-black/20 p-4">
+              <FaTrophy className="text-cyan-300 mb-3" />
+              <p className="text-white text-sm font-semibold mb-1">Bubble bump</p>
+              <p className="text-gray-400 text-xs leading-relaxed">Same rules on both plans: 100+ bullish votes and $10k+ liquidity for max size and main-row placement.</p>
+            </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8">
-          {/* Starter listing */}
-          <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-8 border border-green-500/50 ring-1 ring-green-500/20 min-w-0">
-            <div className="text-center mb-6">
-              <h3 className="text-2xl font-bold text-white mb-2">Starter listing</h3>
-              <div className="text-4xl font-bold text-green-400 mb-2">$0</div>
-              <div className="text-gray-400">Base listing fee · USDC</div>
+        <div className="mb-10 rounded-2xl border border-white/10 bg-black/25 overflow-hidden">
+          <div className="flex flex-col lg:flex-row lg:items-stretch">
+            <div className="lg:w-[280px] shrink-0 px-6 py-6 lg:py-8 border-b lg:border-b-0 lg:border-r border-white/10">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200/80 mb-2">Shared mechanic</p>
+              <h3 className="text-xl font-semibold text-white mb-1">Bubble bump</h3>
+              <p className="text-2xl font-semibold text-white tracking-tight">100 votes + $10k</p>
+              <p className="text-gray-400 text-sm mt-1">Free on Starter and Premium when both are met.</p>
+              {userHasProjects && (
+                <button
+                  onClick={handleBumpOptionsClick}
+                  disabled={bumpLoading}
+                  className="mt-5 inline-flex items-center justify-center px-4 py-2.5 rounded-lg text-sm font-medium text-white bg-white/10 hover:bg-white/15 border border-white/10 disabled:opacity-60 disabled:cursor-wait transition-colors"
+                >
+                  {bumpLoading ? 'Checking…' : 'Check bump status'}
+                  <FaArrowRight className="ml-2 text-xs" />
+                </button>
+              )}
             </div>
-            <ul className="space-y-3 text-gray-300 text-sm">
-              <li className="flex items-start gap-3">
-                <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
-                <span className="min-w-0 flex-1 leading-relaxed">Bubble on the map after admin approval</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
-                <span className="min-w-0 flex-1 leading-relaxed">AquaSwap + BexTools path from your bubble (live chart &amp; swap handoff—same funnel Premium uses for trading clicks)</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
-                <span className="min-w-0 flex-1 leading-relaxed">Bullish/bearish voting & rankings</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
-                <span className="min-w-0 flex-1 leading-relaxed">
-                  Bump free at <strong className="text-white">100+</strong> bullish votes (organic + boosts)
-                </span>
-              </li>
-              <li className="flex items-start gap-3">
-                <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
-                <span className="min-w-0 flex-1 leading-relaxed">
-                  Coordinated raids: <strong className="text-white">1/day</strong> (bump does not increase this — upgrade to Premium for 5→10/day)
-                </span>
-              </li>
-              <li className="flex items-start gap-3">
-                <FaCheckCircle className="text-cyan-400 mt-0.5 shrink-0" />
-                <span className="min-w-0 flex-1 leading-relaxed">
-                  <strong className="text-white">Skipper Agent</strong> — verified accounts; pay-as-you-go AI wallet (top up via AquaPay)
-                </span>
-              </li>
-              <li className="flex items-start gap-3">
-                <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
-                <span className="min-w-0 flex-1 leading-relaxed">
-                  Standard admin review — typically <strong className="text-white">24–48 hours</strong> after submission
-                </span>
-              </li>
-              <li className="flex items-start gap-3">
-                <FaCheckCircle className="text-amber-400 mt-0.5 shrink-0" />
-                <span className="min-w-0 flex-1 leading-relaxed">
-                  <strong className="text-white">No listing announcement</strong> — Aquads does not run social or email campaigns for Starter projects
-                </span>
-              </li>
-              <li className="flex items-start gap-3">
-                <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
-                <span className="min-w-0 flex-1 leading-relaxed">Optional Mintfunnel packages paid separately at checkout</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
-                <span className="min-w-0 flex-1 leading-relaxed">Upgrade to paid Premium anytime from your dashboard</span>
-              </li>
+            <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3 px-6 py-6 lg:py-8 text-sm text-gray-300">
+              <p className="flex items-start gap-2.5"><FaCheckCircle className="text-cyan-400 mt-0.5 shrink-0 text-xs" /><span>Organic votes and paid vote boosts both count</span></p>
+              <p className="flex items-start gap-2.5"><FaCheckCircle className="text-cyan-400 mt-0.5 shrink-0 text-xs" /><span>Liquidity is re-checked every 2 days — restore the pool and tap Bump to re-qualify</span></p>
+              <p className="flex items-start gap-2.5"><FaCheckCircle className="text-cyan-400 mt-0.5 shrink-0 text-xs" /><span>Below 100 votes or $10k liquidity, size shrinks over time</span></p>
+              <p className="flex items-start gap-2.5"><FaCheckCircle className="text-cyan-400 mt-0.5 shrink-0 text-xs" /><span>Premium raid caps rise once bumped; Starter stays at 1/day</span></p>
+              <p className="flex items-start gap-2.5 sm:col-span-2"><FaStar className="text-amber-300 mt-0.5 shrink-0 text-xs" /><span>Bump does not upgrade listing tier. Custom <strong className="text-white">/setbranding</strong> is Premium-only when bumped; Starter keeps default Aquads styling.</span></p>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+          <div className="relative flex flex-col rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.05] to-black/20 p-8 min-w-0">
+            <div className="mb-8">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-400 mb-3">On the map</p>
+              <h3 className="text-2xl font-semibold text-white">Starter</h3>
+              <div className="mt-4 flex items-baseline gap-2">
+                <span className="text-5xl font-semibold tracking-tight text-white">$0</span>
+                <span className="text-gray-400 text-sm">USDC · base listing</span>
+              </div>
+              <p className="mt-3 text-sm text-gray-400 leading-relaxed">Live after approval. Aquads does not announce Starter listings.</p>
+            </div>
+            <ul className="space-y-3 text-sm text-gray-300 flex-1">
+              <li className="flex items-start gap-3"><FaCheckCircle className="text-white/50 mt-0.5 shrink-0 text-xs" /><span>Bubble on the map after admin approval</span></li>
+              <li className="flex items-start gap-3"><FaCheckCircle className="text-white/50 mt-0.5 shrink-0 text-xs" /><span>Standard review — typically <strong className="text-white">24–48 hours</strong></span></li>
+              <li className="flex items-start gap-3"><FaCheckCircle className="text-white/50 mt-0.5 shrink-0 text-xs" /><span>Coordinated raids: <strong className="text-white">1/day</strong> even after bump</span></li>
+              <li className="flex items-start gap-3"><FaCheckCircle className="text-amber-300/90 mt-0.5 shrink-0 text-xs" /><span><strong className="text-white">No listing announcement</strong> — no social or email campaign from Aquads</span></li>
+              <li className="flex items-start gap-3"><FaCheckCircle className="text-white/50 mt-0.5 shrink-0 text-xs" /><span>Optional Mintfunnel packages paid separately</span></li>
+              <li className="flex items-start gap-3"><FaCheckCircle className="text-white/50 mt-0.5 shrink-0 text-xs" /><span>Upgrade to Premium anytime from your dashboard</span></li>
             </ul>
             <button
               onClick={handleListProjectClick}
-              className="mt-6 w-full inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-semibold rounded-lg transition-all duration-300 transform hover:scale-[1.02] shadow-lg"
+              className="mt-8 w-full inline-flex items-center justify-center px-6 py-3.5 bg-white/8 hover:bg-white/12 border border-white/15 text-white font-medium rounded-xl transition-colors"
             >
-              <FaRocket className="mr-2" />
               List as Starter
-              <FaArrowRight className="ml-2" />
+              <FaArrowRight className="ml-2 text-xs" />
             </button>
           </div>
 
-          {/* Premium listing */}
-          <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-8 border border-blue-500/60 ring-1 ring-blue-500/25 min-w-0">
-            <div className="text-center mb-6">
-              <h3 className="text-2xl font-bold text-white mb-2">Premium listing</h3>
-              <div className="text-4xl font-bold text-blue-400 mb-2">$99</div>
-              <div className="text-gray-400">Full launch stack · USDC</div>
+          <div className="relative flex flex-col rounded-2xl border border-cyan-400/25 bg-gradient-to-b from-cyan-500/[0.12] to-black/30 p-8 min-w-0 shadow-[0_24px_80px_rgba(8,145,178,0.12)]">
+            <div className="absolute top-5 right-5">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-cyan-100 bg-cyan-500/20 border border-cyan-400/30 px-2.5 py-1 rounded-full">Launch stack</span>
             </div>
-            <ul className="space-y-3 text-gray-300 text-sm">
-              <li className="flex items-start gap-3">
-                <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
-                <span className="min-w-0 flex-1 leading-relaxed">Everything in Starter, plus:</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
-                <span className="min-w-0 flex-1 leading-relaxed">
-                  <strong className="text-white">1-hour fast-track listing review</strong> — Premium submissions are prioritized (Starter: standard 24–48 hour review)
-                </span>
-              </li>
-              <li className="flex items-start gap-3">
-                <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
-                <span className="min-w-0 flex-1 leading-relaxed">
-                  <strong className="text-white">1 complimentary 7-day</strong> homepage banner ad spot after approval
-                </span>
-              </li>
-              <li className="flex items-start gap-3">
-                <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
-                <span className="min-w-0 flex-1 leading-relaxed">In-house blog written for your project, published as a press release on Aquads</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
-                <span className="min-w-0 flex-1 leading-relaxed">We announce your project with social and email marketing campaigns (newsletter to all Aquads users)</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
-                <span className="min-w-0 flex-1 leading-relaxed">Free AMA, ad campaign exposure, $50 ad credit</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
-                <span className="min-w-0 flex-1 leading-relaxed">
-                  <strong className="text-white">Custom bot branding</strong> when bumped — Premium listing required (same bot features as Starter, plus your logo/video on notifications)
-                </span>
-              </li>
-              <li className="flex items-start gap-3">
-                <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
-                <span className="min-w-0 flex-1 leading-relaxed">
-                  Raids: <strong className="text-white">up to 5/day</strong> before bump, <strong className="text-white">up to 10/day</strong> once bumped
-                </span>
-              </li>
-              <li className="flex items-start gap-3">
-                <FaCheckCircle className="text-cyan-400 mt-0.5 shrink-0" />
-                <span className="min-w-0 flex-1 leading-relaxed">
-                  <strong className="text-white">$5 Skipper AI wallet credit</strong> — one-time prepaid balance on paid Premium (Skipper access itself is on all verified accounts)
-                </span>
-              </li>
-              <li className="flex items-start gap-3">
-                <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
-                <span className="min-w-0 flex-1 leading-relaxed">
-                  Referred users get <strong className="text-white">5% off</strong> the Premium base fee
-                </span>
-              </li>
+            <div className="mb-8">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-200/80 mb-3">We announce you</p>
+              <h3 className="text-2xl font-semibold text-white">Premium</h3>
+              <div className="mt-4 flex items-baseline gap-2">
+                <span className="text-5xl font-semibold tracking-tight text-white">$99</span>
+                <span className="text-gray-400 text-sm">USDC · one-time</span>
+              </div>
+              <p className="mt-3 text-sm text-gray-300 leading-relaxed">Everything in Starter, plus the campaigns that put your listing in front of our audience.</p>
+            </div>
+            <ul className="space-y-3 text-sm text-gray-200 flex-1">
+              <li className="flex items-start gap-3"><FaCheckCircle className="text-cyan-300 mt-0.5 shrink-0 text-xs" /><span><strong className="text-white">Social &amp; email campaigns</strong> to announce your project, including the newsletter to all users</span></li>
+              <li className="flex items-start gap-3"><FaCheckCircle className="text-cyan-300 mt-0.5 shrink-0 text-xs" /><span>In-house blog written for you, published as a press release on Aquads</span></li>
+              <li className="flex items-start gap-3"><FaCheckCircle className="text-cyan-300 mt-0.5 shrink-0 text-xs" /><span><strong className="text-white">1-hour fast-track</strong> listing review after payment</span></li>
+              <li className="flex items-start gap-3"><FaCheckCircle className="text-cyan-300 mt-0.5 shrink-0 text-xs" /><span><strong className="text-white">7-day</strong> complimentary homepage banner</span></li>
+              <li className="flex items-start gap-3"><FaCheckCircle className="text-cyan-300 mt-0.5 shrink-0 text-xs" /><span>Free AMA, ad campaign exposure, and $50 ad credit</span></li>
+              <li className="flex items-start gap-3"><FaCheckCircle className="text-cyan-300 mt-0.5 shrink-0 text-xs" /><span>Raids <strong className="text-white">5/day</strong>, then <strong className="text-white">10/day</strong> once bumped · custom branding when bumped</span></li>
+              <li className="flex items-start gap-3"><FaCheckCircle className="text-cyan-300 mt-0.5 shrink-0 text-xs" /><span><strong className="text-white">$5 Skipper</strong> AI wallet credit · referred users save 5%</span></li>
             </ul>
             <button
               onClick={handleListProjectClick}
-              className="mt-6 w-full inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-semibold rounded-lg transition-all duration-300 transform hover:scale-[1.02] shadow-lg"
+              className="mt-8 w-full inline-flex items-center justify-center px-6 py-3.5 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white font-semibold rounded-xl transition-colors shadow-[0_8px_24px_rgba(6,182,212,0.25)]"
             >
-              <FaRocket className="mr-2" />
               List as Premium
-              <FaArrowRight className="ml-2" />
+              <FaArrowRight className="ml-2 text-xs" />
             </button>
           </div>
+        </div>
 
-          {/* Bump */}
-          <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-8 border border-blue-500 min-w-0">
-            <div className="text-center mb-6">
-              <h3 className="text-2xl font-bold text-white mb-2">Bubble bump</h3>
-              <div className="text-4xl font-bold text-green-400 mb-2">100 votes + $10k liq</div>
-              <div className="text-gray-400">Free when both requirements are met</div>
-            </div>
-            <ul className="space-y-3 text-gray-300 text-sm">
-              <li className="flex items-start gap-3">
-                <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
-                <span className="min-w-0 flex-1 leading-relaxed">
-                  <strong className="text-white">100+</strong> bullish votes and <strong className="text-white">$10k+</strong> pool liquidity = bumped bubble (max size, main row)
-                </span>
-              </li>
-              <li className="flex items-start gap-3">
-                <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
-                <span className="min-w-0 flex-1 leading-relaxed">Organic votes and paid vote boosts both count</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
-                <span className="min-w-0 flex-1 leading-relaxed">Liquidity is re-checked every 2 days; restore pool liquidity and tap Bump in your dashboard to re-bump</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
-                <span className="min-w-0 flex-1 leading-relaxed">Below 100 votes or under $10k liquidity = unbumped (size shrinks over time)</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <FaTrophy className="text-yellow-400 mt-0.5 shrink-0" />
-                <span className="min-w-0 flex-1 leading-relaxed">Premium raid caps increase once bumped (Starter stays 1/day)</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <FaStar className="text-amber-400 mt-0.5 shrink-0" />
-                <span className="min-w-0 flex-1 leading-relaxed">Bump improves visibility — it does <strong className="text-white">not</strong> upgrade you to paid Premium or raise Starter&apos;s 1 raid/day cap</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <FaStar className="text-amber-400 mt-0.5 shrink-0" />
-                <span className="min-w-0 flex-1 leading-relaxed"><strong className="text-white">/setbranding</strong> (custom logo/video pings): paid Premium only when bumped; Starter bubbles use default Aquads styling</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <FaMicrophone className="text-purple-400 mt-0.5 shrink-0" />
-                <span className="min-w-0 flex-1 leading-relaxed">Live yappers &amp; visibility scale with engagement</span>
-              </li>
-            </ul>
-            {userHasProjects && (
-              <button
-                onClick={handleBumpOptionsClick}
-                disabled={bumpLoading}
-                className="mt-6 w-full inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 disabled:opacity-60 disabled:cursor-wait text-white font-semibold rounded-lg transition-all duration-300 transform hover:scale-[1.02] shadow-lg"
-              >
-                <FaRocket className="mr-2" />
-                {bumpLoading ? 'Checking bump…' : 'Check bump status'}
-                <FaArrowRight className="ml-2" />
-              </button>
-            )}
+        <div className="mt-6 rounded-2xl border border-white/10 bg-gradient-to-r from-white/[0.04] to-transparent px-6 py-5 md:px-8 md:py-6 flex flex-col md:flex-row md:items-center md:justify-between gap-5">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-400 mb-1">Optional extra</p>
+            <h3 className="text-lg font-semibold text-white">Homepage banner ads</h3>
+            <p className="text-sm text-gray-400 mt-1">Rotating high-visibility placement. Premium listings include one complimentary 7-day spot; additional inventory is paid.</p>
           </div>
-
-          {/* Banner Ads */}
-          <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-8 border border-gray-700 min-w-0">
-            <div className="text-center mb-6">
-              <h3 className="text-2xl font-bold text-white mb-2">Banner Ads</h3>
-              <div className="text-4xl font-bold text-blue-400 mb-2">$10-40</div>
-              <div className="text-gray-400">USDC</div>
-            </div>
-            <ul className="space-y-3 text-gray-300 text-sm">
-              <li className="flex items-start gap-3">
-                <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
-                <span className="min-w-0 flex-1 leading-relaxed">24 Hours: $10 USDC</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
-                <span className="min-w-0 flex-1 leading-relaxed">3 Days: $20 USDC</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
-                <span className="min-w-0 flex-1 leading-relaxed">7 Days: $40 USDC</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
-                <span className="min-w-0 flex-1 leading-relaxed">Premium placement & high visibility</span>
-              </li>
-            </ul>
+          <div className="flex flex-wrap items-center gap-3 text-sm">
+            <span className="rounded-lg border border-white/10 bg-black/30 px-3 py-1.5 text-gray-200">24h · $10</span>
+            <span className="rounded-lg border border-white/10 bg-black/30 px-3 py-1.5 text-gray-200">3 days · $20</span>
+            <span className="rounded-lg border border-white/10 bg-black/30 px-3 py-1.5 text-gray-200">7 days · $40</span>
             <Link
               to="/advertise"
-              className="mt-6 w-full inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white font-semibold rounded-lg transition-all duration-300 transform hover:scale-[1.02] shadow-lg"
+              className="inline-flex items-center justify-center px-4 py-2 rounded-lg text-sm font-medium text-white bg-white/10 hover:bg-white/15 border border-white/10 transition-colors"
             >
-              <FaRocket className="mr-2" />
               Advertise
-              <FaArrowRight className="ml-2" />
+              <FaArrowRight className="ml-2 text-xs" />
             </Link>
           </div>
         </div>
