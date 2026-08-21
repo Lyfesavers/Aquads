@@ -24,10 +24,10 @@ import { Link } from 'react-router-dom';
 const projectSteps = [
   {
     n: '01',
-    title: 'List & ignite',
+            title: 'List on the map',
     oneLiner:
-      "Free Starter listing—or $99 paid Premium for the full launch stack. DexScreener auto-fill (symbol, chain, pair). Bubble goes live with AquaSwap + Bex routing. Starter listings are not announced. Premium includes social and email campaigns to announce your project, 1-hour fast-track review, in-house PR, and $5 Skipper AI credit.",
-    perks: ['Starter $0 · Paid Premium stack', 'Skipper on verified accounts', 'Affiliate 5% off $99 Premium fee'],
+      "Free Starter listing—or $99 Paid Premium so we announce you. DexScreener auto-fill (symbol, chain, pair). Bubble goes live with AquaSwap + Bex routing. Starter listings are not announced. Premium includes social and email campaigns, 1-hour fast-track review, in-house PR, custom bot branding on approval, and $5 Skipper AI credit.",
+    perks: ['Starter $0 · Paid Premium announced', 'Skipper on verified accounts', 'Affiliate 5% off $99 Premium fee'],
     cta: { label: 'List token free', to: '/list-token-free' },
     mockup: 'ignite',
   },
@@ -35,26 +35,26 @@ const projectSteps = [
     n: '02',
     title: 'Drive activity, earn the bump',
     oneLiner:
-      "Bullish votes grow your bubble. Hit 100 votes and you auto-bump to top placement — no extra fees, ever. The more your community shows up, the bigger you appear.",
-    perks: ['Vote-driven bump', '100-vote threshold', '1 pt once per bubble · change anytime', 'Vote boosts'],
+      "Bullish votes grow your bubble. Hit 100+ bullish votes and $10k+ liquidity and you bump to max placement — no extra bump fee. The more your community shows up, the bigger you appear.",
+    perks: ['Vote-driven bump', '100+ votes + $10k liq', '1 pt once per bubble · change anytime', 'Vote boosts'],
     cta: { label: 'See live bubbles', to: '/home' },
     mockup: 'votes',
   },
   {
     n: '03',
-    title: 'Unlock the hype toolkit',
+            title: 'Grow with raids and PR',
     oneLiner:
-      "Bumped projects get the full kit to stay loud — every feature designed to refuel momentum, not bill you for it.",
-    perks: ['Free raids by tier (Starter 1/day · Premium 5→10/day)', 'Telegram raid network', 'HyperSpace boosts', 'Banners', 'Deep Dive Q&A'],
+      "In-house human raiders (real people, not engagement bots), Telegram and Discord tools, banners, blogs, and PR keep distribution going after listing week. Raid caps follow listing tier — Starter 1/day, Premium 5→10/day once bumped. Custom branding is Paid Premium as soon as approved.",
+    perks: ['Human raiders, not bots', 'Raids by listing tier', 'PR, banners, SEO blogs', 'Premium branding on approval'],
     cta: { label: 'Explore the toolkit', to: '/telegram-bot' },
     mockup: 'toolkit',
   },
   {
     n: '04',
-    title: 'Convert hype into holders',
+            title: 'Hire, get paid, keep compounding',
     oneLiner:
-      "AquaPay payment links, on-chain trust signals, trending placement, BexTools sync. New holders vote → bubble grows → more visibility → more holders. The loop never stops.",
-    perks: ['AquaPay', 'Trending', 'BexTools', 'Holder loop'],
+      "AquaPay payment links, on-chain trust, bump placement on Aquads, and BexTools featured slots when bumped. Hire help and keep the project operating — this is the long game, not a weekend spike.",
+    perks: ['AquaPay', 'Aquads bump placement', 'BexTools when bumped', 'Marketplace + escrow'],
     cta: { label: 'Open dashboard', to: '/dashboard' },
     mockup: 'loop',
   },
@@ -583,7 +583,7 @@ const HowItWorksSection = () => {
         >
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-white/10 bg-white/5 backdrop-blur-sm mb-4 text-[10px] sm:text-xs uppercase tracking-[0.3em] text-gray-300">
             <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
-            How the launch stack works
+            How the growth stack works
             <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
           </div>
           <h2 className="text-3xl sm:text-5xl md:text-6xl font-black text-white font-display leading-tight">
@@ -591,7 +591,7 @@ const HowItWorksSection = () => {
             <span className="whitespace-nowrap">Or power someone else&apos;s.</span>
           </h2>
           <p className="mt-4 text-base sm:text-lg md:text-xl text-gray-400 max-w-3xl mx-auto leading-relaxed">
-            <span className="text-gradient-cyan font-semibold">Project teams</span> run the 30-day playbook—list, grow, convert.{' '}
+            <span className="text-gradient-cyan font-semibold">Project teams</span> list, grow, and operate after the token is live.{' '}
             <span className="text-gradient-purple font-semibold">Freelancers</span> get hired and build on-chain reputation.
           </p>
         </motion.div>
@@ -630,7 +630,7 @@ const HowItWorksSection = () => {
               <span className="w-2 h-2 rounded-full bg-cyan-400" />
             </div>
             <p className="text-gray-400 text-sm mt-1">
-              The 30-day launch playbook. Every perk fuels momentum.
+              List, grow, and operate after the token is live.
             </p>
           </div>
           <div className="text-left pl-4">

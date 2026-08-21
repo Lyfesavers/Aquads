@@ -28,7 +28,7 @@ const LANDING_FAQS = [
   {
     question: 'Is Aquads really free to list a token?',
     answer:
-      "Yes — Aquads is a free token listing platform built specifically for post-launch projects, and the Starter tier lists any token for $0. Your project goes live on the bubble map with community voting, AquaSwap routing, raid tools, and an auto-bump at 100 bullish votes once it's approved. Starter listings are not announced by Aquads. Optional Premium ($99) is the launch plan: we roll out social and email marketing campaigns (including a newsletter to all users), an in-house blog and press release, 1-hour fast-track review, a 7-day homepage banner, and Skipper AI credit. Mintfunnel distribution add-ons start at $299 (Paid Premium listings get 5% off those PR packages at checkout) — but no upfront cost is ever required to list a token on Aquads.",
+      "Yes — Aquads is a free token listing platform built specifically for post-launch projects, and the Starter tier lists any token for $0. Your project goes live on the bubble map with community voting, AquaSwap routing, raid tools, and a vote-plus-liquidity bump (100+ bullish votes and $10k+ liquidity) once it's approved. Starter listings are not announced by Aquads. Optional Premium ($99) is the growth plan: we roll out social and email marketing campaigns (including a newsletter to all users), an in-house blog and press release, 1-hour fast-track review, a 7-day homepage banner, custom bot branding as soon as approved, and Skipper AI credit. Mintfunnel distribution add-ons start at $299 (Paid Premium listings get 5% off those PR packages at checkout) — but no upfront cost is ever required to list a token on Aquads.",
   },
   {
     question: 'Which blockchains does Aquads support?',
@@ -53,7 +53,7 @@ const LANDING_FAQS = [
   {
     question: 'What does Aquads actually do for my project after I list?',
     answer:
-      'Aquads is a post-launch growth stack, not just a listing site. After your project is live you get community votes that auto-bump your bubble at 100 bullish (with optional vote boosts to accelerate hitting that threshold), homepage and bubble banner ads for extra visibility, raid coordination across X, Telegram, and Facebook, AquaSwap trading directly from your bubble, the Skipper AI agent for automating tasks, and optional PR packages that push coverage to outlets like Forbes, CoinTelegraph, CoinMarketCap, and Yahoo Finance.',
+      'Aquads is a post-launch growth stack, not a DexScreener clone and not a 72-hour pump desk. After you list you get a bubble storefront, community votes, in-house human raiders (real people commenting and engaging — not bots, so they can actually become holders), Telegram and Discord tools, AquaSwap from the listing, Skipper AI, hiring and payments, plus SEO-backed blogs and optional Mintfunnel PR. Bump (100+ bullish votes and $10k+ liquidity) is for Aquads and BexTools visibility — it does not replace a DexScreener trending campaign. Paid Premium is how we announce you and unlock custom bot branding as soon as the listing is approved.',
   },
   {
     question: 'How fast can my token go live on Aquads?',
@@ -2253,16 +2253,16 @@ const CarouselCard = ({ feature, index }) => {
                 </h2>
                 
                 <p className="text-gray-400 text-sm md:text-base lg:text-lg mb-6 max-w-xl">
-                  Interactive visualization of crypto projects based on community engagement. BexTools trending section integration, bubble leaderboards, and trending visibility across platforms. Projects gain exposure through community voting and rankings.
+                  Your project storefront after the token is live — community votes, leaderboards, and swap from the bubble. Bump (100+ bullish votes and $10k+ liquidity) earns max size on the Aquads map and BexTools featured placement. That is Aquads visibility, not DexScreener trending.
                 </p>
                 
                 {/* Stats grid */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
                   {[
                     { icon: '📊', label: 'Bubble Rankings', value: 'By Votes' },
-                    { icon: '🔥', label: 'BexTools Trending', value: 'Multi-Platform' },
+                    { icon: '🔥', label: 'BexTools featured', value: 'When bumped' },
                     { icon: '👍', label: '1 Pt / Bubble', value: 'First Vote Only' },
-                    { icon: '🏆', label: 'Top 10 Leaderboard', value: 'Trending' }
+                    { icon: '🏆', label: 'Top 10 Leaderboard', value: 'By votes' }
                   ].map((item, i) => (
                     <motion.div
                       key={item.label}
@@ -2303,7 +2303,7 @@ const CarouselCard = ({ feature, index }) => {
                     <svg className="w-4 h-4 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <span>List project → Get votes → Rank & trend</span>
+                    <span>List → votes → bump on Aquads (100+ votes, $10k liq)</span>
                   </div>
                 </motion.div>
               </div>
@@ -2351,7 +2351,7 @@ const CarouselCard = ({ feature, index }) => {
                 </h2>
                 
                 <p className="text-gray-400 text-sm md:text-base lg:text-lg mb-6 max-w-xl">
-                  Boost visibility with coordinated social campaigns. Create Twitter raids—free daily quota by listing tier (Starter: 1/day · Premium: 5→10/day when bumped), then use 2000 points for additional posts. Community earns 5–20 points per completion (5/10/15/20 tiers). Auto-expires in 48hrs.
+                  Coordinated X and Facebook raids, plus an in-house team of real people when your community is still thin — humans commenting and engaging, not bots, so they can become actual customers. Free daily quota by listing tier (Starter: 1/day · Premium: 5→10/day when bumped), then 2000 points for extra posts. Completions are verified. Auto-expires in 48hrs.
                 </p>
                 
                 {/* Stats grid */}
@@ -2743,7 +2743,7 @@ const CarouselCard = ({ feature, index }) => {
                 </h2>
                 
                 <p className="text-gray-400 text-sm md:text-base lg:text-lg mb-6 max-w-xl">
-                  Complete Telegram integration for project growth. Create Twitter & Facebook raids—free daily quota by listing tier (Starter: 1/day · Premium: 5→10/day when bumped), then use points for additional posts. Boost trending across Aquads, BexTools, and bubble rankings. Custom branding in our trending channel.
+                  Telegram and Discord bots for raids, votes, and community ops. Raid caps follow listing tier. Bump is for Aquads and BexTools placement. Custom branding on pings is Paid Premium as soon as the listing is approved — no bump required.
                 </p>
                 
                 {/* Stats grid */}
@@ -2751,8 +2751,8 @@ const CarouselCard = ({ feature, index }) => {
                   {[
                     { icon: '🐦', label: 'Twitter Raids', value: 'Starter 1/day · Premium 5→10' },
                     { icon: '👍', label: 'Bubble votes', value: '1 pt once' },
-                    { icon: '📈', label: 'Boost Trending', value: 'Multi-Platform' },
-                    { icon: '🎨', label: 'Custom Branding', value: 'Trending Channel' }
+                    { icon: '📈', label: 'Aquads / BexTools', value: 'Bump placement' },
+                    { icon: '🎨', label: 'Custom Branding', value: 'Paid Premium' }
                   ].map((item, i) => (
                     <motion.div
                       key={item.label}
@@ -3663,7 +3663,7 @@ const HeroOrb = ({ side, onClick, label, sublabel }) => (
   </motion.div>
 );
 
-// Four pillars of the launch stack — maps product surfaces to the "first 30 days" narrative
+// Four pillars — listing, community, hire, pay after the token is already live
 const LaunchStackPillars = () => {
   const pillars = [
     {
@@ -3671,7 +3671,7 @@ const LaunchStackPillars = () => {
       icon: '🔮',
       title: 'Get listed',
       subtitle: 'Your storefront',
-      description: 'Free bubble listing with DexScreener auto-fill. Community votes, bumps, and BexTools trending put you in front of traders—not buried on page 47.',
+      description: 'Free bubble listing with DexScreener auto-fill so the map has your real pair data. Votes and bump (100+ bullish, $10k+ liq) grow your Aquads placement — including BexTools featured slots when bumped. Traders can swap from the bubble.',
       link: '/list-token-free',
       cta: 'List your token',
       accent: 'cyan',
@@ -3680,8 +3680,8 @@ const LaunchStackPillars = () => {
       step: '02',
       icon: '🚀',
       title: 'Grow community',
-      subtitle: 'Stay loud after launch',
-      description: 'Twitter & Facebook raids, Telegram bot, HyperSpace, banners, and PR packages—built for the hype phase when most projects go quiet.',
+      subtitle: 'Raids, PR, and compounding SEO',
+      description: 'In-house human raiders (not bots), Telegram and Discord tools, banners, blogs that rank, and Mintfunnel PR. Real people comment and engage — they can become holders, not empty metrics. Built for distribution that lasts after launch.',
       link: '/telegram-bot',
       cta: 'Explore growth tools',
       accent: 'sky',
@@ -3734,7 +3734,7 @@ const LaunchStackPillars = () => {
           transition={{ duration: 0.6 }}
         >
           <p className="text-[10px] sm:text-xs uppercase tracking-[0.35em] text-cyan-400/90 mb-3 font-semibold">
-            Your first 30 days
+            After the token is live
           </p>
           <h2 className="text-2xl sm:text-4xl md:text-5xl font-black text-white font-display leading-tight">
             One stack.{' '}
@@ -3742,7 +3742,7 @@ const LaunchStackPillars = () => {
           </h2>
           <p className="mt-3 text-sm sm:text-base md:text-lg text-gray-400 max-w-2xl mx-auto leading-relaxed">
             After your token launches on Pump.fun, Raydium, or Uniswap—the real work starts.
-            Listing, community, hires, and payments live here.
+            Listing, community, hires, and payments live here — and compound.
           </p>
         </motion.div>
 
@@ -3823,19 +3823,19 @@ const LandingPage = ({ openMintFunnelPlatform }) => {
     {
       icon: '🔮',
       title: 'Dynamic Token Bubbles',
-      description: 'Your project storefront—not a CoinGecko clone. Community votes, bump placement, BexTools trending, and swap routing from your bubble. Where new tokens get discovered after launch.',
+      description: 'Your project storefront—not a CoinGecko clone. Community votes, bump placement on Aquads, BexTools featured slots when bumped, and swap routing from your bubble.',
       gradient: 'from-cyan-900/40 to-slate-900/80'
     },
     {
       icon: '🚀',
       title: 'Twitter Raids',
-      description: 'Coordinated social campaigns to keep momentum in week one. Free raids scale by listing tier—Starter 1/day, Premium 5→10/day when bumped—then scale with points.',
+      description: 'Coordinated X and Facebook raids plus in-house human raiders — real people, not bots — when you need actual interaction that can turn into holders. Free raids scale by listing tier—Starter 1/day, Premium 5→10/day when bumped—then extra raids with points.',
       gradient: 'from-sky-900/40 to-slate-900/80'
     },
     {
       icon: '🤖',
       title: 'Telegram Bot',
-      description: 'Raid automation across Twitter, Facebook, and opt-in Telegram communities. Custom vote branding, trending boosts, and member packages for projects that need to stay loud.',
+      description: 'Raid automation across Twitter, Facebook, and opt-in Telegram communities. Paid Premium unlocks custom vote branding as soon as the listing is approved. Bump is for Aquads and BexTools placement.',
       gradient: 'from-indigo-900/40 to-slate-900/80',
       link: '/telegram-bot',
       size: 'wide'
@@ -3843,7 +3843,7 @@ const LandingPage = ({ openMintFunnelPlatform }) => {
     {
       icon: '📢',
       title: 'Marketing & PR',
-      description: 'Press when you are ready to graduate from raids. Guaranteed coverage on Forbes, Yahoo Finance, CoinTelegraph, CoinMarketCap, and 75+ outlets. Packages from $99.',
+      description: 'In-house blog and press release on Paid Premium. Mintfunnel distribution to major outlets from $299 (5% off for Premium). SEO-backed pages that keep working after launch week.',
       gradient: 'from-pink-900/40 to-slate-900/80',
       link: '/list-token-free',
       size: 'wide'
@@ -3865,7 +3865,7 @@ const LandingPage = ({ openMintFunnelPlatform }) => {
     {
       icon: '💸',
       title: 'AquaPay',
-      description: 'Payment links for presales, merch, and services. Multi-chain, non-custodial, funds straight to your wallet—the rail that ties your launch stack together.',
+      description: 'Payment links for presales, merch, and services. Multi-chain, non-custodial, funds straight to your wallet—the rail that ties listing, hiring, and growth together.',
       gradient: 'from-blue-900/40 to-cyan-900/80',
       link: '/dashboard/aquapay'
     },
@@ -3879,7 +3879,7 @@ const LandingPage = ({ openMintFunnelPlatform }) => {
     {
       icon: '🎧',
       title: 'HyperSpace',
-      description: 'Pack your Twitter Spaces for AMAs and launch calls. 100–5,000 listeners, 30min–2hr—look credible from day one.',
+      description: 'Pack your Twitter Spaces for AMAs and community calls. 100–5,000 listeners, 30min–2hr.',
       gradient: 'from-purple-900/40 to-pink-900/80',
       link: '/hyperspace'
     },
@@ -3893,7 +3893,7 @@ const LandingPage = ({ openMintFunnelPlatform }) => {
     {
       icon: '🔗',
       title: 'On-Chain Resume',
-      description: 'Verified freelancer credentials on Base (EAS)—so projects hiring launch help can trust who they book.',
+      description: 'Verified freelancer credentials on Base (EAS)—so projects hiring help can trust who they book.',
       gradient: 'from-emerald-900/40 to-slate-900/80',
       size: 'large',
       hasVisual: true
@@ -3907,7 +3907,7 @@ const LandingPage = ({ openMintFunnelPlatform }) => {
     {
       icon: '🎮',
       title: 'Web3 Game Hub',
-      description: 'Optional engagement layer—run community game nights to keep holders active after launch week.',
+      description: 'Optional engagement layer—run community game nights to keep holders active after listing.',
       gradient: 'from-orange-900/40 to-slate-900/80'
     },
     {
@@ -3919,7 +3919,7 @@ const LandingPage = ({ openMintFunnelPlatform }) => {
     {
       icon: '💼',
       title: 'Job Board',
-      description: 'Post longer-term roles when your launch team becomes a real company.',
+      description: 'Post longer-term roles when your team becomes a real company.',
       gradient: 'from-amber-900/40 to-slate-900/80',
       link: '/marketplace',
       size: 'wide'
@@ -3927,14 +3927,14 @@ const LandingPage = ({ openMintFunnelPlatform }) => {
     {
       icon: '💰',
       title: 'AquaFi',
-      description: 'DeFi savings and staking for treasuries that outgrow the launch phase.',
+      description: 'DeFi savings and staking for treasuries that outgrow the first listing phase.',
       gradient: 'from-green-900/40 to-slate-900/80',
       link: '/aquafi'
     }
   ];
 
   const stats = [
-    { value: 30, suffix: '±', label: 'Day launch window' },
+    { display: 'In-house', label: 'human raiders — not bots' },
     { value: 150, suffix: '+', label: 'Wallet integrations' },
     { value: 30, suffix: '+', label: 'Hire categories' },
     { value: 50, suffix: '+', label: 'Payment chains' }
@@ -3947,17 +3947,17 @@ const LandingPage = ({ openMintFunnelPlatform }) => {
       style={{ scrollBehavior: 'smooth', maxWidth: '100vw' }}
     >
       <Helmet>
-        <title>Aquads | The launch stack for new crypto projects</title>
+        <title>Aquads | Post-launch growth stack for crypto projects</title>
         <meta
           name="description"
-          content="After your token launches: list on the bubble map, grow with raids and PR, hire Web3 freelancers, and get paid with AquaPay—all in one launch stack. Free listing."
+          content="After your token is live: free bubble listing, in-house raids, SEO blogs, PR, hire Web3 freelancers, and get paid with AquaPay. Starter is free. Premium is $99."
         />
         <link rel="canonical" href="https://www.aquads.xyz/" />
 
-        <meta property="og:title" content="Aquads — The launch stack for new crypto projects" />
+        <meta property="og:title" content="Aquads — Post-launch growth stack for crypto projects" />
         <meta
           property="og:description"
-          content="Listing, community growth, hiring, and payments for new tokens—in one place. Built for your first 30 days after launch."
+          content="Listing, raids, PR, hiring, and payments for tokens already on-chain—in one place. Built to compound, not for a 72-hour pump."
         />
         <meta property="og:image" content="https://www.aquads.xyz/metalogo.png" />
         <meta property="og:url" content="https://www.aquads.xyz/" />
@@ -3965,10 +3965,10 @@ const LandingPage = ({ openMintFunnelPlatform }) => {
         <meta property="og:site_name" content="Aquads" />
 
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Aquads — The launch stack for new crypto projects" />
+        <meta name="twitter:title" content="Aquads — Post-launch growth stack for crypto projects" />
         <meta
           name="twitter:description"
-          content="Listing, community growth, hiring, and payments for new tokens—in one place. Built for your first 30 days after launch."
+          content="Listing, raids, PR, hiring, and payments for tokens already on-chain—in one place. Built to compound, not for a 72-hour pump."
         />
         <meta name="twitter:image" content="https://www.aquads.xyz/metalogo.png" />
 
@@ -3980,7 +3980,7 @@ const LandingPage = ({ openMintFunnelPlatform }) => {
             "url": "https://www.aquads.xyz",
             "logo": "https://www.aquads.xyz/icon192.png",
             "description":
-              "Aquads is the launch stack for new crypto projects: bubble listings, growth tools, freelancer marketplace, and AquaPay payments.",
+              "Aquads is the post-launch growth stack for crypto projects: bubble listings, raids and PR, freelancer marketplace, and AquaPay payments.",
             "sameAs": [
               "https://x.com/_Aquads_",
               "https://t.me/+6rJbDLqdMxA3ZTUx"
@@ -4012,7 +4012,7 @@ const LandingPage = ({ openMintFunnelPlatform }) => {
             "name": "Aquads",
             "url": "https://www.aquads.xyz",
             "description":
-              "All-in-one launch stack for new crypto projects: free bubble-map listings, community raids, marketing & PR, freelancer marketplace, AquaPay multi-chain payments, AquaSwap cross-chain swap, and AquaFi DeFi savings.",
+              "Post-launch growth stack for live crypto projects: free bubble-map listings, community raids, marketing & PR, freelancer marketplace, AquaPay multi-chain payments, AquaSwap cross-chain swap, and AquaFi DeFi savings.",
             "applicationCategory": "FinanceApplication",
             "applicationSubCategory": "Cryptocurrency",
             "operatingSystem": "Any (web-based)",
@@ -4377,7 +4377,7 @@ const LandingPage = ({ openMintFunnelPlatform }) => {
         style={{ opacity: heroOpacity }}
       >
         <h1 className="sr-only">
-          Aquads — the launch stack for new crypto projects: list, grow, hire, and get paid after your token is live
+          Aquads — the post-launch growth stack: list, grow, hire, and get paid after your token is live
         </h1>
 
         {/* Center divider line */}
@@ -4434,7 +4434,7 @@ const LandingPage = ({ openMintFunnelPlatform }) => {
               <span className="text-gradient-purple">the token launches</span>
             </h2>
             <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-gray-400 italic font-medium max-w-3xl mx-auto mb-4 md:mb-6 leading-relaxed">
-              Not another chart site. The stack for your first 30 days.
+              Not another chart site. The stack for listing, community, PR, and ops after you are already live.
             </p>
             <p className="text-sm sm:text-base md:text-xl lg:text-2xl text-gray-400 max-w-3xl mx-auto mb-6 md:mb-8 leading-relaxed">
               Thousands of tokens launch every week on Pump.fun, Raydium, and Uniswap. Most need the same things: a listing, community tools, freelancers, and payments—Aquads is all four.
@@ -4479,7 +4479,11 @@ const LandingPage = ({ openMintFunnelPlatform }) => {
                 whileHover={{ scale: 1.05, borderColor: 'rgba(34, 211, 238, 0.5)' }}
               >
                 <div className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold text-gradient-gold mb-1 md:mb-2 stat-value">
-                  <AnimatedCounter value={stat.value} suffix={stat.suffix} prefix={stat.prefix} />
+                  {stat.display ? (
+                    stat.display
+                  ) : (
+                    <AnimatedCounter value={stat.value} suffix={stat.suffix} prefix={stat.prefix} />
+                  )}
                 </div>
                 <div className="text-gray-500 text-[9px] sm:text-[10px] md:text-xs lg:text-sm stat-label leading-tight">{stat.label}</div>
               </motion.div>
@@ -4506,10 +4510,10 @@ const LandingPage = ({ openMintFunnelPlatform }) => {
             viewport={{ once: true }}
           >
             <h2 className="text-xl sm:text-3xl md:text-5xl font-bold text-white mb-0.5 md:mb-1 font-display">
-              Tools in your launch stack
+              Tools in the growth stack
             </h2>
             <p className="text-gray-400 text-xs sm:text-sm md:text-lg max-w-2xl mx-auto">
-              Core launch tools first—swipe through. DeFi, games, and more when you outgrow day 30.
+              Listing and community first—swipe through. DeFi, games, and more as the project matures.
             </p>
           </motion.div>
 
@@ -4528,7 +4532,7 @@ const LandingPage = ({ openMintFunnelPlatform }) => {
           transition={{ duration: 0.6 }}
         >
           <h2 className="text-2xl sm:text-4xl md:text-6xl font-black text-white mb-4 md:mb-6 font-display">
-            Ready to <span className="text-gradient-cyan">launch</span>?
+            Ready to <span className="text-gradient-cyan">grow</span>?
           </h2>
           <p className="text-gray-400 text-sm md:text-base max-w-xl mx-auto mb-6 md:mb-8">
             Your token is live. Now get listed, grow the community, and hire help—without juggling five platforms.

@@ -3114,15 +3114,15 @@ function App() {
             title/site-name parsing treats "|" as a reliable delimiter, so
             "Aquads" is read as the brand rather than part of one long phrase.
           */}
-          <title>Aquads | The launch stack for new crypto projects</title>
-          <meta name="description" content="Aquads is the launch stack for new crypto projects: list on the bubble map, grow with raids and PR, hire Web3 freelancers, and get paid with AquaPay. Free listing." />
-          <meta property="og:title" content="Aquads — The launch stack for new crypto projects" />
-          <meta property="og:description" content="After your token launches: list, grow, hire, and get paid in one place. Bubble map, raids, marketplace, AquaPay — your first 30 days." />
+          <title>Aquads | Post-launch growth stack for crypto projects</title>
+          <meta name="description" content="Aquads is the post-launch growth stack for crypto projects: list on the bubble map, grow with raids and PR, hire Web3 freelancers, and get paid with AquaPay. Free listing." />
+          <meta property="og:title" content="Aquads — Post-launch growth stack for crypto projects" />
+          <meta property="og:description" content="After your token is live: list, grow, hire, and get paid in one place. Bubble map, raids, PR, marketplace, AquaPay — built to compound." />
           <meta property="og:image" content="https://www.aquads.xyz/metalogo.png" />
           <meta property="og:url" content="https://www.aquads.xyz/" />
           <meta property="og:type" content="website" />
-          <meta name="twitter:title" content="Aquads — The launch stack for new crypto projects" />
-          <meta name="twitter:description" content="After your token launches: list, grow, hire, and get paid in one place. Bubble map, raids, marketplace, AquaPay — your first 30 days." />
+          <meta name="twitter:title" content="Aquads — Post-launch growth stack for crypto projects" />
+          <meta name="twitter:description" content="After your token is live: list, grow, hire, and get paid in one place. Bubble map, raids, PR, marketplace, AquaPay — built to compound." />
           <meta name="twitter:image" content="https://www.aquads.xyz/metalogo.png" />
         </Helmet>
         <PWAInstallProvider>
