@@ -7,6 +7,7 @@ import HowItWorksSection from './HowItWorksSection';
 import EtmTagline from './EtmTagline';
 import AsSeenOn from './AsSeenOn';
 import OnboardingSection from './OnboardingSection';
+import { StandardDesktopNavLinks, StandardMobileNavLinks } from './StandardNavLinks';
 
 /*
   Landing-page FAQ — single source of truth for both:
@@ -3789,7 +3790,7 @@ const LaunchStackPillars = () => {
   );
 };
 
-const LandingPage = () => {
+const LandingPage = ({ openMintFunnelPlatform }) => {
   const [showContent, setShowContent] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const containerRef = useRef(null);
@@ -4223,7 +4224,7 @@ const LandingPage = () => {
 
       {/* Navigation */}
       <motion.nav 
-        className="fixed top-0 left-0 right-0 z-50 px-4 md:px-6 py-3 md:py-4"
+        className="fixed top-0 left-0 right-0 z-[60] overflow-visible px-4 md:px-6 py-3 md:py-4"
         initial={{ y: -100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.2, duration: 0.6 }}
@@ -4240,32 +4241,13 @@ const LandingPage = () => {
             />
           </motion.div>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-4">
-            <Link 
-              to="/docs"
-              className="text-gray-400 hover:text-white transition-colors text-sm"
-            >
-              Documentation
-            </Link>
-            <Link 
-              to="/learn"
-              className="text-gray-400 hover:text-white transition-colors text-sm"
-            >
-              Learn
-            </Link>
-            <Link 
-              to="/games"
-              className="text-gray-400 hover:text-white transition-colors text-sm"
-            >
-              Games
-            </Link>
-            <Link 
-              to="/aquaswap"
-              className="text-gray-400 hover:text-white transition-colors text-sm"
-            >
-              AquaSwap
-            </Link>
+          {/* Desktop Navigation — landing chrome + same product menus */}
+          <div className="hidden md:flex items-center gap-2 lg:gap-3">
+            <StandardDesktopNavLinks
+              openMintFunnelPlatform={openMintFunnelPlatform}
+              showListCta={false}
+              variant="landing"
+            />
             <Link
               to="/home?showLogin=true"
               className="text-gray-400 hover:text-white transition-colors text-sm font-medium"
@@ -4344,119 +4326,18 @@ const LandingPage = () => {
                       </Link>
                     </div>
                     <div className="h-px bg-white/10 my-1 mx-2" />
-                    <Link 
-                      to="/home"
-                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-cyan-500/10 transition-all"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      <span className="text-lg">🚀</span>
-                      <span className="font-medium">Projects</span>
-                    </Link>
-                    <Link 
-                      to="/marketplace"
-                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-purple-500/10 transition-all"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      <span className="text-lg">👥</span>
-                      <span className="font-medium">Freelancers</span>
-                    </Link>
-                    <Link 
-                      to="/bounties"
-                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      <span className="text-lg">🏆</span>
-                      <span className="font-medium">Bounties</span>
-                    </Link>
-                    <div className="h-px bg-white/10 my-2" />
-                    <Link 
-                      to="/docs"
-                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      <span className="text-lg">📄</span>
-                      <span className="font-medium">Documentation</span>
-                    </Link>
-                    <Link 
-                      to="/learn"
-                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      <span className="text-lg">📚</span>
-                      <span className="font-medium">Learn</span>
-                    </Link>
-                    <Link 
-                      to="/games"
-                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      <span className="text-lg">🎮</span>
-                      <span className="font-medium">Games</span>
-                    </Link>
-                    <Link 
+                    <Link
                       to="/list-token-free"
-                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all"
+                      className="flex items-center justify-center px-4 py-2.5 rounded-xl text-sm font-medium text-white/90 border border-white/10 hover:bg-white/5 transition-all"
                       onClick={() => setMobileMenuOpen(false)}
                     >
-                      <span className="text-lg">✨</span>
-                      <span className="font-medium">List token free</span>
+                      List your token
                     </Link>
-                    <Link 
-                      to="/claim-bubble"
-                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-teal-500/10 transition-all"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      <span className="text-lg">🫧</span>
-                      <span className="font-medium">Claim your bubble</span>
-                    </Link>
-                    <Link 
-                      to="/aquaswap"
-                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      <span className="text-lg">💱</span>
-                      <span className="font-medium">AquaSwap</span>
-                    </Link>
-                    <Link 
-                      to="/aquafi"
-                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      <span className="text-lg">💧</span>
-                      <span className="font-medium">AquaFi</span>
-                    </Link>
-                    <Link 
-                      to="/partner-rewards"
-                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      <span className="text-lg">🎁</span>
-                      <span className="font-medium">Partner Rewards</span>
-                    </Link>
-                    <Link 
-                      to="/telegram-bot"
-                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      <span className="text-lg">🤖</span>
-                      <span className="font-medium">Telegram Bot</span>
-                    </Link>
-                    <Link 
-                      to="/aquapay"
-                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      <span className="text-lg">💸</span>
-                      <span className="font-medium">AquaPay</span>
-                    </Link>
-                    <Link 
-                      to="/hyperspace"
-                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      <span className="text-lg">🚀</span>
-                      <span className="font-medium">HyperSpace</span>
-                    </Link>
+                    <div className="h-px bg-white/10 my-1 mx-2" />
+                    <StandardMobileNavLinks
+                      onNavigate={() => setMobileMenuOpen(false)}
+                      openMintFunnelPlatform={openMintFunnelPlatform}
+                    />
                     <div className="h-px bg-white/10 my-2" />
                     <div className="flex items-center justify-center gap-6 py-3">
                       <a 

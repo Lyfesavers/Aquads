@@ -3274,7 +3274,7 @@ function App() {
               ads={ads}
             />
           } />
-          <Route path="/" element={<LandingPage />} />
+          <Route path="/" element={<LandingPage openMintFunnelPlatform={openMintFunnelPlatform} />} />
           <Route path="/home" element={
             <div className="bg-gradient-to-br from-gray-900 to-black text-white flex flex-col h-screen overflow-hidden">
               {/* Background stays fixed */}

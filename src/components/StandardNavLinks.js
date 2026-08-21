@@ -232,6 +232,8 @@ function MegaItem({ item, onNavigate, openMintFunnelPlatform, active }) {
  */
 export function StandardDesktopNavLinks({
   openMintFunnelPlatform,
+  showListCta = true,
+  variant = 'default',
   // Retained so existing call sites keep compiling; the full intent map is always shown.
   linkClassName,
   includeHome,
@@ -299,6 +301,7 @@ export function StandardDesktopNavLinks({
       {INTENT_MENUS.map((menu) => {
         const active = isMenuActive(pathname, search, menu);
         const open = openMenu === menu.id;
+        const isLanding = variant === 'landing';
         return (
           <button
             key={menu.id}
@@ -310,11 +313,17 @@ export function StandardDesktopNavLinks({
               clearCloseTimer();
               setOpenMenu(menu.id);
             }}
-            className={`inline-flex items-center gap-1 whitespace-nowrap rounded-lg px-2.5 py-1.5 text-sm font-medium transition-colors lg:px-3 ${
-              open || active
-                ? 'bg-white/5 text-white'
-                : 'text-gray-300 hover:bg-white/5 hover:text-white'
-            }`}
+            className={
+              isLanding
+                ? `inline-flex items-center gap-1 whitespace-nowrap px-2 py-1 text-sm transition-colors ${
+                    open || active ? 'text-white' : 'text-gray-400 hover:text-white'
+                  }`
+                : `inline-flex items-center gap-1 whitespace-nowrap rounded-lg px-2.5 py-1.5 text-sm font-medium transition-colors lg:px-3 ${
+                    open || active
+                      ? 'bg-white/5 text-white'
+                      : 'text-gray-300 hover:bg-white/5 hover:text-white'
+                  }`
+            }
           >
             {menu.label}
             <Chevron open={open} />
@@ -363,12 +372,14 @@ export function StandardDesktopNavLinks({
         </div>
       )}
 
-      <Link
-        to="/list-token-free"
-        className="ml-2 inline-flex shrink-0 items-center whitespace-nowrap rounded-full bg-gradient-to-r from-cyan-500 to-teal-500 px-3.5 py-1.5 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 transition-all hover:from-cyan-400 hover:to-teal-400"
-      >
-        List token free
-      </Link>
+      {showListCta && (
+        <Link
+          to="/list-token-free"
+          className="ml-2 inline-flex shrink-0 items-center whitespace-nowrap rounded-full bg-gradient-to-r from-cyan-500 to-teal-500 px-3.5 py-1.5 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 transition-all hover:from-cyan-400 hover:to-teal-400"
+        >
+          List token free
+        </Link>
+      )}
     </div>
   );
 }
