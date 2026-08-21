@@ -788,7 +788,7 @@ const ProjectInfo = ({ currentUser, ads = [], onAdPatched }) => {
               </li>
             </ul>
             <p className="text-gray-400 text-xs mt-3">
-              <strong className="text-white">Paid Premium</strong> also includes the in-house blog &amp; press release, AMA, ad credits, <strong className="text-white">1-hour fast-track listing review</strong>, higher pre-bump raid cap, longer homepage banner, and custom ping branding when bumped.
+              <strong className="text-white">Paid Premium</strong> is how we <strong className="text-white">announce your listing</strong> — social and email marketing campaigns (newsletter to all users), plus the in-house blog &amp; press release, AMA, ad credits, <strong className="text-white">1-hour fast-track listing review</strong>, higher raid cap, homepage banner, and custom ping branding when bumped. Starter listings go on the map only; Aquads does not announce them.
             </p>
           </div>
         </div>
@@ -839,6 +839,12 @@ const ProjectInfo = ({ currentUser, ads = [], onAdPatched }) => {
                 </span>
               </li>
               <li className="flex items-start gap-3">
+                <FaCheckCircle className="text-amber-400 mt-0.5 shrink-0" />
+                <span className="min-w-0 flex-1 leading-relaxed">
+                  <strong className="text-white">No listing announcement</strong> — Aquads does not run social or email campaigns for Starter projects
+                </span>
+              </li>
+              <li className="flex items-start gap-3">
                 <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
                 <span className="min-w-0 flex-1 leading-relaxed">Optional Mintfunnel packages paid separately at checkout</span>
               </li>
@@ -884,6 +890,10 @@ const ProjectInfo = ({ currentUser, ads = [], onAdPatched }) => {
               <li className="flex items-start gap-3">
                 <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
                 <span className="min-w-0 flex-1 leading-relaxed">In-house blog written for your project, published as a press release on Aquads</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />
+                <span className="min-w-0 flex-1 leading-relaxed">We announce your project with social and email marketing campaigns (newsletter to all Aquads users)</span>
               </li>
               <li className="flex items-start gap-3">
                 <FaCheckCircle className="text-green-400 mt-0.5 shrink-0" />

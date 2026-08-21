@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Modal from './Modal';
-import { FaCheck, FaArrowLeft, FaArrowRight, FaBullhorn, FaUsers, FaTwitter, FaChartLine, FaGift, FaRocket, FaNewspaper, FaCrown, FaStar, FaFire, FaGem, FaLightbulb, FaChevronDown, FaChevronUp, FaSpinner, FaTelegram, FaDiscord, FaRobot, FaSearch } from 'react-icons/fa';
+import { FaCheck, FaArrowLeft, FaArrowRight, FaBullhorn, FaUsers, FaTwitter, FaChartLine, FaGift, FaRocket, FaNewspaper, FaCrown, FaStar, FaFire, FaGem, FaLightbulb, FaChevronDown, FaChevronUp, FaSpinner, FaTelegram, FaDiscord, FaRobot, FaSearch, FaEnvelope } from 'react-icons/fa';
 import DiscountCodeInput from './DiscountCodeInput';
 import BlockchainSelect from './BlockchainSelect';
 import { normalizeBlockchainSlug } from '../constants/blockchains';
@@ -162,7 +162,7 @@ function SharedListingBenefitsNote({ className = '' }) {
           <strong className="text-white">Trading:</strong> bubble opens <strong className="text-white">AquaSwap</strong> + <strong className="text-white">BexTools</strong>-style routing so traders jump to live charts and swaps.
         </li>
         <li>
-          <strong className="text-white">Discovery &amp; momentum:</strong> map, vote rankings, raids, boosts &amp; Bump Bot. <strong className="text-white">Skipper Agent</strong> on all verified accounts (pay-as-you-go; top up via AquaPay). <strong className="text-white">Premium</strong> (paid listing) adds <strong className="text-white">1-hour fast-track listing review</strong>, an <strong className="text-white">in-house blog &amp; press release</strong>, a <strong className="text-white">$5</strong> Skipper AI wallet credit, AMA, ad credit, higher pre-bump raid cap &amp; <strong className="text-white">custom branding</strong> when bumped (<strong className="text-white">paid Premium listing</strong> required for <code className="text-cyan-300">/setbranding</code> — vote bump alone does not upgrade tier).
+          <strong className="text-white">Discovery &amp; momentum:</strong> map, vote rankings, raids, boosts &amp; Bump Bot. <strong className="text-white">Skipper Agent</strong> on all verified accounts (pay-as-you-go; top up via AquaPay). <strong className="text-white">Starter</strong> listings are <strong className="text-white">not announced</strong> by Aquads. <strong className="text-white">Premium</strong> rolls out <strong className="text-white">social and email marketing campaigns</strong> to announce your project (including the newsletter to all users), plus <strong className="text-white">1-hour fast-track listing review</strong>, an <strong className="text-white">in-house blog &amp; press release</strong>, a <strong className="text-white">$5</strong> Skipper AI wallet credit, AMA, ad credit, higher raid cap &amp; <strong className="text-white">custom branding</strong> when bumped (<strong className="text-white">paid Premium listing</strong> required for <code className="text-cyan-300">/setbranding</code> — vote bump alone does not upgrade tier).
         </li>
       </ul>
     </div>
@@ -1001,7 +1001,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                   >
                     <div className="font-bold text-white">Starter</div>
                     <div className="mt-1 text-sm text-green-400">Free base listing</div>
-                    <p className="mt-2 text-xs text-gray-400">AquaSwap + Bex path from bubble · bump at 100+ votes + $10k liq · 1 raid/day · optional packages: pay package prices only</p>
+                    <p className="mt-2 text-xs text-gray-400">On the map with AquaSwap · no Aquads listing announcement · bump at 100+ votes + $10k liq · 1 raid/day · optional packages: pay package prices only</p>
                   </button>
                   <button
                     type="button"
@@ -1018,7 +1018,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                         `$${PREMIUM_LISTING_FEE_USDC} USDC`
                       )}
                     </div>
-                    <p className="mt-2 text-xs text-gray-400">$5 Skipper AI credit · in-house blog &amp; press release · AMA · 7-day banner · ad credit · custom branding when bumped (100+ votes, $10k+ liq) · 5 raids/day → 10 when bumped</p>
+                    <p className="mt-2 text-xs text-gray-400">$5 Skipper AI credit · we announce your listing (social + email) · in-house blog &amp; press release · AMA · 7-day banner · ad credit · custom branding when bumped (100+ votes, $10k+ liq) · 5 raids/day → 10 when bumped</p>
                   </button>
                 </div>
               </div>
@@ -1285,7 +1285,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                   >
                     <div className="font-bold text-white">Starter</div>
                     <div className="text-green-400 text-sm mt-1">Free base listing</div>
-                    <p className="text-gray-400 text-xs mt-2">AquaSwap + Bex routing · bump at 100+ votes + $10k liq · 1 raid/day · optional paid add-ons</p>
+                    <p className="text-gray-400 text-xs mt-2">On the map with AquaSwap · no Aquads listing announcement · bump at 100+ votes + $10k liq · 1 raid/day · optional paid add-ons</p>
                   </button>
                   <button
                     type="button"
@@ -1300,7 +1300,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                         `$${PREMIUM_LISTING_FEE_USDC} USDC`
                       )}
                     </div>
-                    <p className="text-gray-400 text-xs mt-2">$5 Skipper AI credit · in-house blog &amp; press release · AMA · 7-day banner · ad credit · custom branding when bumped · 5→10 raids/day</p>
+                    <p className="text-gray-400 text-xs mt-2">$5 Skipper AI credit · we announce your listing (social + email) · in-house blog &amp; press release · AMA · 7-day banner · ad credit · custom branding when bumped · 5→10 raids/day</p>
                   </button>
                 </div>
 
@@ -1311,7 +1311,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                     Starter — free base listing
                   </h3>
                   <p className="text-gray-400 text-sm mb-6">
-                    $0 base fee after approval. Everything below is included; Mintfunnel packages are optional extras (step 2).
+                    $0 base fee after approval. You go live on the map — Aquads does <strong className="text-white">not</strong> announce Starter listings. Mintfunnel packages are optional extras (step 2).
                   </p>
 
                   <div className="space-y-4">
@@ -1345,6 +1345,16 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                       </div>
                     </div>
 
+                    <div className="flex items-start space-x-4 p-4 bg-gray-800/50 rounded-lg border border-amber-500/40">
+                      <div className="bg-amber-500 p-2 rounded-full flex-shrink-0">
+                        <FaBullhorn className="text-white" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-white">No listing announcement</h4>
+                        <p className="text-gray-300 text-sm">Aquads does <strong className="text-white">not</strong> run social or email campaigns for Starter projects. <strong className="text-white">Premium</strong> is the plan that announces your listing to our audience.</p>
+                      </div>
+                    </div>
+
                     <div className="flex items-start space-x-4 p-4 bg-gray-800/50 rounded-lg border border-gray-600/80">
                       <div className="bg-purple-500 p-2 rounded-full flex-shrink-0">
                         <FaGift className="text-white" />
@@ -1371,7 +1381,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                       </div>
                       <div>
                         <h4 className="font-semibold text-white">Upgrade path</h4>
-                        <p className="text-gray-300 text-sm">Switch to <strong className="text-white">paid Premium</strong> anytime from your dashboard for <strong className="text-white">1-hour fast-track listing review</strong>, an <strong className="text-white">in-house blog &amp; press release</strong>, a <strong className="text-white">$5</strong> Skipper AI wallet credit, AMA, a <strong className="text-white">7-day</strong> homepage banner, $50 ad credit, custom bots/branding when bumped, <strong className="text-white">5→10 raids/day</strong>, and more.</p>
+                        <p className="text-gray-300 text-sm">Switch to <strong className="text-white">paid Premium</strong> anytime from your dashboard so we <strong className="text-white">announce your project</strong> with social and email campaigns (newsletter to all users), plus <strong className="text-white">1-hour fast-track listing review</strong>, an <strong className="text-white">in-house blog &amp; press release</strong>, a <strong className="text-white">$5</strong> Skipper AI wallet credit, AMA, a <strong className="text-white">7-day</strong> homepage banner, $50 ad credit, custom bots/branding when bumped, <strong className="text-white">5→10 raids/day</strong>, and more.</p>
                       </div>
                     </div>
                   </div>
@@ -1379,7 +1389,8 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                   <div className="mt-6 p-4 bg-green-900/25 border border-green-500/45 rounded-lg">
                     <p className="text-green-200 text-sm leading-relaxed">
                       ✓ Starter skips the $99 Premium package—you keep full Aquads bubble visibility<br/>
-                      ✓ Same AquaSwap/Bex funnel &amp; map discovery as Premium; Premium adds the full launch bundle<br/>
+                      ✓ Same AquaSwap/Bex funnel &amp; map discovery as Premium; Premium adds the launch announcement bundle<br/>
+                      ✓ Aquads does <strong className="text-green-100">not announce</strong> Starter listings (social + email campaigns are Premium)<br/>
                       ✓ Same fair-play rules and bump mechanics as Premium listings
                     </p>
                   </div>
@@ -1443,6 +1454,16 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                     <div>
                       <h4 className="font-semibold text-white">In-house blog &amp; press release</h4>
                       <p className="text-gray-300 text-sm">Professional blog written in-house for your project, published as a press release on Aquads and posted to the Aquads newsroom.</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start space-x-4 p-4 bg-gray-800/50 rounded-lg border border-emerald-500/35">
+                    <div className="bg-emerald-500 p-2 rounded-full">
+                      <FaEnvelope className="text-white" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-white">Social &amp; email launch campaigns</h4>
+                      <p className="text-gray-300 text-sm">We <strong className="text-white">announce your project</strong> with social marketing campaigns and an email campaign, including the Aquads newsletter sent to <strong className="text-white">all users</strong>. Starter listings are not announced.</p>
                     </div>
                   </div>
                   
@@ -1531,6 +1552,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                     ✓ <strong className="text-green-200">1-hour fast-track</strong> listing review (vs 24–48h on Starter)<br/>
                     ✓ <strong className="text-green-200">$5</strong> Skipper AI wallet credit on paid Premium (Skipper access itself is on all verified accounts)<br/>
                     ✓ <strong className="text-green-200">1 complimentary 7-day homepage banner</strong><br/>
+                    ✓ <strong className="text-green-200">Social &amp; email campaigns</strong> to announce your listing (newsletter to all users)<br/>
                     ✓ Admin review & refund if rejected<br/>
                     ✓ Optional Mintfunnel add-ons still available separately (step 2)
                   </p>

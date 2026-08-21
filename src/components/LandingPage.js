@@ -28,7 +28,7 @@ const LANDING_FAQS = [
   {
     question: 'Is Aquads really free to list a token?',
     answer:
-      "Yes — Aquads is a free token listing platform built specifically for post-launch projects, and the Starter tier lists any token for $0. Your project goes live on the bubble map with community voting, AquaSwap routing, raid tools, and an auto-bump at 100 bullish votes once it's approved. Optional Premium ($99) includes an in-house blog and press release, 1-hour fast-track review, a 7-day homepage banner, and Skipper AI credit. Mintfunnel distribution add-ons start at $284 if you want broader news pickup — but no upfront cost is ever required to list a token on Aquads.",
+      "Yes — Aquads is a free token listing platform built specifically for post-launch projects, and the Starter tier lists any token for $0. Your project goes live on the bubble map with community voting, AquaSwap routing, raid tools, and an auto-bump at 100 bullish votes once it's approved. Starter listings are not announced by Aquads. Optional Premium ($99) is the launch plan: we roll out social and email marketing campaigns (including a newsletter to all users), an in-house blog and press release, 1-hour fast-track review, a 7-day homepage banner, and Skipper AI credit. Mintfunnel distribution add-ons start at $284 if you want broader news pickup — but no upfront cost is ever required to list a token on Aquads.",
   },
   {
     question: 'Which blockchains does Aquads support?',
@@ -4027,14 +4027,14 @@ const LandingPage = ({ openMintFunnelPlatform }) => {
                 "name": "Starter listing",
                 "price": "0",
                 "priceCurrency": "USD",
-                "description": "Free token listing on the Aquads bubble map with votes, bumps, AquaSwap routing, and raids."
+                "description": "Free token listing on the Aquads bubble map with votes, bumps, AquaSwap routing, and raids. Starter listings are not announced by Aquads."
               },
               {
                 "@type": "Offer",
                 "name": "Premium listing",
                 "price": "99",
                 "priceCurrency": "USD",
-                "description": "Paid listing with in-house blog and press release on Aquads, 1-hour fast-track review, 7-day homepage banner, AMA, and Skipper AI credit. Optional Mintfunnel distribution add-ons start at $284."
+                "description": "Paid listing: Aquads announces your project with social and email campaigns (newsletter to all users), plus in-house blog and press release, 1-hour fast-track review, 7-day homepage banner, AMA, and Skipper AI credit. Optional Mintfunnel distribution add-ons start at $284."
               }
             ],
             "featureList": [

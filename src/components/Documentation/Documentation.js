@@ -770,7 +770,7 @@ Skipper uses a **prepaid USD wallet** (separate from affiliate points):
 | **Starter (free listing)** | Full Skipper access + **$1** trial credit per listing wallet |
 | **Premium (paid listing)** | Full Skipper access + **$5** starter wallet credit (see List Project modal for current USDC price) |
 
-**Paid Premium** also includes the bundled **Premium growth bundle** (**1-hour fast-track listing review**, PR/AMA where offered, ad credit, longer homepage banner, higher pre-bump raid cap, custom bot branding when bumped, etc.). See **Listing Your Token** for the full comparison.
+**Paid Premium** also includes the bundled **Premium growth bundle** (**we announce your listing** with social and email campaigns / newsletter to all users, **1-hour fast-track listing review**, in-house blog & press release, PR/AMA where offered, ad credit, longer homepage banner, higher raid cap, custom bot branding when bumped, etc.). **Starter** listings go on the map only — Aquads does not announce them. See **Listing Your Token** for the full comparison.
 
 ### Suggested first-week workflow
 
@@ -871,7 +871,7 @@ You can pay via:
 
 **Skipper Agent** is on all **email-verified** accounts (pay-as-you-go; top up via AquaPay). See **Skipper Agent → Overview & Guide** in the docs sidebar for modes, wallets, and listing via Agent.
 
-**Paid Premium** adds the bundled **Premium growth bundle** (e.g. **in-house blog & press release on Aquads**, **$5 Skipper wallet credit**, **1-hour fast-track listing review**, AMA, ad credit, higher pre-bump raid cap, **7-day** homepage banner).
+**Paid Premium** adds the bundled **Premium growth bundle** (e.g. **we announce your listing** with **social and email campaigns** / newsletter to all users, **in-house blog & press release on Aquads**, **$5 Skipper wallet credit**, **1-hour fast-track listing review**, AMA, ad credit, higher raid cap, **7-day** homepage banner). **Starter** listings are not announced by Aquads.
 
 ### Listing review times
 

@@ -80,6 +80,7 @@ const LAUNCH_CHECKLIST_STEPS = [
   'skipper_posts',
   'daily_raids',
   'free_ama',
+  'email_campaign',
   'x_spaces',
   'banner_ad',
   'chrome_extension'

@@ -16,6 +16,7 @@ export const LAUNCH_CHECKLIST_STEP_IDS = [
   'skipper_posts',
   'daily_raids',
   'free_ama',
+  'email_campaign',
   'x_spaces',
   'banner_ad',
   'chrome_extension'
@@ -191,6 +192,14 @@ const ProjectLaunchChecklist = ({ ad, onTabSelect, onOpenDeepDive, showNotificat
         title: 'Claim your free AMA session',
         description: 'Book a complimentary AMA with the Aquads team on Telegram (included with Premium listings).',
         action: { type: 'link', label: 'Book free AMA', href: FREE_AMA_URL },
+        premiumOnly: true
+      },
+      {
+        id: 'email_campaign',
+        group: 'Your listing',
+        title: 'Social & email launch campaigns',
+        description: 'Included with Premium — we announce your project with social marketing campaigns and an email campaign, including the newsletter sent to all Aquads users. Starter listings are not announced.',
+        action: null,
         premiumOnly: true
       },
       {
