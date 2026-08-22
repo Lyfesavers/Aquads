@@ -169,8 +169,8 @@ const ProjectLaunchChecklist = ({ ad, onTabSelect, onOpenDeepDive, showNotificat
         id: 'mintfunnel_credit',
         group: 'Paid growth',
         title: 'Claim your free $50 ad spend credit',
-        description: 'Use the Paid Ads button — sign up on MintFunnel as Advertiser for $50 credit.',
-        action: { type: 'button', label: 'Open MintFunnel', onClick: openMintFunnel }
+        description: 'Use the Paid Ads button — sign up as Advertiser for $50 credit.',
+        action: { type: 'button', label: 'Open Paid Ads', onClick: openMintFunnel }
       },
       {
         id: 'skipper_posts',

@@ -842,7 +842,7 @@ Thresholds may change over time at Aquads' discretion.
 
 ### Step 2: Marketing Add-ons (Optional)
 
-After entering project info, you can add Mintfunnel distribution packages. **In-house blog & press release** is included with **Premium** (not sold as a separate add-on).
+After entering project info, you can add PR campaign packages. **In-house blog & press release** is included with **Premium** (not sold as a separate add-on).
 
 | Package | Starter | Premium (5% off) | Features |
 |---------|---------|------------------|----------|
@@ -853,7 +853,7 @@ After entering project info, you can add Mintfunnel distribution packages. **In-
 | **AquaTidal** | $12,999 | $12,349 | 125+ pickups, CoinTelegraph |
 | **AquaLegend** | $21,999 | $20,899 | Epic package, guaranteed Forbes |
 
-> 💡 **Paid Premium perk**: 5% off Mintfunnel PR packages only. Starter listings pay the full partner rate. The affiliate **5% off** applies only to the **$99 Premium listing fee**, not to PR add-ons.
+> 💡 **Paid Premium perk**: 5% off PR packages only. Starter listings pay the full partner rate. The affiliate **5% off** applies only to the **$99 Premium listing fee**, not to PR add-ons.
 
 ### Payment Options
 
@@ -871,7 +871,7 @@ You can pay via:
 
 **Skipper Agent** is on all **email-verified** accounts (pay-as-you-go; top up via AquaPay). See **Skipper Agent → Overview & Guide** in the docs sidebar for modes, wallets, and listing via Agent.
 
-**Paid Premium** adds the bundled **Premium growth bundle** (e.g. **we announce your listing** with **social and email campaigns** / newsletter to all users, **in-house blog & press release on Aquads**, **5% off Mintfunnel PR packages**, **$5 Skipper wallet credit**, **1-hour fast-track listing review**, AMA, ad credit, higher raid cap, **7-day** homepage banner). **Starter** listings are not announced by Aquads.
+**Paid Premium** adds the bundled **Premium growth bundle** (e.g. **we announce your listing** with **social and email campaigns** / newsletter to all users, **in-house blog & press release on Aquads**, **5% off PR packages**, **$5 Skipper wallet credit**, **1-hour fast-track listing review**, AMA, ad credit, higher raid cap, **7-day** homepage banner). **Starter** listings are not announced by Aquads.
 
 ### Listing review times
 

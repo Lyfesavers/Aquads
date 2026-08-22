@@ -28,7 +28,7 @@ const LANDING_FAQS = [
   {
     question: 'Is Aquads really free to list a token?',
     answer:
-      "Yes — Aquads is a free token listing platform built specifically for post-launch projects, and the Starter tier lists any token for $0. Your project goes live on the bubble map with community voting, AquaSwap routing, raid tools, and a vote-plus-liquidity bump (100+ bullish votes and $10k+ liquidity) once it's approved. Starter listings are not announced by Aquads. Optional Premium ($99) is the growth plan: we roll out social and email marketing campaigns (including a newsletter to all users), an in-house blog and press release, 1-hour fast-track review, a 7-day homepage banner, custom bot branding as soon as approved, and Skipper AI credit. Mintfunnel distribution add-ons start at $299 (Paid Premium listings get 5% off those PR packages at checkout) — but no upfront cost is ever required to list a token on Aquads.",
+      "Yes — Aquads is a free token listing platform built specifically for post-launch projects, and the Starter tier lists any token for $0. Your project goes live on the bubble map with community voting, AquaSwap routing, raid tools, and a vote-plus-liquidity bump (100+ bullish votes and $10k+ liquidity) once it's approved. Starter listings are not announced by Aquads. Optional Premium ($99) is the growth plan: we roll out social and email marketing campaigns (including a newsletter to all users), an in-house blog and press release, 1-hour fast-track review, a 7-day homepage banner, custom bot branding as soon as approved, and Skipper AI credit. PR campaign add-ons start at $299 (Paid Premium listings get 5% off those PR packages at checkout) — but no upfront cost is ever required to list a token on Aquads.",
   },
   {
     question: 'Which blockchains does Aquads support?',
@@ -53,7 +53,7 @@ const LANDING_FAQS = [
   {
     question: 'What does Aquads actually do for my project after I list?',
     answer:
-      'Aquads is a post-launch growth stack, not a DexScreener clone and not a 72-hour pump desk. After you list you get a bubble storefront, community votes, in-house human raiders (real people commenting and engaging — not bots, so they can actually become holders), Telegram and Discord tools, AquaSwap from the listing, Skipper AI, hiring and payments, plus SEO-backed blogs and optional Mintfunnel PR. Bump (100+ bullish votes and $10k+ liquidity) is for Aquads and BexTools visibility — it does not replace a DexScreener trending campaign. Paid Premium is how we announce you and unlock custom bot branding as soon as the listing is approved.',
+      'Aquads is a post-launch growth stack, not a DexScreener clone and not a 72-hour pump desk. After you list you get a bubble storefront, community votes, in-house human raiders (real people commenting and engaging — not bots, so they can actually become holders), Telegram and Discord tools, AquaSwap from the listing, Skipper AI, hiring and payments, plus SEO-backed blogs and optional PR campaigns. Bump (100+ bullish votes and $10k+ liquidity) is for Aquads and BexTools visibility — it does not replace a DexScreener trending campaign. Paid Premium is how we announce you and unlock custom bot branding as soon as the listing is approved.',
   },
   {
     question: 'How fast can my token go live on Aquads?',
@@ -837,7 +837,7 @@ const FeaturePreviewSVG = ({ featureTitle }) => {
           {/* Powered By Badge */}
           <rect x="20" y="120" width="120" height="20" rx="3" fill="rgba(236, 72, 153, 0.2)"/>
           <text x="25" y="133" fontSize="7" fill="#9ca3af">Powered by</text>
-          <text x="80" y="133" fontSize="8" fill="#f472b6" fontWeight="600">Coinbound/Mintfunnel</text>
+          <text x="80" y="133" fontSize="8" fill="#f472b6" fontWeight="600">Coinbound</text>
         </svg>
       );
 
@@ -1505,7 +1505,7 @@ const MarketingPhoneScreen = () => (
     <div className="mb-3 rounded-xl border border-pink-500/25 bg-pink-500/10 px-2.5 py-2 text-center text-[10px] font-semibold text-pink-200">
       75+ outlets · Forbes, Yahoo, CT…
     </div>
-    <div className="mt-auto text-center text-[9px] text-slate-500">Powered by Coinbound / Mintfunnel</div>
+    <div className="mt-auto text-center text-[9px] text-slate-500">Powered by Coinbound</div>
   </div>
 );
 
@@ -3028,7 +3028,7 @@ const CarouselCard = ({ feature, index }) => {
                 </h2>
                 
                 <p className="text-gray-400 text-sm md:text-base lg:text-lg mb-6 max-w-xl">
-                  Powered by Coinbound/Mintfunnel. Guaranteed coverage on Forbes, Yahoo Finance, CoinTelegraph, CoinMarketCap, and 75+ media outlets. 7 packages from $99 to $20,899. SEO optimization included. Reach up to 500M+ with professional PR campaigns.
+                  Powered by Coinbound. Guaranteed coverage on Forbes, Yahoo Finance, CoinTelegraph, CoinMarketCap, and 75+ media outlets. 7 packages from $99 to $20,899. SEO optimization included. Reach up to 500M+ with professional PR campaigns.
                 </p>
                 
                 {/* Stats grid */}
@@ -3681,7 +3681,7 @@ const LaunchStackPillars = () => {
       icon: '🚀',
       title: 'Grow community',
       subtitle: 'Raids, PR, and compounding SEO',
-      description: 'In-house human raiders (not bots), Telegram and Discord tools, banners, blogs that rank, and Mintfunnel PR. Real people comment and engage — they can become holders, not empty metrics. Built for distribution that lasts after launch.',
+      description: 'In-house human raiders (not bots), Telegram and Discord tools, banners, blogs that rank, and PR campaigns. Real people comment and engage — they can become holders, not empty metrics. Built for distribution that lasts after launch.',
       link: '/telegram-bot',
       cta: 'Explore growth tools',
       accent: 'sky',
@@ -3843,7 +3843,7 @@ const LandingPage = ({ openMintFunnelPlatform }) => {
     {
       icon: '📢',
       title: 'Marketing & PR',
-      description: 'In-house blog and press release on Paid Premium. Mintfunnel distribution to major outlets from $299 (5% off for Premium). SEO-backed pages that keep working after launch week.',
+      description: 'In-house blog and press release on Paid Premium. PR campaign distribution to major outlets from $299 (5% off for Premium). SEO-backed pages that keep working after launch week.',
       gradient: 'from-pink-900/40 to-slate-900/80',
       link: '/list-token-free',
       size: 'wide'
@@ -4034,7 +4034,7 @@ const LandingPage = ({ openMintFunnelPlatform }) => {
                 "name": "Premium listing",
                 "price": "99",
                 "priceCurrency": "USD",
-                "description": "Paid listing: Aquads announces your project with social and email campaigns (newsletter to all users), plus in-house blog and press release, 1-hour fast-track review, 7-day homepage banner, AMA, and Skipper AI credit. Optional Mintfunnel distribution add-ons start at $299; Paid Premium listings get 5% off those PR packages."
+                "description": "Paid listing: Aquads announces your project with social and email campaigns (newsletter to all users), plus in-house blog and press release, 1-hour fast-track review, 7-day homepage banner, AMA, and Skipper AI credit. Optional PR campaign add-ons start at $299; Paid Premium listings get 5% off those PR packages."
               }
             ],
             "featureList": [

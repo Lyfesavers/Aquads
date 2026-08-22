@@ -47,7 +47,7 @@ const ADDON_PACKAGES = [
     turnaround: '24-48 Hours',
     features: [
       '4+ Media Pickups Guaranteed',
-      'Mintfunnel Newsroom & Additional Platforms',
+      'PR Newsroom & Additional Platforms',
       'Basic Support Services',
       'Professional Distribution Network'
     ]
@@ -63,7 +63,7 @@ const ADDON_PACKAGES = [
     turnaround: '24-72 Hours',
     features: [
       '9+ Media Pickups Guaranteed',
-      'Mintfunnel Newsroom & More',
+      'PR Newsroom & More',
       'Telegram Chat Support',
       'FREE SEO Optimizations'
     ]
@@ -83,7 +83,7 @@ const ADDON_PACKAGES = [
       'Coverage from BraveNewCoin',
       'Coverage from CoinCodex',
       'Coverage from Bitcolumnist',
-      'Mintfunnel Newsroom & More',
+      'PR Newsroom & More',
       'Telegram Chat Support',
       'FREE SEO Optimizations'
     ]
@@ -100,7 +100,7 @@ const ADDON_PACKAGES = [
     features: [
       'Everything from Starter Package, plus:',
       '75+ Media Pickups Guaranteed',
-      'Mintfunnel Newsroom Inclusion',
+      'PR Newsroom Inclusion',
       'Site Audience of 75M+',
       'Telegram Chat Support',
       'FREE SEO Optimizations'
@@ -144,7 +144,7 @@ const ADDON_PACKAGES = [
       '• CoinGape',
       '• CryptoNews',
       'Video Chat Support',
-      'Mintfunnel Newsroom Inclusion'
+      'PR Newsroom Inclusion'
     ]
   }
 ];
@@ -992,7 +992,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
             {!isAddOnOnly && (
               <div className="mb-8 rounded-xl border border-gray-600 bg-gray-800/40 p-4 sm:p-5">
                 <p className="mb-4 text-center text-sm text-gray-300">
-                  Pick your listing plan first. <strong className="text-white">Starter</strong> has no base listing fee — Mintfunnel packages below are charged at the <strong className="text-white">full partner rate</strong>.{' '}
+                  Pick your listing plan first. <strong className="text-white">Starter</strong> has no base listing fee — PR packages below are charged at the <strong className="text-white">full partner rate</strong>.{' '}
                   <strong className="text-white">Premium</strong> adds the base listing fee and unlocks <strong className="text-white">5% off</strong> those PR packages.
                 </p>
                 <SharedListingBenefitsNote className="mb-4" />
@@ -1021,7 +1021,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                         `$${PREMIUM_LISTING_FEE_USDC} USDC`
                       )}
                     </div>
-                    <p className="mt-2 text-xs text-gray-400">$5 Skipper AI credit · we announce your listing (social + email) · in-house blog &amp; press release · 5% off Mintfunnel PR · AMA · 7-day banner · ad credit · custom branding on bot pings immediately · 5 raids/day → 10 when bumped</p>
+                    <p className="mt-2 text-xs text-gray-400">$5 Skipper AI credit · we announce your listing (social + email) · in-house blog &amp; press release · 5% off PR campaigns · AMA · 7-day banner · ad credit · custom branding on bot pings immediately · 5 raids/day → 10 when bumped</p>
                   </button>
                 </div>
               </div>
@@ -1058,7 +1058,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                     Full partner rate — 5% off PR is Premium-only
                   </p>
                   <p className="text-center text-gray-400 text-xs mt-1">
-                    Switch to Paid Premium to unlock 5% off Mintfunnel campaigns. Affiliate 5% never applies to these packages.
+                    Switch to Paid Premium to unlock 5% off PR campaigns. Affiliate 5% never applies to these packages.
                   </p>
                 </div>
               )}
@@ -1249,7 +1249,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                     </div>
                   )}
                   <p className="text-gray-300 mb-6">
-                    You're purchasing PR & marketing packages powered by our partner Mintfunnel. We'll handle the entire setup and delivery process for you.
+                    You're purchasing PR & marketing packages. We'll handle the entire setup and delivery process for you.
                   </p>
                   
                   <div className="space-y-3">
@@ -1289,7 +1289,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                   
                   <div className="mt-6 p-4 bg-green-900/30 border border-green-500/50 rounded-lg">
                     <p className="text-green-300 text-sm font-medium">
-                      ✓ We handle all coordination with Mintfunnel<br/>
+                      ✓ We handle all coordination<br/>
                       ✓ Your PR content will be reviewed and optimized<br/>
                       ✓ Full support throughout the process
                     </p>
@@ -1321,7 +1321,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                         `$${PREMIUM_LISTING_FEE_USDC} USDC`
                       )}
                     </div>
-                    <p className="text-gray-400 text-xs mt-2">$5 Skipper AI credit · we announce your listing (social + email) · in-house blog &amp; press release · 5% off Mintfunnel PR · AMA · 7-day banner · ad credit · custom branding on bot pings immediately · 5→10 raids/day</p>
+                    <p className="text-gray-400 text-xs mt-2">$5 Skipper AI credit · we announce your listing (social + email) · in-house blog &amp; press release · 5% off PR campaigns · AMA · 7-day banner · ad credit · custom branding on bot pings immediately · 5→10 raids/day</p>
                   </button>
                 </div>
 
@@ -1332,7 +1332,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                     Starter — free base listing
                   </h3>
                   <p className="text-gray-400 text-sm mb-6">
-                    $0 base fee after approval. You go live on the map — Aquads does <strong className="text-white">not</strong> announce Starter listings. Mintfunnel packages are optional extras (step 2).
+                    $0 base fee after approval. You go live on the map — Aquads does <strong className="text-white">not</strong> announce Starter listings. PR packages are optional extras (step 2).
                   </p>
 
                   <div className="space-y-4">
@@ -1381,8 +1381,8 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                         <FaGift className="text-white" />
                       </div>
                       <div>
-                        <h4 className="font-semibold text-white">Optional Mintfunnel PR (paid)</h4>
-                        <p className="text-gray-300 text-sm">Add AquaRipple and other Mintfunnel packages in step 2—you pay the <strong className="text-white">full partner rate</strong> (no 5% off). The Aquads partnership discount on PR campaigns is a <strong className="text-white">Premium</strong> perk. In-house blog &amp; press release is included with Premium.</p>
+                        <h4 className="font-semibold text-white">Optional PR campaigns (paid)</h4>
+                        <p className="text-gray-300 text-sm">Add AquaRipple and other PR packages in step 2—you pay the <strong className="text-white">full partner rate</strong> (no 5% off). The Aquads partnership discount on PR campaigns is a <strong className="text-white">Premium</strong> perk. In-house blog &amp; press release is included with Premium.</p>
                       </div>
                     </div>
 
@@ -1402,7 +1402,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                       </div>
                       <div>
                         <h4 className="font-semibold text-white">Upgrade path</h4>
-                        <p className="text-gray-300 text-sm">Switch to <strong className="text-white">paid Premium</strong> anytime from your dashboard so we <strong className="text-white">announce your project</strong> with social and email campaigns (newsletter to all users), plus <strong className="text-white">1-hour fast-track listing review</strong>, an <strong className="text-white">in-house blog &amp; press release</strong>, <strong className="text-white">5% off Mintfunnel PR packages</strong>, a <strong className="text-white">$5</strong> Skipper AI wallet credit, AMA, a <strong className="text-white">7-day</strong> homepage banner, $50 ad credit, custom branding on bot pings immediately, <strong className="text-white">5→10 raids/day</strong>, and more.</p>
+                        <p className="text-gray-300 text-sm">Switch to <strong className="text-white">paid Premium</strong> anytime from your dashboard so we <strong className="text-white">announce your project</strong> with social and email campaigns (newsletter to all users), plus <strong className="text-white">1-hour fast-track listing review</strong>, an <strong className="text-white">in-house blog &amp; press release</strong>, <strong className="text-white">5% off PR packages</strong>, a <strong className="text-white">$5</strong> Skipper AI wallet credit, AMA, a <strong className="text-white">7-day</strong> homepage banner, $50 ad credit, custom branding on bot pings immediately, <strong className="text-white">5→10 raids/day</strong>, and more.</p>
                       </div>
                     </div>
                   </div>
@@ -1485,8 +1485,8 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                       <FaGift className="text-white" />
                     </div>
                     <div>
-                      <h4 className="font-semibold text-white">5% off Mintfunnel PR campaigns</h4>
-                      <p className="text-gray-300 text-sm">Paid Premium unlocks the Aquads partnership rate on AquaRipple and every Mintfunnel package. Starter listings pay the full partner price.</p>
+                      <h4 className="font-semibold text-white">5% off PR campaigns</h4>
+                      <p className="text-gray-300 text-sm">Paid Premium unlocks the Aquads partnership rate on AquaRipple and every PR package. Starter listings pay the full partner price.</p>
                     </div>
                   </div>
 
@@ -1587,7 +1587,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser, preSelectedPackage = 
                     ✓ <strong className="text-green-200">1 complimentary 7-day homepage banner</strong><br/>
                     ✓ <strong className="text-green-200">Social &amp; email campaigns</strong> to announce your listing (newsletter to all users)<br/>
                     ✓ Admin review & refund if rejected<br/>
-                    ✓ Optional Mintfunnel add-ons still available separately (step 2)
+                    ✓ Optional PR add-ons still available separately (step 2)
                   </p>
                 </div>
               </div>

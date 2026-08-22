@@ -27,7 +27,7 @@ const ADDON_PACKAGES = [
     turnaround: '24-48 Hours',
     features: [
       '4+ Media Pickups Guaranteed',
-      'Mintfunnel Newsroom & Additional Platforms',
+      'PR Newsroom & Additional Platforms',
       'Basic Support Services',
       'Professional Distribution Network'
     ],
@@ -36,7 +36,7 @@ const ADDON_PACKAGES = [
       { label: 'Distribution', value: '24-48 Hours' },
       { label: 'Support', value: 'Basic' }
     ],
-    platforms: ['Mintfunnel Newsroom']
+    platforms: ['PR Newsroom']
   },
   {
     id: 'aqua_wave',
@@ -51,7 +51,7 @@ const ADDON_PACKAGES = [
     turnaround: '24-72 Hours',
     features: [
       '9+ Media Pickups Guaranteed',
-      'Mintfunnel Newsroom & More',
+      'PR Newsroom & More',
       'Telegram Chat Support',
       'FREE SEO Optimizations'
     ],
@@ -60,7 +60,7 @@ const ADDON_PACKAGES = [
       { label: 'SEO', value: 'Included Free' },
       { label: 'Support', value: 'Telegram Chat' }
     ],
-    platforms: ['Mintfunnel Newsroom', 'Multiple Crypto Outlets'],
+    platforms: ['PR Newsroom', 'Multiple Crypto Outlets'],
     popular: false
   },
   {
@@ -79,7 +79,7 @@ const ADDON_PACKAGES = [
       'Coverage from BraveNewCoin',
       'Coverage from CoinCodex',
       'Coverage from Bitcolumnist',
-      'Mintfunnel Newsroom & More',
+      'PR Newsroom & More',
       'Telegram Chat Support',
       'FREE SEO Optimizations'
     ],
@@ -105,7 +105,7 @@ const ADDON_PACKAGES = [
     features: [
       'Everything from Starter Package, plus:',
       '75+ Media Pickups Guaranteed',
-      'Mintfunnel Newsroom Inclusion',
+      'PR Newsroom Inclusion',
       'Site Audience of 75M+',
       'Telegram Chat Support',
       'FREE SEO Optimizations'
@@ -115,7 +115,7 @@ const ADDON_PACKAGES = [
       { label: 'Audience Reach', value: '75M+' },
       { label: 'Support', value: 'Telegram Chat' }
     ],
-    platforms: ['75+ Media Outlets', 'Mintfunnel Newsroom'],
+    platforms: ['75+ Media Outlets', 'PR Newsroom'],
     audienceReach: '75M+'
   },
   {
@@ -168,7 +168,7 @@ const ADDON_PACKAGES = [
       '• CoinGape',
       '• CryptoNews',
       'Video Chat Support',
-      'Mintfunnel Newsroom Inclusion'
+      'PR Newsroom Inclusion'
     ],
     highlights: [
       { label: 'Coverage', value: 'ALL Top Platforms' },
@@ -348,7 +348,7 @@ const ProjectInfo = ({ currentUser, ads = [], onAdPatched }) => {
             "@type": "ItemList",
             "name": "Aquads Marketing & PR Add-on Packages",
             "description":
-              "Press release distribution and marketing add-ons available to Aquads listings, powered by Mintfunnel.",
+              "Press release distribution and marketing add-ons available to Aquads listings.",
             "itemListOrder": "https://schema.org/ItemListOrderAscending",
             "numberOfItems": ADDON_PACKAGES.length,
             "itemListElement": ADDON_PACKAGES.map((pkg, i) => ({
@@ -506,7 +506,7 @@ const ProjectInfo = ({ currentUser, ads = [], onAdPatched }) => {
                 <li className="flex items-start gap-3"><FaCheckCircle className="text-white/50 mt-0.5 shrink-0 text-xs" /><span>Standard review — typically <strong className="text-white">24–48 hours</strong></span></li>
                 <li className="flex items-start gap-3"><FaCheckCircle className="text-white/50 mt-0.5 shrink-0 text-xs" /><span>Coordinated raids: <strong className="text-white">1/day</strong> even after bump</span></li>
                 <li className="flex items-start gap-3"><FaCheckCircle className="text-amber-300/90 mt-0.5 shrink-0 text-xs" /><span><strong className="text-white">No listing announcement</strong> — no social or email campaign from Aquads</span></li>
-                <li className="flex items-start gap-3"><FaCheckCircle className="text-white/50 mt-0.5 shrink-0 text-xs" /><span>Mintfunnel PR at the <strong className="text-white">full partner rate</strong></span></li>
+                <li className="flex items-start gap-3"><FaCheckCircle className="text-white/50 mt-0.5 shrink-0 text-xs" /><span>PR campaigns at the <strong className="text-white">full partner rate</strong></span></li>
                 <li className="flex items-start gap-3"><FaCheckCircle className="text-white/50 mt-0.5 shrink-0 text-xs" /><span>Upgrade to Premium anytime from your dashboard</span></li>
               </ul>
               <button
@@ -534,7 +534,7 @@ const ProjectInfo = ({ currentUser, ads = [], onAdPatched }) => {
               <ul className="space-y-3 text-sm text-gray-200 flex-1">
                 <li className="flex items-start gap-3"><FaCheckCircle className="text-cyan-300 mt-0.5 shrink-0 text-xs" /><span><strong className="text-white">Social &amp; email campaigns</strong> to announce your project, including the newsletter to all users</span></li>
                 <li className="flex items-start gap-3"><FaCheckCircle className="text-cyan-300 mt-0.5 shrink-0 text-xs" /><span>In-house blog written for you, published as a press release on Aquads</span></li>
-                <li className="flex items-start gap-3"><FaCheckCircle className="text-cyan-300 mt-0.5 shrink-0 text-xs" /><span><strong className="text-white">5% off</strong> Mintfunnel PR campaigns (AquaRipple and up)</span></li>
+                <li className="flex items-start gap-3"><FaCheckCircle className="text-cyan-300 mt-0.5 shrink-0 text-xs" /><span><strong className="text-white">5% off</strong> PR campaigns (AquaRipple and up)</span></li>
                 <li className="flex items-start gap-3"><FaCheckCircle className="text-cyan-300 mt-0.5 shrink-0 text-xs" /><span><strong className="text-white">1-hour fast-track</strong> listing review after payment</span></li>
                 <li className="flex items-start gap-3"><FaCheckCircle className="text-cyan-300 mt-0.5 shrink-0 text-xs" /><span><strong className="text-white">7-day</strong> complimentary homepage banner</span></li>
                 <li className="flex items-start gap-3"><FaCheckCircle className="text-cyan-300 mt-0.5 shrink-0 text-xs" /><span>Free AMA, ad campaign exposure, and $50 ad credit</span></li>
@@ -781,7 +781,7 @@ const ProjectInfo = ({ currentUser, ads = [], onAdPatched }) => {
               <h3 className="text-xl font-semibold text-white ml-4">Professional PR</h3>
             </div>
             <p className="text-gray-300">
-              Included with <strong className="text-white">Premium</strong> listings (in-house blog &amp; press release on Aquads). <strong className="text-white">Starter</strong> listings can add Mintfunnel distribution packages below, or upgrade to Premium from the dashboard.
+              Included with <strong className="text-white">Premium</strong> listings (in-house blog &amp; press release on Aquads). <strong className="text-white">Starter</strong> listings can add PR distribution packages below, or upgrade to Premium from the dashboard.
             </p>
           </div>
 
@@ -921,13 +921,13 @@ const ProjectInfo = ({ currentUser, ads = [], onAdPatched }) => {
       <div id="pr-campaigns" className="max-w-7xl mx-auto scroll-mt-24 px-4 sm:px-6 lg:px-8 py-16">
         <div className="text-center mb-12">
           <div className="inline-flex items-center gap-2 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 px-4 py-2 rounded-full mb-4">
-            <span className="text-cyan-400 text-sm font-medium">Powered by Mintfunnel (Coinbound)</span>
+            <span className="text-cyan-400 text-sm font-medium">Powered by Coinbound</span>
           </div>
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
             PR & Marketing Add-on Packages
           </h2>
           <p className="text-xl text-gray-300 max-w-3xl mx-auto mb-6">
-            Amplify reach after you pick a listing plan. These Mintfunnel campaigns stack <strong className="text-white">on top of</strong> Starter or Premium — priced separately from the base listing fee.
+            Amplify reach after you pick a listing plan. These PR campaigns stack <strong className="text-white">on top of</strong> Starter or Premium — priced separately from the base listing fee.
           </p>
           <div className="mt-4 p-4 bg-gray-800/80 border border-cyan-500/30 rounded-xl max-w-2xl mx-auto">
             <p className="text-white font-semibold text-lg">Prices below are the full partner rate</p>
@@ -1089,7 +1089,7 @@ const ProjectInfo = ({ currentUser, ads = [], onAdPatched }) => {
               <div>
                 <FaLightbulb className="text-yellow-400 text-xl mx-auto mb-2" />
                 <p className="text-white font-semibold">5+ Years Experience</p>
-                <p className="text-gray-400 text-xs">Powered by Mintfunnel - the first and most popular PR wire built for Web3 & crypto</p>
+                <p className="text-gray-400 text-xs">The first and most popular PR wire built for Web3 & crypto</p>
               </div>
               <div>
                 <FaNetworkWired className="text-blue-400 text-xl mx-auto mb-2" />

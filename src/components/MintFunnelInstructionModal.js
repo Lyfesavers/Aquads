@@ -38,7 +38,7 @@ const MintFunnelInstructionModal = ({ onClose }) => {
               Quick Setup Guide:
             </h3>
             <ol className="list-decimal list-inside text-sm text-gray-300 space-y-2">
-              <li>When you sign up on MintFunnel below, you'll see two role options</li>
+              <li>When you sign up below, you'll see two role options</li>
               <li>
                 <span className="font-medium text-white">Important:</span> Select 
                 <span className="mx-1 px-2 py-0.5 bg-green-600 text-white rounded text-xs font-mono">
@@ -46,7 +46,7 @@ const MintFunnelInstructionModal = ({ onClose }) => {
                 </span> 
                 as your role
               </li>
-              <li>Complete your MintFunnel account registration</li>
+              <li>Complete your account registration</li>
               <li>You will get $50 ad credit to start</li>
               <li>Start creating and running your crypto ad campaigns!</li>
             </ol>
@@ -54,7 +54,7 @@ const MintFunnelInstructionModal = ({ onClose }) => {
 
           <div className="bg-yellow-900/20 border border-yellow-700 rounded-lg p-3 mb-4">
             <p className="text-yellow-200 text-sm">
-              <strong>Why "Advertiser"?</strong> This role gives you access to create and manage ad campaigns on the MintFunnel platform.
+              <strong>Why "Advertiser"?</strong> This role gives you access to create and manage ad campaigns on the ads platform.
             </p>
           </div>
 
