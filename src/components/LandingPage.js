@@ -3934,7 +3934,7 @@ const LandingPage = ({ openMintFunnelPlatform }) => {
   ];
 
   const stats = [
-    { display: 'In-house', label: 'human raiders — not bots' },
+    { display: '1M+', label: 'job listings' },
     { value: 150, suffix: '+', label: 'Wallet integrations' },
     { value: 30, suffix: '+', label: 'Hire categories' },
     { value: 50, suffix: '+', label: 'Payment chains' }
