@@ -27,7 +27,7 @@ const ADDON_PACKAGES = [
     turnaround: '24-48 Hours',
     features: [
       '4+ Media Pickups Guaranteed',
-      'PR Newsroom & Additional Platforms',
+      'Mintfunnel Newsroom & Additional Platforms',
       'Basic Support Services',
       'Professional Distribution Network'
     ],
@@ -36,7 +36,7 @@ const ADDON_PACKAGES = [
       { label: 'Distribution', value: '24-48 Hours' },
       { label: 'Support', value: 'Basic' }
     ],
-    platforms: ['PR Newsroom']
+    platforms: ['Mintfunnel Newsroom']
   },
   {
     id: 'aqua_wave',
@@ -51,7 +51,7 @@ const ADDON_PACKAGES = [
     turnaround: '24-72 Hours',
     features: [
       '9+ Media Pickups Guaranteed',
-      'PR Newsroom & More',
+      'Mintfunnel Newsroom & More',
       'Telegram Chat Support',
       'FREE SEO Optimizations'
     ],
@@ -60,7 +60,7 @@ const ADDON_PACKAGES = [
       { label: 'SEO', value: 'Included Free' },
       { label: 'Support', value: 'Telegram Chat' }
     ],
-    platforms: ['PR Newsroom', 'Multiple Crypto Outlets'],
+    platforms: ['Mintfunnel Newsroom', 'Multiple Crypto Outlets'],
     popular: false
   },
   {
@@ -79,7 +79,7 @@ const ADDON_PACKAGES = [
       'Coverage from BraveNewCoin',
       'Coverage from CoinCodex',
       'Coverage from Bitcolumnist',
-      'PR Newsroom & More',
+      'Mintfunnel Newsroom & More',
       'Telegram Chat Support',
       'FREE SEO Optimizations'
     ],
@@ -105,7 +105,7 @@ const ADDON_PACKAGES = [
     features: [
       'Everything from Starter Package, plus:',
       '75+ Media Pickups Guaranteed',
-      'PR Newsroom Inclusion',
+      'Mintfunnel Newsroom Inclusion',
       'Site Audience of 75M+',
       'Telegram Chat Support',
       'FREE SEO Optimizations'
@@ -115,7 +115,7 @@ const ADDON_PACKAGES = [
       { label: 'Audience Reach', value: '75M+' },
       { label: 'Support', value: 'Telegram Chat' }
     ],
-    platforms: ['75+ Media Outlets', 'PR Newsroom'],
+    platforms: ['75+ Media Outlets', 'Mintfunnel Newsroom'],
     audienceReach: '75M+'
   },
   {
@@ -168,7 +168,7 @@ const ADDON_PACKAGES = [
       '• CoinGape',
       '• CryptoNews',
       'Video Chat Support',
-      'PR Newsroom Inclusion'
+      'Mintfunnel Newsroom Inclusion'
     ],
     highlights: [
       { label: 'Coverage', value: 'ALL Top Platforms' },
