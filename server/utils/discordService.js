@@ -2400,7 +2400,8 @@ async function sendRaidCompletionToChannel(completionData) {
       `👤 **${username}** just completed a raid\n` +
       `💰 Reward: ${completionData.points} points\n` +
       (completionCount !== null ? `👥 **Total Raiders: ${completionCount}**\n` : '') +
-      `\n🌐 Complete more raids: use \`/raids\` in Discord or https://aquads.xyz`
+      `\n💵 **10K points = $100 CAD**\n` +
+      `🌐 Complete more raids to cash out: use \`/raids\` in Discord or https://aquads.xyz`
     )
     .setColor(0x00bfff)
     .setURL(raidPostUrl || 'https://aquads.xyz');

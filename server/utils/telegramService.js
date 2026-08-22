@@ -2910,8 +2910,9 @@ ${raidLinkLine}
 👤 ${username}${telegramUsername ? ` ${telegramUsername}` : ''} just completed a raid
 💰 Reward: ${completionData.points} points${completionCount !== null ? `\n👥 Total Raiders: ${completionCount}` : ''}
 
+💵 10K points = $100 CAD
 🌐 Track all raids: [@aquadsbumpbot](https://t.me/aquadsbumpbot)
-💡 Complete more raids to earn points!`;
+💡 Complete more raids to earn and cash out!`;
 
       // Creator branding (white-label): use raid creator's custom branding when set
       if (completionData.raidId) {
